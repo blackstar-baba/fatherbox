@@ -1,0 +1,8 @@
+{
+  "tool": "工具",
+  "about": "关于",
+  "time-parser": "时间转换",
+  "analysis": "分析",
+  "json-formatter": "Json格式化",
+  "uuid-generator": "Uuid生成"
+}

@@ -1,0 +1,8 @@
+{
+  "tool": "Tool",
+  "about": "About",
+  "time-parser": "TimeParser",
+  "analysis": "Analysis",
+  "json-formatter": "JsonFormatter",
+  "uuid-generator": "UuidGenerator"
+}
