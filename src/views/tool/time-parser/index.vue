@@ -9,17 +9,20 @@
         <div class="mt-6">
           <span class="leading-8 m-4">TimeZone:</span>
           <Select ref="select" v-model:value="curUTC" class="w-60 ml-2" :options="options1" />
-          <Switch
-            class="m-2"
-            v-model:checked="checked"
-            checked-children="Auto"
-            un-checked-children="Off"
-            @click="switchAuthRefresh"
-          />
         </div>
       </Col>
       <Col :md="24">
-        <Divider orientation="left">Current</Divider>
+        <Divider orientation="left">
+          Current
+          <Switch
+            class="m-2"
+            v-model:checked="checked"
+            checked-children="Auto Refresh"
+            un-checked-children="Off"
+            @click="switchAuthRefresh"
+          />
+        </Divider>
+
         <div class="m-4">
           <span class="leading-8">DateTime:</span>
           <Input v-model:value="txtNowDate" class="w-42" readonly :bordered="false" />
