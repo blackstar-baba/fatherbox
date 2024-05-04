@@ -6,74 +6,60 @@
   >
     <Row :gutter="16">
       <Col :md="24">
-        <Row class="p-4">
-          <Col :md="3" class="leading-8"> TimeZone:</Col>
-          <Col :md="21">
-            <Select ref="select" v-model:value="curUTC" class="w-100" :options="options1" />
-            <Switch
-              class="m-2"
-              v-model:checked="checked"
-              checked-children="Auto"
-              un-checked-children="Off"
-              @click="switchAuthRefresh"
-            />
-          </Col>
-        </Row>
+        <div class="mt-6">
+          <span class="leading-8 m-4">TimeZone:</span>
+          <Select ref="select" v-model:value="curUTC" class="w-60 ml-2" :options="options1" />
+          <Switch
+            class="m-2"
+            v-model:checked="checked"
+            checked-children="Auto"
+            un-checked-children="Off"
+            @click="switchAuthRefresh"
+          />
+        </div>
       </Col>
-      <Col :md="10">
-        <Row class="p-4">
-          <Col :md="6" class="leading-8">DateTime:</Col>
-          <Col :md="18">
-            <Input v-model:value="txtNowDate" class="w-50" readonly :bordered="false" />
-            <Button @click="copyDateToClipboard">
-              <template #icon><CopyOutlined /></template>
-            </Button>
-          </Col>
-        </Row>
-        <Row class="p-4">
-          <Col :md="6" class="leading-8">TimeStamp(s):</Col>
-          <Col :md="18">
-            <Input v-model:value="txtNowS" class="w-50" readonly :bordered="false" />
-            <Button @click="copyTimeStampSToClipboard">
-              <template #icon><CopyOutlined /></template>
-            </Button>
-          </Col>
-        </Row>
-        <Row class="p-4">
-          <Col :md="6" class="leading-8">TimeStamp(ms):</Col>
-          <Col :md="18">
-            <Input v-model:value="txtNowMs" class="w-50" readonly :bordered="false" />
-            <Button @click="copyTimeStampMsToClipboard">
-              <template #icon><CopyOutlined /></template>
-            </Button>
-          </Col>
-        </Row>
+      <Col :md="24">
+        <Divider orientation="left">Current</Divider>
+        <div class="m-4">
+          <span class="leading-8">DateTime:</span>
+          <Input v-model:value="txtNowDate" class="w-42" readonly :bordered="false" />
+          <Button @click="copyDateToClipboard">
+            <template #icon><CopyOutlined /></template>
+          </Button>
+          <span class="leading-8 m-4">TimeStamp(s):</span>
+          <Input v-model:value="txtNowS" class="w-28" readonly :bordered="false" />
+          <Button @click="copyTimeStampSToClipboard">
+            <template #icon><CopyOutlined /></template>
+          </Button>
+          <span class="leading-8 m-4">TimeStamp(ms):</span>
+          <Input v-model:value="txtNowMs" class="w-35" readonly :bordered="false" />
+          <Button @click="copyTimeStampMsToClipboard">
+            <template #icon><CopyOutlined /></template>
+          </Button>
+        </div>
       </Col>
-      <Col :md="13">
-        <Row class="p-4">
-          <Col :md="6" class="leading-12">TimeStamp to DateTime:</Col>
-          <Col :md="18">
-            <Input v-model:value="txtSrcStamp" placeholder="1388307215" class="m-2 w-45" />
-            <Select ref="select" v-model:value="secFrom" class="m-2 w-20" :options="options2" />
-            <Tooltip title="convert to">
-              <Button type="text" @click="stampToLocale()">
-                <template #icon><DoubleRightOutlined /></template>
-              </Button>
-            </Tooltip>
-            {{ txtDesDate }}
-          </Col>
-        </Row>
-        <Row class="p-4">
-          <Col :md="6" class="leading-12"> DateTime to TimeStamp:</Col>
-          <Col :md="18">
-            <Input v-model:value="txtSrcDate" placeholder="2015-04-01 10:01:01" class="m-2 w-60" />
-            <Select ref="select" v-model:value="secTo" class="m-2 w-20" :options="options2" />
-            <Button type="text" @click="localeToStamp()">
+      <Col :md="24">
+        <Divider orientation="left">Convert</Divider>
+        <div class="m-4">
+          <span class="leading-12">TimeStamp to DateTime:</span>
+          <Input v-model:value="txtSrcStamp" placeholder="1388307215" class="m-2 w-50" />
+          <Select ref="select" v-model:value="secFrom" class="m-2 w-18" :options="options2" />
+          <Tooltip title="convert to">
+            <Button type="text" @click="stampToLocale()">
               <template #icon><DoubleRightOutlined /></template>
             </Button>
-            {{ txtDesStamp }}
-          </Col>
-        </Row>
+          </Tooltip>
+          {{ txtDesDate }}
+        </div>
+        <div class="m-4">
+          <span class="leading-12">DateTime to TimeStamp:</span>
+          <Input v-model:value="txtSrcDate" placeholder="2015-04-01 10:01:01" class="m-2 w-50" />
+          <Select ref="select" v-model:value="secTo" class="m-2 w-18" :options="options2" />
+          <Button type="text" @click="localeToStamp()">
+            <template #icon><DoubleRightOutlined /></template>
+          </Button>
+          {{ txtDesStamp }}
+        </div>
       </Col>
     </Row>
   </PageWrapper>
@@ -81,7 +67,7 @@
 <script lang="ts" setup>
   import { ref, onMounted, onUnmounted } from 'vue';
   import { formatToDateTime } from '@/utils/dateUtil';
-  import { Select, Input, Button, Switch, Tooltip, Row, Col } from 'ant-design-vue';
+  import { Select, Input, Button, Switch, Tooltip, Row, Col, Divider } from 'ant-design-vue';
   import { CopyOutlined, DoubleRightOutlined } from '@ant-design/icons-vue';
   import type { SelectProps } from 'ant-design-vue';
   import { PageWrapper } from '@/components/Page';

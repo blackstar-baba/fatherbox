@@ -27,7 +27,7 @@
               Copy
             </Button>
           </div>
-          <Textarea v-model:value="jsonText" :rows="22" show-count :maxlength="8000" />
+          <Textarea v-model:value="jsonText" :rows="17" show-count :maxlength="8000" />
         </Card>
       </Col>
       <Col :span="1">
@@ -44,7 +44,7 @@
           <div class="py-4 w-80">
             <InputSearch v-model:value="searchValue" class="mb-8" placeholder="Search" />
           </div>
-          <div class="pt-6 h-110 overflow-y-auto">
+          <div class="pt-6 h-88 overflow-y-auto">
             <Tree
               :expanded-keys="expandedKeys"
               :auto-expand-parent="autoExpandParent"

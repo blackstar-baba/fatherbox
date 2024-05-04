@@ -5,11 +5,11 @@
     content="Support for RFC4122 version 1, and 4 UUIDs"
   >
     <Row :gutter="16">
-      <Col :span="12">
+      <Col :span="13">
         <Card :bordered="false" class="h-120">
           <div class="py-4">
             <Select ref="select" v-model:value="version" class="w-50" :options="versions" />
-            <Select ref="select" v-model:value="number" class="w-20 ml-2" :options="numbers" />
+            <Select ref="select" v-model:value="number" class="w-18 ml-2" :options="numbers" />
             <Button type="success" class="ml-2" @click="generate">
               <template #icon>
                 <EnterOutlined />
@@ -32,9 +32,9 @@
           </div>
         </Card>
       </Col>
-      <Col :span="12">
+      <Col :span="11">
         <Card :bordered="false" class="h-120">
-          <Divider orientation="left">Null UUID</Divider>
+          <Divider orientation="left">Null</Divider>
           <div class="py-4">
             {{ nullUuid }}
             <Button type="success" class="ml-2" @click="copyNullUuid">
@@ -44,12 +44,12 @@
               Copy
             </Button>
           </div>
-          <Divider orientation="left">UUID Validate</Divider>
+          <Divider orientation="left">Validate</Divider>
           <div class="pt-4 h-20">
             <Input
               v-model:value="needValidateUuid"
               placeholder="6ec0bd7f-11c0-43da-975e-2a8ad9ebae0b"
-              class="w-100"
+              class="w-85"
             />
             <Button type="success" class="ml-2" @click="validate">
               <template #icon>
