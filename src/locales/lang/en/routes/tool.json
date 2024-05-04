@@ -4,5 +4,6 @@
   "time-parser": "TimeParser",
   "analysis": "Analysis",
   "json-formatter": "JsonFormatter",
-  "uuid-generator": "UuidGenerator"
+  "uuid-generator": "UuidGenerator",
+  "encryptor": "Encryptor"
 }

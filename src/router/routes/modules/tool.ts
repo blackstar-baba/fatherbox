@@ -41,6 +41,15 @@ const tool: AppRouteModule = {
         title: t('routes.tool.uuid-generator'),
       },
     },
+    {
+      path: 'encryptor',
+      name: 'Encryptor',
+      component: () => import('@/views/tool/encryptor/index.vue'),
+      meta: {
+        // affix: true,
+        title: t('routes.tool.encryptor'),
+      },
+    },
   ],
 };
 

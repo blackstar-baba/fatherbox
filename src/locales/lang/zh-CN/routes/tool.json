@@ -4,5 +4,6 @@
   "time-parser": "时间转换",
   "analysis": "分析",
   "json-formatter": "Json格式化",
-  "uuid-generator": "Uuid生成"
+  "uuid-generator": "Uuid生成",
+  "encryptor": "加密器"
 }
