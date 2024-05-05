@@ -50,6 +50,15 @@ const tool: AppRouteModule = {
         title: t('routes.tool.encryptor'),
       },
     },
+    {
+      path: 'image-editor',
+      name: 'ImageEditor',
+      component: () => import('@/views/tool/image-editor/index.vue'),
+      meta: {
+        // affix: true,
+        title: t('routes.tool.image-editor'),
+      },
+    },
   ],
 };
 

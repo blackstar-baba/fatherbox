@@ -98,6 +98,8 @@
     "showdown": "^2.1.0",
     "sortablejs": "^1.15.2",
     "tinymce": "^5.10.9",
+    "tui-color-picker": "^2.2.8",
+    "tui-image-editor": "^3.15.3",
     "unocss": "^0.59.4",
     "uuid": "^9.0.1",
     "vditor": "^3.10.4",
