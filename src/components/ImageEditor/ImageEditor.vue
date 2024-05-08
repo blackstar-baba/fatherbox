@@ -1,4 +1,19 @@
 <template>
+  <div class="m-4">
+    <Button type="success" @click="selectFile">
+      <template #icon>
+        <ExpandOutlined />
+      </template>
+      Load
+    </Button>
+    <input type="file" style="display: none" ref="fileInput" @change="handleFileChange" />
+    <Button type="warning" class="ml-2" @click="download">
+      <template #icon>
+        <CompressOutlined />
+      </template>
+      Download
+    </Button>
+  </div>
   <div id="tui-image-editor"></div>
 </template>
 
@@ -7,88 +22,22 @@
   import 'tui-color-picker/dist/tui-color-picker.css'
   import ImageEditor from 'tui-image-editor'
   import demoImg from '@/assets/images/demo.png';
+  import { CompressOutlined, ExpandOutlined } from "@ant-design/icons-vue";
+  import { Button } from "ant-design-vue";
+  import { downloadByBase64 } from "@/utils/file/download";
 
-  // props
-  const locale_zh = {
-    // override default English locale to your custom
-    Crop: "裁剪",
-    DeleteAll: "全部删除",
-    Delete: "删除",
-    Undo: "撤销",
-    Redo: "反撤销",
-    Reset: "重置",
-    Flip: "镜像",
-    Rotate: "旋转",
-    Draw: "画",
-    Shape: "形状标注",
-    Icon: "图标标注",
-    Text: "文字标注",
-    Mask: "遮罩",
-    Filter: "滤镜",
-    Bold: "加粗",
-    Italic: "斜体",
-    Underline: "下划线",
-    Left: "左对齐",
-    Center: "居中",
-    Right: "右对齐",
-    Color: "颜色",
-    "Text size": "字体大小",
-    Custom: "自定义",
-    Square: "正方形",
-    Apply: "应用",
-    Cancel: "取消",
-    "Flip X": "X 轴",
-    "Flip Y": "Y 轴",
-    Range: "区间",
-    Stroke: "描边",
-    Fill: "填充",
-    Circle: "圆",
-    Triangle: "三角",
-    Rectangle: "矩形",
-    Free: "曲线",
-    Straight: "直线",
-    Arrow: "箭头",
-    "Arrow-2": "箭头2",
-    "Arrow-3": "箭头3",
-    "Star-1": "星星1",
-    "Star-2": "星星2",
-    Polygon: "多边形",
-    Location: "定位",
-    Heart: "心形",
-    Bubble: "气泡",
-    "Custom icon": "自定义图标",
-    "Load Mask Image": "加载蒙层图片",
-    Grayscale: "灰度",
-    Blur: "模糊",
-    Sharpen: "锐化",
-    Emboss: "浮雕",
-    "Remove White": "除去白色",
-    Distance: "距离",
-    Brightness: "亮度",
-    Noise: "噪音",
-    "Color Filter": "彩色滤镜",
-    Sepia: "棕色",
-    Sepia2: "棕色2",
-    Invert: "负片",
-    Pixelate: "像素化",
-    Threshold: "阈值",
-    Tint: "色调",
-    Multiply: "正片叠底",
-    Blend: "混合色"
-    // etc...
-  };
   const customTheme = {
     // image 坐上角度图片
     "common.bi.image": "", // 在这里换上你喜欢的logo图片
     "common.bisize.width": "0px",
     "common.bisize.height": "0px",
     "common.backgroundImage": "none",
-    "common.backgroundColor": "#ffffff",
-    "common.border": "1px solid #001111 ",
+    "common.backgroundColor": "#555555",
+    "common.border": "1px solid #ffffff ",
 
     // header
     "header.backgroundImage": "none",
-    "header.backgroundColor": "#f3f4f6",
+    "header.backgroundColor": "#555555",
     "header.border": "0px",
 
     // load button
@@ -121,7 +70,7 @@
     "submenu.iconSize.height": "32px",
 
     // submenu primary color
-    "submenu.backgroundColor": "#1e1e1e",
+    "submenu.backgroundColor": "#555555",
     "submenu.partition.color": "#858585",
 
     // submenu labels
@@ -132,7 +81,7 @@
 
     // checkbox style
     "checkbox.border": "1px solid #ccc",
-    "checkbox.backgroundColor": "#fff",
+    "checkbox.backgroundColor": "#555555",
 
     // rango style
     "range.pointer.color": "#fff",
@@ -147,7 +96,7 @@
     "range.value.fontWeight": "lighter",
     "range.value.fontSize": "11px",
     "range.value.border": "1px solid #353535",
-    "range.value.backgroundColor": "#151515",
+    "range.value.backgroundColor": "#555555",
     "range.title.color": "#fff",
     "range.title.fontWeight": "lighter",
 
@@ -156,6 +105,7 @@
     "colorpicker.title.color": "#fff"
   };
   export default {
+    components: { Button, ExpandOutlined, CompressOutlined },
     data() {
       return {
         instance: null,
@@ -168,16 +118,32 @@
           includeUI: {
             loadImage: {
               path: demoImg,
-              name: "image"
+              name: "demo.png",
             },
             initMenu: "draw",
-            menuBarPosition: "bottom",
-            locale: locale_zh,
-            theme: customTheme, // 自定义主题
-            cssMaxHeight: 800,
+            menuBarPosition: "right",
+            theme: customTheme,
           },
         }
       );
-    }
+    },
+    methods: {
+      selectFile() {
+        this.$refs.fileInput.click();
+      },
+       download() {
+        let imageName = this.instance.getImageName();
+        let dataURL = this.instance.toDataURL();
+        console.info(imageName + ": " + dataURL);
+        downloadByBase64(dataURL, imageName);
+      },
+      handleFileChange(event) {
+        let file = event.target.files[0];
+        this.instance.loadImageFromFile(file).then(function (result) {
+          console.log(result);
+          this.instance.clearUndoStack();
+        });
+      }
+    },
   }
 </script>
