@@ -25,6 +25,8 @@
   import { CompressOutlined, ExpandOutlined } from "@ant-design/icons-vue";
   import { Button } from "ant-design-vue";
   import { downloadByBase64 } from "@/utils/file/download";
+  import { save } from '@tauri-apps/api/dialog';
+  import { writeTextFile } from '@tauri-apps/api/fs';
 
   const customTheme = {
     // image 坐上角度图片
@@ -131,11 +133,16 @@
       selectFile() {
         this.$refs.fileInput.click();
       },
-       download() {
+      async download() {
         let imageName = this.instance.getImageName();
         let dataURL = this.instance.toDataURL();
         console.info(imageName + ": " + dataURL);
-        downloadByBase64(dataURL, imageName);
+         if (window.__TAURI__) {
+           const filePath = await save({ defaultPath: imageName });
+           await writeTextFile(filePath, dataURL);
+         } else {
+           downloadByBase64(dataURL, imageName);
+         }
       },
       handleFileChange(event) {
         let file = event.target.files[0];
