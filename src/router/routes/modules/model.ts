@@ -7,20 +7,20 @@ const tool: AppRouteModule = {
   path: '/model',
   name: 'Model',
   component: LAYOUT,
-  redirect: '/model/doubao',
+  redirect: '/model/remote',
   meta: {
     orderNo: 10,
-    icon: 'ion:hammer-outline',
+    icon: 'eos-icons:ai',
     title: t('routes.model.model'),
   },
   children: [
     {
-      path: 'doubao',
-      name: 'DouBao',
-      component: () => import('@/views/model/doubao/index.vue'),
+      path: 'remote',
+      name: 'Remote',
+      component: () => import('@/views/model/remote/index.vue'),
       meta: {
         // affix: true,
-        title: t('routes.model.doubao'),
+        title: t('routes.model.remote'),
       },
     },
   ],
