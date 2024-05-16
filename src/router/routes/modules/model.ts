@@ -23,6 +23,15 @@ const tool: AppRouteModule = {
         title: t('routes.model.remote'),
       },
     },
+    {
+      path: 'ollama',
+      name: 'Ollama',
+      component: () => import('@/views/model/ollama/index.vue'),
+      meta: {
+        // affix: true,
+        title: t('routes.model.ollama'),
+      },
+    },
   ],
 };
 

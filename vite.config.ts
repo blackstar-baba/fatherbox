@@ -31,6 +31,12 @@ export default defineApplicationConfig({
           ws: true,
           rewrite: (path) => path.replace(new RegExp(`^/upload`), ''),
         },
+        '/ollama': {
+          target: 'http://localhost:3000/ollma',
+          changeOrigin: true,
+          ws: true,
+          rewrite: (path) => path.replace(new RegExp(`^/ollama`), ''),
+        },
       },
       open: true, // 项目启动后，自动打开
       warmup: {

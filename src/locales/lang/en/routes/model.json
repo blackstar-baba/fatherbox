@@ -1,4 +1,5 @@
 {
   "model": "Model",
-  "remote": "Remote"
+  "remote": "Remote",
+  "ollama": "Ollama"
 }
