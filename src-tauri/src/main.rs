@@ -1,12 +1,17 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use app::api::Api;
+use app::{Config, ModelData, Response};
 use clap::Parser;
+use config::Case::ScreamingSnake;
+use config::FileFormat;
+use log::info;
 use serde::Serialize;
 use serde_json::from_slice;
 use tauri::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
-use app::{ModelData, Response};
 
+static DEFAULT_CONFIG: &str = include_str!("../config.toml");
 
 #[derive(Parser)]
 #[command(version)]
@@ -30,9 +35,10 @@ fn banner() {
 }
 
 fn main() {
-
+    // show banner
     banner();
 
+    // process args
     let args: Args = Args::parse();
 
     let level = match args.verbose {
@@ -52,6 +58,23 @@ fn main() {
         .with_env_filter(level)
         .init();
 
+    // process config
+    let mut config_builder = config::Config::builder();
+
+    config_builder = match &args.config {
+        Some(config) => config_builder.add_source(config::File::with_name(config)),
+        None => {
+            info!("System use build-in config");
+            config_builder.add_source(config::File::from_str(DEFAULT_CONFIG, FileFormat::Toml))
+        }
+    };
+    let config: Config = config_builder.build().unwrap().try_deserialize().unwrap();
+
+    let api_settings = config.api.unwrap();
+    // start api
+    // todo add api module
+    let mut api = Api::new(api_settings);
+    let api_handle = api.start().unwrap();
 
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![my_custom_command])
@@ -69,35 +92,33 @@ fn my_custom_command() -> String {
 #[tauri::command]
 async fn ollama_get_models() -> Response<ModelData> {
     let client = ClientBuilder::new().build().unwrap();
-    let request = HttpRequestBuilder::new("GET", "http://localhost:11434/api/tags").unwrap()
+    let request = HttpRequestBuilder::new("GET", "http://localhost:11434/api/tags")
+        .unwrap()
         .response_type(ResponseType::Json);
     if let Ok(response) = client.send(request).await {
         let data = response.read().await.unwrap().data;
         // println!("{}",data);
         let model_data: ModelData = serde_json::from_value(data).unwrap();
-        return Response{
+        return Response {
             code: 0,
             r#type: "".to_string(),
             message: "".to_string(),
             result: model_data,
         };
     }
-    let model_data = ModelData {
-        models: vec![],
-    };
+    let model_data = ModelData { models: vec![] };
     return Response {
         code: 0,
         r#type: "".to_string(),
         message: "".to_string(),
-        result: model_data
+        result: model_data,
     };
 }
 
-
 #[cfg(test)]
 mod tests {
-    use serde::{Deserialize, Serialize};
     use app::{Model, ModelData};
+    use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
     #[deny()]

@@ -1,5 +1,19 @@
+pub mod api;
+
+use std::net::SocketAddr;
+
 use serde::{Deserialize, Serialize};
-use serde_json::Number;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Config {
+    pub api: Option<ApiSettings>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ApiSettings {
+    pub listen: SocketAddr,
+    pub db_url: String,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Response<T> {
