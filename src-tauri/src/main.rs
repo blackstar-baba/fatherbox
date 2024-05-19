@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use app::api::Api;
-use app::{Config, ModelData, Response};
+use app::{Config, ModelData, Response, RESPONSE_CODE_SUCCESS};
 use clap::Parser;
 use config::Case::ScreamingSnake;
 use config::FileFormat;
@@ -70,13 +70,15 @@ fn main() {
     };
     let config: Config = config_builder.build().unwrap().try_deserialize().unwrap();
 
-    let api_settings = config.api.unwrap();
-    // start api
-    // todo add api module
-    let mut api = Api::new(api_settings);
-    let api_handle = api.start().unwrap();
-
     tauri::Builder::default()
+        .setup(|_app|{
+            // start api
+            let api_settings = config.api.unwrap();
+            let mut api = Api::new(api_settings);
+            let api_handle = api.start().unwrap();
+            // Ok(api_handle.join().unwrap())
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![my_custom_command])
         .invoke_handler(tauri::generate_handler![ollama_get_models])
         .run(tauri::generate_context!())
@@ -100,7 +102,7 @@ async fn ollama_get_models() -> Response<ModelData> {
         // println!("{}",data);
         let model_data: ModelData = serde_json::from_value(data).unwrap();
         return Response {
-            code: 0,
+            code:  RESPONSE_CODE_SUCCESS,
             r#type: "".to_string(),
             message: "".to_string(),
             result: model_data,
@@ -108,7 +110,7 @@ async fn ollama_get_models() -> Response<ModelData> {
     }
     let model_data = ModelData { models: vec![] };
     return Response {
-        code: 0,
+        code:  RESPONSE_CODE_SUCCESS,
         r#type: "".to_string(),
         message: "".to_string(),
         result: model_data,

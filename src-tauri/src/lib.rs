@@ -23,6 +23,10 @@ pub struct Response<T> {
     pub result:T
 }
 
+pub static RESPONSE_CODE_SUCCESS: i32 = 0;
+pub static RESPONSE_CODE_ERROR: i32 = -1;
+pub static RESPONSE_CODE_TIMEOUT: i32 = 401;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelData {
     pub models: Vec<Model>,

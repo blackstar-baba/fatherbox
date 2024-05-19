@@ -45,7 +45,7 @@ export default defineApplicationConfig({
     },
     plugins: [
       Inspector({
-        openInEditorHost: 'http://localhost:5173',
+        // openInEditorHost: 'http://localhost:5173',
       }),
     ],
   },
