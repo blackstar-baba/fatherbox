@@ -10,6 +10,8 @@ const editor: AppRouteModule = {
   component: LAYOUT,
   meta: {
     // icon: 'carbon:table-split',
+    orderNo: 40,
+    icon: 'icon-park-outline:editor',
     title: t('routes.editor.editor'),
   },
   children: [

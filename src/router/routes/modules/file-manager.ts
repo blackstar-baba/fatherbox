@@ -10,6 +10,8 @@ const fileManager: AppRouteModule = {
   component: LAYOUT,
   meta: {
     // icon: 'carbon:table-split',
+    orderNo: 50,
+    icon: 'tabler:files',
     title: t('routes.file-manager.file-manager'),
   },
   children: [

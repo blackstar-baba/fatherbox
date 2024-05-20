@@ -9,7 +9,7 @@ const tool: AppRouteModule = {
   component: LAYOUT,
   redirect: '/model/remote',
   meta: {
-    orderNo: 10,
+    orderNo: 30,
     icon: 'eos-icons:ai',
     title: t('routes.model.model'),
   },

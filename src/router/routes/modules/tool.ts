@@ -9,7 +9,7 @@ const tool: AppRouteModule = {
   component: LAYOUT,
   redirect: '/tool/time-parser',
   meta: {
-    orderNo: 10,
+    orderNo: 20,
     icon: 'ion:hammer-outline',
     title: t('routes.tool.tool'),
   },
