@@ -1,8 +1,9 @@
 <template>
   <PageWrapper title="Markdown editor">
     <div>
-      <a-button @click="toggleTheme" class="mb-2 ml-2" type="primary"> Load </a-button>
-      <a-button @click="toggleTheme" class="mb-2 ml-2" type="primary"> Download </a-button>
+      <a-button @click="open" class="mb-2 ml-2" type="primary"> Open </a-button>
+      <input type="file" style="display: none" ref="fileInput" @change="handleFileChange" />
+      <a-button @click="download" class="mb-2 ml-2" type="primary"> Download </a-button>
       <a-button @click="clearValue" class="mb-2 ml-2" type="default"> Clear </a-button>
       <MarkDown v-model:value="valueRef" @change="handleChange" ref="markDownRef" placeholder="" />
     </div>
@@ -14,11 +15,14 @@
   </PageWrapper>
 </template>
 <script lang="ts" setup>
-  import { ref, unref } from 'vue';
+  import { ref } from 'vue';
   import { MarkDown, MarkDownActionType, MarkdownViewer } from '@/components/Markdown';
   import { PageWrapper } from '@/components/Page';
   import { Card } from 'ant-design-vue';
   import { type Nullable } from '@vben/types';
+  import { save } from '@tauri-apps/api/dialog';
+  import { writeTextFile } from '@tauri-apps/api/fs';
+  import { downloadByData } from '@/utils/file/download';
 
   const markDownRef = ref<Nullable<MarkDownActionType>>(null);
   const valueRef = ref(`
@@ -63,12 +67,20 @@
 | 1 | 2 | 3 |
 | 4 | 5 | 6 |
 `);
+  const fileInput = ref(null);
+  const fileName = ref('demo.md');
 
-  function toggleTheme() {
-    const markDown = unref(markDownRef);
-    if (!markDown) return;
-    const vditor = markDown.getVditor();
-    vditor.setTheme('dark', 'dark', 'dracula');
+  function open() {
+    fileInput.value.click();
+  }
+
+  async function download() {
+    if (window.__TAURI__) {
+      const filePath = await save({ defaultPath: fileName.value });
+      await writeTextFile(filePath, valueRef.value);
+    } else {
+      downloadByData(valueRef.value, fileName.value);
+    }
   }
 
   function handleChange(v: string) {
@@ -77,5 +89,19 @@
 
   function clearValue() {
     valueRef.value = '';
+  }
+
+  function handleFileChange(event) {
+    let file = event.target.files[0];
+    fileName.value = file.name;
+    if (file) {
+      const fileReader = new FileReader();
+      fileReader.onload = () => {
+        const fileContent = fileReader.result as string;
+        console.log(fileContent);
+        valueRef.value = fileContent;
+      };
+      fileReader.readAsText(file);
+    }
   }
 </script>
