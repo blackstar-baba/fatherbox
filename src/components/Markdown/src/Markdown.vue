@@ -27,7 +27,7 @@
   defineOptions({ inheritAttrs: false });
 
   const props = defineProps({
-    height: { type: Number, default: 360 },
+    height: { type: Number, default: 600 },
     value: { type: String, default: '' },
   });
 

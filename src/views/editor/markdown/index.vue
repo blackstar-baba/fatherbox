@@ -7,18 +7,12 @@
       <a-button @click="clearValue" class="mb-2 ml-2" type="default"> Clear </a-button>
       <MarkDown v-model:value="valueRef" @change="handleChange" ref="markDownRef" placeholder="" />
     </div>
-    <div class="mt-2">
-      <Card title="Markdown Viewer 组件演示">
-        <MarkdownViewer :value="valueRef" />
-      </Card>
-    </div>
   </PageWrapper>
 </template>
 <script lang="ts" setup>
   import { ref } from 'vue';
-  import { MarkDown, MarkDownActionType, MarkdownViewer } from '@/components/Markdown';
+  import { MarkDown, MarkDownActionType } from '@/components/Markdown';
   import { PageWrapper } from '@/components/Page';
-  import { Card } from 'ant-design-vue';
   import { type Nullable } from '@vben/types';
   import { save } from '@tauri-apps/api/dialog';
   import { writeTextFile } from '@tauri-apps/api/fs';
