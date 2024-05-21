@@ -61,17 +61,21 @@
 | 1 | 2 | 3 |
 | 4 | 5 | 6 |
 `);
-  const fileInput = ref(null);
+  const fileInput = ref<HTMLInputElement>();
   const fileName = ref('demo.md');
 
   function open() {
-    fileInput.value.click();
+    if (fileInput.value) {
+      fileInput.value.click();
+    }
   }
 
   async function download() {
     if (window.__TAURI__) {
       const filePath = await save({ defaultPath: fileName.value });
-      await writeTextFile(filePath, valueRef.value);
+      if (filePath != null) {
+        await writeTextFile(filePath, valueRef.value);
+      }
     } else {
       downloadByData(valueRef.value, fileName.value);
     }
