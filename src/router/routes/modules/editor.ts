@@ -16,14 +16,6 @@ const editor: AppRouteModule = {
   },
   children: [
     {
-      path: 'json',
-      component: () => import('@/views/editor/json/index.vue'),
-      name: 'JsonEditor',
-      meta: {
-        title: t('routes.editor.jsonEditor'),
-      },
-    },
-    {
       path: 'markdown',
       name: 'MarkDownEditor',
       component: () => import('@/views/editor/markdown/index.vue'),
