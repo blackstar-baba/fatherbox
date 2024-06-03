@@ -16,7 +16,7 @@ pub struct ApiSettings {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Response<T> {
+pub struct AppResponse<T> {
     pub code: i32,
     pub r#type: String,
     pub message: String,

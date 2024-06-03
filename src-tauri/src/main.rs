@@ -1,8 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use app::api::Api;
-use app::{Config, ModelData, Response, RESPONSE_CODE_SUCCESS};
+
 use clap::Parser;
 use config::Case::ScreamingSnake;
 use config::FileFormat;
@@ -10,6 +9,9 @@ use log::info;
 use serde::Serialize;
 use serde_json::from_slice;
 use tauri::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
+
+use app::{AppResponse, Config, ModelData, RESPONSE_CODE_SUCCESS};
+use app::api::Api;
 
 static DEFAULT_CONFIG: &str = include_str!("../config.toml");
 
@@ -92,7 +94,7 @@ fn my_custom_command() -> String {
 }
 
 #[tauri::command]
-async fn ollama_get_models() -> Response<ModelData> {
+async fn ollama_get_models() -> AppResponse<ModelData> {
     let client = ClientBuilder::new().build().unwrap();
     let request = HttpRequestBuilder::new("GET", "http://localhost:11434/api/tags")
         .unwrap()
@@ -101,7 +103,7 @@ async fn ollama_get_models() -> Response<ModelData> {
         let data = response.read().await.unwrap().data;
         // println!("{}",data);
         let model_data: ModelData = serde_json::from_value(data).unwrap();
-        return Response {
+        return AppResponse {
             code:  RESPONSE_CODE_SUCCESS,
             r#type: "".to_string(),
             message: "".to_string(),
@@ -109,7 +111,7 @@ async fn ollama_get_models() -> Response<ModelData> {
         };
     }
     let model_data = ModelData { models: vec![] };
-    return Response {
+    return AppResponse {
         code:  RESPONSE_CODE_SUCCESS,
         r#type: "".to_string(),
         message: "".to_string(),
@@ -119,7 +121,6 @@ async fn ollama_get_models() -> Response<ModelData> {
 
 #[cfg(test)]
 mod tests {
-    use app::{Model, ModelData};
     use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -132,5 +133,10 @@ mod tests {
     fn it_works() {
         // let results = get_images();
         // assert_eq!(2, results.len())
+    }
+
+    #[test] //由此判断这是一个测试函数
+    fn test_load_file() {
+
     }
 }

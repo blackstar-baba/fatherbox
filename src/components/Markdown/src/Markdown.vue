@@ -112,6 +112,29 @@
         },
         actions: [],
       },
+      upload: {
+        url: 'http://localhost:3000/file',
+        format: function (files: File[], responseText: string): string {
+          // todo test this
+          let response = JSON.parse(responseText);
+          let paths = response.result;
+          let succMap = {};
+          for (let i = 0; i < paths.length; i++) {
+            succMap[files[i].name] = this.url + '/' + paths[i];
+          }
+          console.log(responseText);
+          console.log(files);
+          let newResponse = {
+            msg: '',
+            code: 0,
+            data: {
+              errFiles: [],
+              succMap: succMap,
+            },
+          };
+          return JSON.stringify(newResponse);
+        },
+      },
       input: (v) => {
         valueRef.value = v;
         emit('update:value', v);
