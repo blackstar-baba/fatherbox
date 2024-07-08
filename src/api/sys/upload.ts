@@ -21,3 +21,25 @@ export function uploadApi(
     params,
   );
 }
+
+/**
+ * @description: Upload interface
+ */
+// export function uploadApi(
+//   params: UploadFileParams,
+//   onUploadProgress: (progressEvent: AxiosProgressEvent) => void,
+// ) {
+//   return new Promise<any>((resolve) => {
+//     const result = {
+//       message: '123',
+//       code: 456,
+//       url: 'xxx.png',
+//     };
+//     onUploadProgress({
+//       loaded: 100,
+//       total: 100,
+//       bytes: 100,
+//     });
+//     resolve({ data: result });
+//   });
+// }

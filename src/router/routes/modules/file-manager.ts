@@ -4,23 +4,24 @@ import { LAYOUT } from '@/router/constant';
 import { t } from '@/hooks/web/useI18n';
 
 const fileManager: AppRouteModule = {
-  path: 'file-system',
-  name: 'File',
-  redirect: '/file/file-manager/cloud',
+  path: '/file-manager',
+  name: 'File Manager',
+  redirect: '/file-manager/index',
   component: LAYOUT,
   meta: {
-    // icon: 'carbon:table-split',
+    hideChildrenInMenu: true,
     orderNo: 50,
     icon: 'tabler:files',
     title: t('routes.file-manager.file-manager'),
   },
   children: [
     {
-      path: 'json',
-      component: () => import('@/views/file-manager/cloud/index.vue'),
-      name: 'File',
+      path: 'index',
+      name: 'File Manager Page',
+      component: () => import('@/views/file-manager/index.vue'),
       meta: {
-        title: t('routes.file-manager.cloud'),
+        title: t('routes.file-manager.file-manager'),
+        hideMenu: true,
       },
     },
   ],

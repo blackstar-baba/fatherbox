@@ -1,13 +1,13 @@
 pub mod auth;
 pub mod file;
 
+use axum::http::Method;
+use axum::routing::{get, post};
+use axum::Router;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
-use axum::http::Method;
-use axum::Router;
-use axum::routing::{get, post};
 
 use log::info;
 use tokio::runtime;
@@ -15,7 +15,7 @@ use tower_http::cors::CorsLayer;
 
 use crate::api::auth::{get_menu_list, get_perm_code, get_user_info, login, logout};
 use crate::api::file::{download_file, upload_file};
-use crate::{ApiSettings, AppResponse, RESPONSE_CODE_SUCCESS};
+use crate::{ApiSettings, AppResponse};
 
 pub struct Api {
     settings: ApiSettings,

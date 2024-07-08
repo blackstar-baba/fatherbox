@@ -28,7 +28,7 @@ import ApiTree from './components/ApiTree.vue';
 import ApiTreeSelect from './components/ApiTreeSelect.vue';
 import ApiCascader from './components/ApiCascader.vue';
 import ApiTransfer from './components/ApiTransfer.vue';
-import { BasicUpload, ImageUpload } from '@/components/Upload';
+import { BasicUpload, ImageUpload, LocalUpload } from '@/components/Upload';
 import { StrengthMeter } from '@/components/StrengthMeter';
 import { IconPicker } from '@/components/Icon';
 import { CountdownInput } from '@/components/CountDown';
@@ -76,6 +76,8 @@ componentMap.set('InputCountDown', CountdownInput);
 componentMap.set('Upload', BasicUpload);
 componentMap.set('Divider', Divider);
 componentMap.set('CropperAvatar', CropperAvatar);
+
+componentMap.set('LocalUpload', LocalUpload);
 
 componentMap.set('BasicTitle', BasicTitle);
 
