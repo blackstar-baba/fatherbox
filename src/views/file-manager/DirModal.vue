@@ -10,8 +10,8 @@
   import {
     getDirs,
     createFile,
+    updateFile,
     dirFormSchema,
-    workspace,
     DIR_TYPE,
   } from '@/views/file-manager/file.data';
 
@@ -20,7 +20,7 @@
   const emit = defineEmits(['success', 'register']);
 
   const isUpdate = ref(true);
-  // const rowId = ref('');
+  const rowId = ref('');
 
   const [registerForm, { setFieldsValue, updateSchema, resetFields, validate }] = useForm({
     labelWidth: 100,
@@ -37,6 +37,10 @@
     setModalProps({ confirmLoading: false });
     isUpdate.value = !!data?.isUpdate;
 
+    if (unref(isUpdate)) {
+      rowId.value = data.record.id;
+    }
+
     await setFieldsValue({
       ...data.record,
     });
@@ -44,11 +48,11 @@
     const treeData = await getDirs();
     await updateSchema([
       {
-        field: 'parentPath',
+        field: 'pid',
         componentProps: { treeData },
-        dynamicDisabled: () => {
-          return !isUpdate.value;
-        },
+        // dynamicDisabled: () => {
+        //   return !isUpdate.value;
+        // },
       },
     ]);
   });
@@ -60,7 +64,12 @@
       const values = await validate();
       setModalProps({ confirmLoading: true });
       console.info(values);
-      await createFile(workspace, values.name, DIR_TYPE, values.parentPath);
+      if (unref(isUpdate)) {
+        await updateFile(rowId.value, values.pid, DIR_TYPE, values.name);
+      } else {
+        await createFile(values.pid, DIR_TYPE, values.name);
+      }
+
       closeModal();
       emit('success', { isUpdate: unref(isUpdate), values: { ...values } });
     } finally {

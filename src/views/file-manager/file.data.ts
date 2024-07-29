@@ -1,11 +1,15 @@
 import { BasicColumn, FormSchema } from '@/components/Table';
 import { FileParams, SimpleFileEntry } from '@/api/sys/model/fileModel';
 import { invoke } from '@tauri-apps/api/tauri';
+import { useWorkspaceStore } from '@/store/modules/workspace';
+import { TreeItem } from '@/components/Tree';
 
 export const workspace = 'default';
 
 export const DIR_TYPE = 'dir';
 export const FILE_TYPE = 'file';
+
+const workspaceStore = useWorkspaceStore();
 export const columns: BasicColumn[] = [
   {
     title: 'name',
@@ -70,17 +74,17 @@ export const dirFormSchema: FormSchema[] = [
     required: true,
   },
   {
-    field: 'parentPath',
-    label: 'parentPath',
+    field: 'pid',
+    label: 'directory',
     component: 'TreeSelect',
-    defaultValue: '',
     componentProps: {
       fieldNames: {
-        label: 'name',
-        value: 'path',
+        label: 'title',
+        value: 'key',
       },
       getPopupContainer: () => document.body,
     },
+    required: true,
   },
 ];
 
@@ -213,33 +217,62 @@ export const getFiles = (param: FileParams) => {
 };
 
 export const getDirs = () => {
+  const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     // how to return promise
-    return invoke('list_workspace_dirs', { workspace: workspace }).then((message: any) => {
+    return invoke('list_workspace_dirs_cmd', { wid: wid }).then((message: any) => {
       console.log(message);
-      // processFileEntrys(message.result, '');
+      const dirTree: TreeItem[] = [];
+      const map: Map<String, any[]> = new Map();
+      let root: TreeItem = { key: '' };
       message.result.forEach((element: any) => {
-        element.bkName = element.name;
+        if (element.pid === '') {
+          root = {
+            key: element.id,
+            title: element.name,
+          };
+          dirTree.push(root);
+          return;
+        }
+        let values = map.get(element.pid);
+        if (!values) {
+          values = [];
+        }
+        values.push(element);
+        map.set(element.pid, values);
       });
-      return message.result;
+      root.children = getChildren(root.key.toString(), map);
+      return dirTree;
     });
   }
   return Promise.resolve([]);
 };
 
-export const createFile = (
-  workspace: string,
-  fileName: string,
-  fileType: string,
-  parentPath: string,
-) => {
+function getChildren(key: String, map: Map<String, any[]>) {
+  const children: TreeItem[] = [];
+  const value = map.get(key);
+  if (value) {
+    value.forEach((element: any) => {
+      children.push({
+        key: element.id,
+        title: element.name,
+        pkey: element.pid,
+        children: getChildren(element.id, map),
+      });
+    });
+  }
+  return children;
+}
+
+export const createFile = (pid: string, fileType: string, fileName: string) => {
+  const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     // how to return promise
-    return invoke('create_workspace_file', {
-      workspace: workspace,
-      fileName: fileName,
+    return invoke('create_workspace_file_cmd', {
+      wid: wid,
+      pid: pid,
       fileType: fileType,
-      parentPath: parentPath,
+      fileName: fileName,
     })
       .then((message: any) => {
         console.log(message);
@@ -251,13 +284,34 @@ export const createFile = (
   return Promise.resolve([]);
 };
 
-export const deleteFile = (workspace: string, fileName: string, parentPath: string) => {
+export const updateFile = (id: string, pid: string, fileType: string, fileName: string) => {
+  const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     // how to return promise
-    return invoke('delete_workspace_file', {
-      workspace: workspace,
+    return invoke('update_workspace_file_cmd', {
+      id: id,
+      wid: wid,
+      pid: pid,
+      fileType: fileType,
       fileName: fileName,
-      parentPath: parentPath,
+    })
+      .then((message: any) => {
+        console.log(message);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+  return Promise.resolve([]);
+};
+
+export const deleteFile = (id: string) => {
+  // const wid = workspaceStore.getWorkspaceInfo?.id || '';
+  if (window.__TAURI__) {
+    // how to return promise
+    return invoke('delete_workspace_file_cmd', {
+      // wid: wid,
+      id: id,
     })
       .then((message: any) => {
         console.log(message);

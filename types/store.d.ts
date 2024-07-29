@@ -10,6 +10,13 @@ export interface LockInfo {
   isLock?: boolean;
 }
 
+export interface WorkspaceInfo {
+  // id
+  id?: string | undefined;
+  // name
+  name?: string | undefined;
+}
+
 export interface ApiAddress {
   key: string;
   val: string;

@@ -7,7 +7,6 @@
       treeWrapperClassName="h-[calc(100%-35px)] overflow-auto"
       :clickRowToExpand="false"
       :treeData="treeData"
-      :fieldNames="{ key: 'path', title: 'name' }"
       :rightMenuList="menuList"
       :beforeRightClick="rightClick"
       @select="handleSelect"
@@ -18,7 +17,7 @@
 <script lang="ts" setup>
   import { onMounted, ref } from 'vue';
   import { BasicTree, TreeItem } from '@/components/Tree';
-  import { deleteFile, getDirs, workspace } from '@/views/file-manager/file.data';
+  import { deleteFile, getDirs } from '@/views/file-manager/file.data';
   import { useModal } from '@/components/Modal';
   import DirModal from '@/views/file-manager/DirModal.vue';
 
@@ -40,12 +39,7 @@
     },
     {
       label: 'edit',
-      handler: function () {
-        if (rightClickItem) {
-          console.info(rightClickItem);
-        }
-        rightClickItem = undefined;
-      },
+      handler: handleUpdate,
     },
     {
       label: 'delete',
@@ -55,16 +49,15 @@
   ];
 
   async function fetch() {
-    treeData.value = (await getDirs()) as unknown as TreeItem[];
+    treeData.value = await getDirs();
   }
 
   async function rightClick(node: any, event: any) {
     console.info(event);
-    const data = node.dataRef;
-    rightClickItem = data;
-    if (data.path === '') {
-      return [menuList[0]];
-    }
+    rightClickItem = node.dataRef;
+    // if (data.path === '') {
+    //   return [menuList[0]];
+    // }
     return menuList;
   }
 
@@ -79,27 +72,42 @@
     // rightClickItem = undefined;
     openModal(true, {
       isUpdate: false,
-      parentPath: rightClickItem.path,
+      record: {
+        pid: rightClickItem.key,
+      },
     });
   }
+
+  function handleUpdate() {
+    openModal(true, {
+      // todo how to get pid
+      isUpdate: true,
+      record: {
+        id: rightClickItem.key,
+        name: getTitle(treeData.value, rightClickItem.key),
+        pid: rightClickItem.pkey,
+      },
+    });
+  }
+
   async function handleDelete() {
     if (rightClickItem) {
-      let fileName = getTitle(treeData.value, rightClickItem.path);
-      if (fileName !== '') {
-        await deleteFile(workspace, fileName, rightClickItem.parentPath);
+      let id = rightClickItem.key;
+      if (id !== '') {
+        await deleteFile(id);
         await fetch();
       }
     }
     rightClickItem = undefined;
   }
 
-  function getTitle(treeItems: TreeItem[], path: string) {
+  function getTitle(treeItems: TreeItem[], key: string) {
     for (let i = 0; i < treeItems.length; i++) {
       let treeItem = treeItems[i];
-      if (treeItem.path == path) {
-        return treeItem.name;
+      if (treeItem.key === key) {
+        return treeItem.title;
       } else if (treeItem.children && treeItem.children.length > 0) {
-        let title = getTitle(treeItem.children, path);
+        let title = getTitle(treeItem.children, key);
         if (title !== '') {
           return title;
         }

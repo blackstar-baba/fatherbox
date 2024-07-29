@@ -3,22 +3,34 @@
 
 use std::fs::File;
 use std::os::unix::fs::MetadataExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::time::SystemTime;
 use std::{env, fs};
 
 use clap::Parser;
 use config::FileFormat;
-use log::info;
+use log::{error, info};
+use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, Schema};
 use tauri::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
 use tauri::api::path::home_dir;
 
-use app::api::Api;
+use app::api::{file, Api};
 use app::{
-    AppResponse, Config, FileEntry, FileRequest, ModelData, CONFIG_PATH, DEFAULT_WORKSPACE,
-    DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH, WORKSPACE_PATH,
+    entity, AppResponse, AppState, Config, FileEntry, FileRequest, ModelData, CONFIG_PATH,
+    DEFAULT_WORKSPACE, DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH,
+    WORKSPACE_PATH,
 };
+use app::service::workspace_service::WorkspaceService;
+use crate::db_utils::init_connection;
+use crate::file_command::{create_workspace_file_cmd, update_workspace_file_cmd, create_workspace_file_inner, delete_workspace_file_cmd, list_workspace_dirs_cmd, list_workspace_files_cmd};
+use crate::model_command::ollama_get_models_cmd;
+use crate::workspace_command::{create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner, list_workspaces_cmd};
+
+mod db_utils;
+mod file_command;
+mod model_command;
+mod workspace_command;
 
 static DEFAULT_CONFIG: &str = include_str!("../config.toml");
 
@@ -49,337 +61,8 @@ fn my_custom_command() -> String {
     return String::from("Hello, world!");
 }
 
-#[tauri::command]
-fn create_workspace(workspace: String) -> AppResponse<String> {
-    let home = home_dir().unwrap();
-    let base_path = Path::join(home.as_path(), ROOT_PATH)
-        .join(WORKSPACE_PATH)
-        .join(workspace);
-    if !base_path.exists() {
-        fs::create_dir_all(base_path.clone()).unwrap();
-    }
-    AppResponse {
-        code: RESPONSE_CODE_SUCCESS,
-        r#type: "".to_string(),
-        message: "".to_string(),
-        result: base_path.to_string_lossy().to_string(),
-    }
-}
-
-#[tauri::command]
-fn list_workspaces() -> AppResponse<Vec<String>> {
-    let home = home_dir().unwrap();
-    let base_path = Path::join(home.as_path(), ROOT_PATH).join(WORKSPACE_PATH);
-    let mut result = vec![];
-    if let Ok(entries) = fs::read_dir(base_path) {
-        for entry in entries {
-            result.push(entry.unwrap().file_name().to_string_lossy().to_string())
-        }
-    }
-    AppResponse {
-        code: RESPONSE_CODE_SUCCESS,
-        r#type: "".to_string(),
-        message: "".to_string(),
-        result,
-    }
-}
-
-#[tauri::command]
-fn delete_workspace(workspace: String) -> AppResponse<String> {
-    let home = home_dir().unwrap();
-    let base_path = Path::join(home.as_path(), ROOT_PATH)
-        .join(WORKSPACE_PATH)
-        .join(workspace.to_string());
-    if base_path.exists() {
-        fs::remove_dir(base_path).unwrap();
-    }
-    AppResponse {
-        code: RESPONSE_CODE_SUCCESS,
-        r#type: "".to_string(),
-        message: "".to_string(),
-        result: "".to_string(),
-    }
-}
-
-#[tauri::command]
-fn list_workspace_files(request: FileRequest) -> AppResponse<Vec<FileEntry>> {
-    let mut response = AppResponse {
-        code: RESPONSE_CODE_ERROR,
-        r#type: "".to_string(),
-        message: "".to_string(),
-        result: vec![],
-    };
-    let home = home_dir().unwrap();
-    let base_path = Path::join(home.as_path(), ROOT_PATH)
-        .join(WORKSPACE_PATH)
-        .join(request.workspace.clone());
-    response.code = RESPONSE_CODE_SUCCESS;
-    response.result = get_file_entry(
-        base_path.to_str().unwrap(),
-        request.path.as_str(),
-        request.recursive,
-        request.r#type,
-        request.name,
-    );
-    return response;
-}
-
-#[tauri::command]
-fn list_workspace_dirs(workspace: String) -> AppResponse<Vec<FileEntry>> {
-    const DIR: &str = "dir";
-    return match home_dir() {
-        None => {
-            return AppResponse {
-                code: RESPONSE_CODE_ERROR,
-                r#type: "".to_string(),
-                message: "".to_string(),
-                result: vec![],
-            }
-        }
-        Some(home) => {
-            let base_path = Path::join(home.as_path(), ROOT_PATH)
-                .join(WORKSPACE_PATH)
-                .join(workspace.clone());
-            let root_metadata = fs::metadata(base_path.clone()).unwrap();
-
-            let root = vec![FileEntry {
-                name: "root".to_string(),
-                r#type: DIR.to_string(),
-                path: "".to_string(),
-                parent_path: "".to_string(),
-                children: get_file_entry(
-                    base_path.to_str().unwrap(),
-                    "",
-                    true,
-                    Some(DIR.to_string()),
-                    None,
-                ),
-                size: root_metadata.size(),
-                create_time: root_metadata
-                    .created()
-                    .unwrap()
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis(),
-                modify_time: root_metadata
-                    .modified()
-                    .unwrap()
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis(),
-            }];
-            AppResponse {
-                code: RESPONSE_CODE_SUCCESS,
-                r#type: "".to_string(),
-                message: "".to_string(),
-                result: root,
-            }
-        }
-    };
-}
-
-#[tauri::command]
-fn create_workspace_file(
-    workspace: String,
-    file_name: String,
-    file_type: String,
-    parent_path: String,
-) -> AppResponse<String> {
-    match home_dir() {
-        None => AppResponse {
-            code: RESPONSE_CODE_ERROR,
-            r#type: "".to_string(),
-            message: "".to_string(),
-            result: "".to_string(),
-        },
-        Some(home) => {
-            let base_path = Path::join(home.as_path(), ROOT_PATH)
-                .join(WORKSPACE_PATH)
-                .join(workspace)
-                .join(parent_path);
-            if file_type == "dir" {
-                fs::create_dir_all(base_path.join(file_name.clone())).unwrap();
-            } else {
-                File::create(base_path.join(file_name.clone())).unwrap();
-            }
-            AppResponse {
-                code: RESPONSE_CODE_SUCCESS,
-                r#type: "".to_string(),
-                message: "".to_string(),
-                result: file_name,
-            }
-        }
-    }
-}
-
-#[tauri::command]
-fn delete_workspace_file(
-    workspace: String,
-    file_name: String,
-    parent_path: String,
-) -> AppResponse<String> {
-    match home_dir() {
-        None => AppResponse {
-            code: RESPONSE_CODE_ERROR,
-            r#type: "".to_string(),
-            message: "".to_string(),
-            result: "".to_string(),
-        },
-        Some(home) => {
-            let base_path = Path::join(home.as_path(), ROOT_PATH)
-                .join(WORKSPACE_PATH)
-                .join(workspace)
-                .join(parent_path)
-                .join(file_name.clone());
-            match fs::metadata(base_path.clone()) {
-                Ok(metadata) => {
-                    if metadata.is_dir() {
-                        // remove all include file in dir
-                        fs::remove_dir_all(base_path).unwrap()
-                    } else {
-                        fs::remove_file(base_path).unwrap()
-                    }
-                    AppResponse {
-                        code: RESPONSE_CODE_SUCCESS,
-                        r#type: "".to_string(),
-                        message: "".to_string(),
-                        result: file_name,
-                    }
-                }
-                Err(e) => AppResponse {
-                    code: RESPONSE_CODE_ERROR,
-                    r#type: "".to_string(),
-                    message: e.to_string(),
-                    result: "".to_string(),
-                },
-            }
-        }
-    }
-}
-
-fn get_file_entry(
-    base_path: &str,
-    path: &str,
-    recursive: bool,
-    option_type_filter: Option<String>,
-    option_name_filter: Option<String>,
-) -> Vec<FileEntry> {
-    let mut file_entrys = vec![];
-    let full_path = Path::new(base_path).join(path);
-    if let Ok(entries) = fs::read_dir(full_path) {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let mut file_type = "";
-                let mut create_epoch_ms = 0;
-                let mut modified_epoch_ms = 0;
-                let mut size = 0;
-                if let Ok(metadata) = entry.metadata() {
-                    if metadata.is_file() {
-                        file_type = FILE_TYPE;
-                    } else if metadata.is_dir() {
-                        file_type = DIR_TYPE
-                    } else {
-                        // ignore unknown file
-                        break;
-                    }
-                    create_epoch_ms = metadata
-                        .created()
-                        .unwrap()
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap()
-                        .as_millis();
-
-                    modified_epoch_ms = metadata
-                        .modified()
-                        .unwrap()
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap()
-                        .as_millis();
-
-                    size = metadata.size();
-                }
-                // let entry_path = entry.path();
-                // if file_type == "file" {
-                //     file_type = entry_path.extension().unwrap().to_str().unwrap()
-                // }
-                let abs_path = Path::new(path).join(entry.file_name());
-
-                let mut children = vec![];
-                if recursive {
-                    children = get_file_entry(
-                        base_path,
-                        abs_path.to_str().unwrap(),
-                        recursive.clone(),
-                        option_type_filter.clone(),
-                        option_name_filter.clone(),
-                    )
-                }
-
-                let file_name = entry.file_name().clone().to_string_lossy().to_string();
-                let file_entry = FileEntry {
-                    name: file_name.clone(),
-                    path: abs_path.to_string_lossy().to_string(),
-                    parent_path: path.to_string(),
-                    r#type: file_type.to_string(),
-                    size,
-                    create_time: create_epoch_ms,
-                    modify_time: modified_epoch_ms,
-                    children,
-                };
-                if(option_name_filter.is_none()) {
-                    file_entrys.push(file_entry)
-                } else {
-                    let name_filter = option_name_filter.clone().unwrap();
-                    if file_name.find(name_filter.as_str()).is_some(){
-                        file_entrys.push(file_entry)
-                    }
-                }
-            }
-        }
-        // filter type
-        if option_type_filter.is_some() {
-            let type_filter = option_type_filter.unwrap();
-            if file_entrys.len() != 0 {
-                let mut filtered_file_entrys = vec![];
-                for entry in file_entrys {
-                    if entry.r#type == type_filter {
-                        filtered_file_entrys.push(entry.clone());
-                    }
-                }
-                file_entrys = filtered_file_entrys;
-            }
-        }
-    }
-    return file_entrys;
-}
-
-#[tauri::command]
-async fn ollama_get_models() -> AppResponse<ModelData> {
-    let client = ClientBuilder::new().build().unwrap();
-    let request = HttpRequestBuilder::new("GET", "http://localhost:11434/api/tags")
-        .unwrap()
-        .response_type(ResponseType::Json);
-    if let Ok(response) = client.send(request).await {
-        let data = response.read().await.unwrap().data;
-        // println!("{}",data);
-        let model_data: ModelData = serde_json::from_value(data).unwrap();
-        return AppResponse {
-            code: RESPONSE_CODE_SUCCESS,
-            r#type: "".to_string(),
-            message: "".to_string(),
-            result: model_data,
-        };
-    }
-    let model_data = ModelData { models: vec![] };
-    return AppResponse {
-        code: RESPONSE_CODE_SUCCESS,
-        r#type: "".to_string(),
-        message: "".to_string(),
-        result: model_data,
-    };
-}
-
-fn main() {
+#[tokio::main]
+async fn main() {
     // show banner
     banner();
 
@@ -404,27 +87,31 @@ fn main() {
         .init();
 
     // init default path
-    match home_dir() {
-        None => {
-            println!("Home directory not found.");
-            exit(1)
-        }
-        Some(home) => {
-            println!("Home directory path: {}", home.display());
-            let root = Path::join(home.as_path(), ROOT_PATH);
-            if !root.exists() {
-                fs::create_dir(root.as_path()).unwrap();
-                // create config
-                fs::create_dir(root.join(CONFIG_PATH)).unwrap();
-                // create workspace
-                fs::create_dir_all(root.join(WORKSPACE_PATH).join(DEFAULT_WORKSPACE)).unwrap();
-            }
-        }
+    if(home_dir().is_none()) {
+        error!("Home directory not found.");
+        exit(1)
     }
-
+    let home = home_dir().unwrap();
+    info!("Home directory path: {}", home.display());
+    let root_path = &home.join(ROOT_PATH);
+    if !root_path.exists() {
+        info!("Create root path: {}", root_path.display());
+        fs::create_dir(root_path.as_path()).unwrap();
+    }
+    let config_path = &root_path.join(CONFIG_PATH);
+    if !config_path.exists() {
+        // create config
+        info!("Create config path: {}", config_path.display());
+        fs::create_dir(&root_path.join(CONFIG_PATH)).unwrap();
+    }
+    let workspace_path = &root_path.join(WORKSPACE_PATH);
+    if !workspace_path.exists() {
+        // create workspace
+        info!("Create workspace path: {}", config_path.display());
+        fs::create_dir(&root_path.join(WORKSPACE_PATH)).unwrap();
+    }
     // process config
     let mut config_builder = config::Config::builder();
-
     config_builder = match &args.config {
         Some(config) => config_builder.add_source(config::File::with_name(config)),
         None => {
@@ -433,6 +120,36 @@ fn main() {
         }
     };
     let config: Config = config_builder.build().unwrap().try_deserialize().unwrap();
+
+    // process db
+    let db_file_path = home_dir().unwrap().join(ROOT_PATH).join("data.sqlite");
+    info!("begin init db use file {:?}", db_file_path);
+    let db_exist = db_file_path.exists();
+    let db = match init_connection(&db_file_path).await {
+        Ok(conn) => conn,
+        Err(err) => {
+            info!("init connection catch err: {:?}", err);
+            exit(1)
+        }
+    };
+    if !db_exist {
+        info!("begin init tables in db");
+        let builder = db.get_database_backend();
+        let schema = Schema::new(builder);
+        db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::Workspace)))
+            .await
+            .unwrap();
+        db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::File)))
+            .await
+            .unwrap();
+    }
+    let option_workspace_model = WorkspaceService::get_workspace_by_name(&db, DEFAULT_WORKSPACE).await.unwrap();
+    if option_workspace_model.is_none() {
+        // create default workspace=
+        let workspace = create_workspace_inner(&db, DEFAULT_WORKSPACE.to_string()).await.expect("create default workspace failed").result;
+        // create default workspace dir
+        let _ = create_workspace_file_inner(&db, workspace_path, workspace.id, "".to_string(), DIR_TYPE.to_string(), DEFAULT_WORKSPACE.to_string()).await.expect("create default workspace dir failed");
+    }
 
     tauri::Builder::default()
         .setup(|_app| {
@@ -443,17 +160,23 @@ fn main() {
             // Ok(api_handle.join().unwrap())
             Ok(())
         })
+        .manage(AppState {
+            conn: db,
+            root_path: root_path.to_owned(),
+            workspace_path: workspace_path.to_owned()
+        })
         // why sync fn must after sync fc
         .invoke_handler(tauri::generate_handler![
             my_custom_command,
-            list_workspaces,
-            create_workspace,
-            delete_workspace,
-            list_workspace_dirs,
-            list_workspace_files,
-            create_workspace_file,
-            delete_workspace_file,
-            ollama_get_models
+            list_workspaces_cmd,
+            create_workspace_cmd,
+            delete_workspace_cmd,
+            list_workspace_dirs_cmd,
+            list_workspace_files_cmd,
+            create_workspace_file_cmd,
+            update_workspace_file_cmd,
+            delete_workspace_file_cmd,
+            ollama_get_models_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -461,14 +184,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use sea_orm::EntityTrait;
     use serde::{Deserialize, Serialize};
-
-    use app::{FileRequest, FILE_TYPE};
-
-    use crate::{
-        create_workspace, create_workspace_file, delete_workspace, delete_workspace_file,
-        list_workspace_files, list_workspaces,
-    };
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct ModelDataNew {
@@ -479,93 +196,6 @@ mod tests {
     fn it_works() {
         // let results = get_images();
         // assert_eq!(2, results.len())
-        assert_eq!(true, "abc.txt".find("a").is_some())
-    }
-
-    #[test] //由此判断这是一个测试函数
-    fn test_list_files() {
-        let workspace = "test";
-
-        create_workspace(workspace.to_string());
-
-        let workspace_response = list_workspaces();
-        for name in workspace_response.result {
-            println!("workspace:{:?}", name)
-        }
-
-        // todo create workspace & files first
-        create_workspace_file(
-            workspace.to_string(),
-            "file1.md".to_string(),
-            "file".to_string(),
-            "".to_string(),
-        );
-        create_workspace_file(
-            workspace.to_string(),
-            "dir1".to_string(),
-            "dir".to_string(),
-            "".to_string(),
-        );
-        create_workspace_file(
-            workspace.to_string(),
-            "a.svg".to_string(),
-            "file".to_string(),
-            "dir1".to_string(),
-        );
-        create_workspace_file(
-            workspace.to_string(),
-            "b.png".to_string(),
-            "file".to_string(),
-            "dir1".to_string(),
-        );
-
-        let request1 = FileRequest {
-            workspace: workspace.to_string(),
-            path: "".to_string(),
-            name: None,
-            r#type: None,
-            recursive: false,
-        };
-
-        let response = list_workspace_files(request1);
-        for file_entry in response.result {
-            println!("r1:{:?}", file_entry)
-        }
-
-        let request2 = FileRequest {
-            workspace: workspace.to_string(),
-            path: "".to_string(),
-            name: None,
-            r#type: None,
-            recursive: true,
-        };
-
-        let response = list_workspace_files(request2);
-        for file_entry in response.result {
-            println!("r2:{:?}", file_entry)
-        }
-
-        let request3 = FileRequest {
-            workspace: workspace.to_string(),
-            path: "".to_string(),
-            name: None,
-            r#type: Option::Some(FILE_TYPE.to_string()),
-            recursive: true,
-        };
-
-        let response = list_workspace_files(request3);
-        for file_entry in response.result {
-            println!("r3:{:?}", file_entry)
-        }
-
-        delete_workspace_file(
-            workspace.to_string(),
-            "file1.md".to_string(),
-            "".to_string(),
-        );
-        delete_workspace_file(workspace.to_string(), "dir1".to_string(), "".to_string());
-
-        let response1 = delete_workspace(workspace.to_string());
-        println!("{}", response1.result);
+        assert_eq!(true, "abc.txt".find("a").is_some());
     }
 }

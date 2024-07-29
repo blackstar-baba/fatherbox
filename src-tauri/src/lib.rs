@@ -1,7 +1,10 @@
 pub mod api;
+pub mod entity;
+pub mod service;
 
 use std::net::SocketAddr;
-
+use std::path::PathBuf;
+use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 use tauri::api::path::home_dir;
 
@@ -64,12 +67,20 @@ pub struct FileEntry {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct FileRequest {
-    pub workspace: String,
-    pub path: String,
+    pub workspace_id: String,
+    pub parent_id: String,
     pub name: Option<String>,
     pub r#type: Option<String>,
     pub recursive: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct AppState {
+    pub conn: DatabaseConnection,
+    pub root_path: PathBuf,
+    pub workspace_path: PathBuf,
 }
 
 pub fn get_work_space_path(work_space_name: &str) -> String {

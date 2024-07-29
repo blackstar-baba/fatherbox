@@ -16,6 +16,9 @@ export const API_ADDRESS = 'API_ADDRESS__';
 // lock info
 export const LOCK_INFO_KEY = 'LOCK__INFO__KEY__';
 
+// workspace info
+export const WORKSPACE_INFO_KEY = 'WORKSPACE__INFO__KEY__';
+
 export const MULTIPLE_TABS_KEY = 'MULTIPLE_TABS__KEY__';
 
 export const APP_DARK_MODE_KEY = '__APP__DARK__MODE__';

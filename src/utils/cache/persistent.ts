@@ -1,4 +1,4 @@
-import type { LockInfo, UserInfo, TableSetting } from '#/store';
+import type { LockInfo, WorkspaceInfo, UserInfo, TableSetting } from '#/store';
 import type { ProjectConfig } from '#/config';
 import type { RouteLocationNormalized } from 'vue-router';
 
@@ -9,6 +9,7 @@ import {
   USER_INFO_KEY,
   ROLES_KEY,
   LOCK_INFO_KEY,
+  WORKSPACE_INFO_KEY,
   PROJ_CFG_KEY,
   APP_LOCAL_CACHE_KEY,
   APP_SESSION_CACHE_KEY,
@@ -24,6 +25,7 @@ interface BasicStore {
   [USER_INFO_KEY]: UserInfo;
   [ROLES_KEY]: string[];
   [LOCK_INFO_KEY]: LockInfo;
+  [WORKSPACE_INFO_KEY]: WorkspaceInfo;
   [PROJ_CFG_KEY]: ProjectConfig;
   [MULTIPLE_TABS_KEY]: RouteLocationNormalized[];
   [TABLE_SETTING_KEY]: Partial<TableSetting>;
