@@ -1,17 +1,16 @@
 use std::env::temp_dir;
-use std::{fs, path};
 use std::fs::File;
 use std::path::PathBuf;
+use std::{fs, path};
 
-use sea_orm::{Database, DatabaseConnection};
 use sea_orm::entity::prelude::*;
+use sea_orm::{Database, DatabaseConnection};
 
 pub async fn init_connection(file_path: &PathBuf) -> Result<DatabaseConnection, DbErr> {
     if !exist_database_file(file_path) {
         let parent_path = file_path.parent().unwrap();
         if !parent_path.exists() {
             fs::create_dir_all(parent_path).unwrap();
-
         }
         if !file_path.exists() {
             File::create(file_path.clone()).unwrap();
@@ -36,7 +35,10 @@ pub fn exist_database_file(file_path: &PathBuf) -> bool {
 #[cfg(test)]
 mod tests {
     use std::env::temp_dir;
-    use crate::db_utils::{close_connection, drop_database_file, exist_database_file, init_connection};
+
+    use crate::db_utils::{
+        close_connection, drop_database_file, exist_database_file, init_connection,
+    };
 
     #[tokio::test]
     async fn database_test() {
@@ -49,16 +51,16 @@ mod tests {
         }
         let connection = init_connection(&file_path).await;
         match connection {
-            Ok( conn) => {
+            Ok(conn) => {
                 println!("connect success: {:?}", conn);
-                    match conn.ping().await {
-                        Ok(_) => {
-                            println!("ping success")
-                        }
-                        Err(err) => {
-                            panic!("{}", err)
-                        }
+                match conn.ping().await {
+                    Ok(_) => {
+                        println!("ping success")
                     }
+                    Err(err) => {
+                        panic!("{}", err)
+                    }
+                }
                 close_connection(conn).await.unwrap();
                 println!("close success");
                 drop_database_file(&file_path).unwrap();
@@ -71,6 +73,3 @@ mod tests {
         }
     }
 }
-
-
-

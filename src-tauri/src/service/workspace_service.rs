@@ -1,25 +1,49 @@
 // src/service.rs
-use sea_orm::{DatabaseConnection, EntityTrait, ActiveModelTrait, Set, ModelTrait, ColumnTrait, QueryFilter, IntoActiveModel};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
+    QueryFilter,
+};
+
 use crate::entity::workspace;
-use crate::entity::workspace::{ActiveModel as WorkspaceActiveModel, Model as WorkspaceModel, Entity as Workspace};
+use crate::entity::workspace::{
+    ActiveModel as WorkspaceActiveModel, Entity as Workspace, Model as WorkspaceModel,
+};
 
 pub struct WorkspaceService;
 
 impl WorkspaceService {
-    pub async fn create_workspace(db: &DatabaseConnection, workspace: WorkspaceActiveModel) -> Result<WorkspaceModel, sea_orm::DbErr> {
+    pub async fn create_workspace(
+        db: &DatabaseConnection,
+        workspace: WorkspaceActiveModel,
+    ) -> Result<WorkspaceModel, sea_orm::DbErr> {
         workspace.insert(db).await
     }
 
-    pub async fn get_workspace(db: &DatabaseConnection, id: &str) -> Result<Option<WorkspaceModel>, sea_orm::DbErr> {
+    pub async fn get_workspace(
+        db: &DatabaseConnection,
+        id: &str,
+    ) -> Result<Option<WorkspaceModel>, sea_orm::DbErr> {
         Workspace::find_by_id(id.to_string()).one(db).await
     }
 
-    pub async fn get_workspace_by_name(db: &DatabaseConnection, name: &str) -> Result<Option<WorkspaceModel>, sea_orm::DbErr> {
-        Workspace::find().filter(workspace::Column::Name.eq(name)).one(db).await
+    pub async fn get_workspace_by_name(
+        db: &DatabaseConnection,
+        name: &str,
+    ) -> Result<Option<WorkspaceModel>, sea_orm::DbErr> {
+        Workspace::find()
+            .filter(workspace::Column::Name.eq(name))
+            .one(db)
+            .await
     }
 
-    pub async fn update_workspace(db: &DatabaseConnection, workspace: WorkspaceActiveModel) -> Result<Option<WorkspaceModel>, sea_orm::DbErr> {
-        if let Some(existing_workspace) = Workspace::find_by_id(workspace.id.clone().unwrap()).one(db).await? {
+    pub async fn update_workspace(
+        db: &DatabaseConnection,
+        workspace: WorkspaceActiveModel,
+    ) -> Result<Option<WorkspaceModel>, sea_orm::DbErr> {
+        if let Some(existing_workspace) = Workspace::find_by_id(workspace.id.clone().unwrap())
+            .one(db)
+            .await?
+        {
             let mut active_model = existing_workspace.into_active_model();
 
             active_model.name = workspace.name.clone();
@@ -41,14 +65,23 @@ impl WorkspaceService {
         Ok(())
     }
 
-    pub async fn delete_workspace_by_name(db: &DatabaseConnection, name: &str) -> Result<(), sea_orm::DbErr> {
-        if let Some(workspace) = Workspace::find().filter(workspace::Column::Name.eq(name)).one(db).await? {
+    pub async fn delete_workspace_by_name(
+        db: &DatabaseConnection,
+        name: &str,
+    ) -> Result<(), sea_orm::DbErr> {
+        if let Some(workspace) = Workspace::find()
+            .filter(workspace::Column::Name.eq(name))
+            .one(db)
+            .await?
+        {
             workspace.delete(db).await?;
         }
         Ok(())
     }
 
-    pub async fn list_workspaces(db: &DatabaseConnection) -> Result<Vec<WorkspaceModel>, sea_orm::DbErr> {
+    pub async fn list_workspaces(
+        db: &DatabaseConnection,
+    ) -> Result<Vec<WorkspaceModel>, sea_orm::DbErr> {
         Workspace::find().all(db).await
     }
 }

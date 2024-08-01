@@ -3,7 +3,7 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel,Serialize, Deserialize, Eq)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize, Eq)]
 #[sea_orm(table_name = "workspace")]
 #[serde(rename_all = "camelCase")]
 pub struct Model {

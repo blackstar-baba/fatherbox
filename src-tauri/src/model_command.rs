@@ -1,5 +1,5 @@
-use tauri::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
 use app::{AppResponse, ModelData, RESPONSE_CODE_SUCCESS};
+use tauri::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
 
 #[tauri::command]
 pub async fn ollama_get_models_cmd() -> AppResponse<ModelData> {

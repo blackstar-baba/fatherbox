@@ -1,10 +1,10 @@
 use std::io;
 
-use axum::{BoxError, Json};
 use axum::body::{Body, Bytes};
 use axum::extract::{Multipart, Path};
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{Html, IntoResponse};
+use axum::{BoxError, Json};
 use futures::{Stream, TryStreamExt};
 use tokio::fs::File;
 use tokio::io::BufWriter;
@@ -62,9 +62,9 @@ pub async fn upload_file(mut multipart: Multipart) -> Json<AppResponse<Vec<Strin
 
 // Save a `Stream` to a file
 async fn stream_to_file<S, E>(path: &str, stream: S) -> Result<(), (StatusCode, String)>
-    where
-        S: Stream<Item = Result<Bytes, E>>,
-        E: Into<BoxError>,
+where
+    S: Stream<Item = Result<Bytes, E>>,
+    E: Into<BoxError>,
 {
     if !path_is_valid(path) {
         return Err((StatusCode::BAD_REQUEST, "Invalid path".to_owned()));
@@ -91,8 +91,8 @@ async fn stream_to_file<S, E>(path: &str, stream: S) -> Result<(), (StatusCode, 
 
         Ok::<_, io::Error>(())
     }
-        .await
-        .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()))
+    .await
+    .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()))
 }
 
 // to prevent directory traversal attacks we ensure the path consists of exactly one normal
@@ -110,18 +110,26 @@ fn path_is_valid(path: &str) -> bool {
     components.count() == 1
 }
 
-pub async fn download_file(Path(fileName): Path<String>) -> impl IntoResponse  {
-
-    let file = File::open("/Users/blackstar/.fatherbox/workspace/logo2_no_name.png").await.unwrap();
+pub async fn download_file(Path(fileName): Path<String>) -> impl IntoResponse {
+    let file = File::open("/Users/blackstar/.fatherbox/workspace/logo2_no_name.png")
+        .await
+        .unwrap();
 
     // convert the `AsyncRead` into a `Stream`
     let stream = ReaderStream::new(file);
     // convert the `Stream` into an `axum::body::HttpBody`
 
     let mut headers = HeaderMap::new();
-    headers.append(header::CONTENT_TYPE,"application/octet-stream".parse().unwrap());
-    headers.append(header::CONTENT_DISPOSITION, (&format!("attachment; filename={:?}", "logo2_no_name.png")).parse().unwrap());
+    headers.append(
+        header::CONTENT_TYPE,
+        "application/octet-stream".parse().unwrap(),
+    );
+    headers.append(
+        header::CONTENT_DISPOSITION,
+        (&format!("attachment; filename={:?}", "logo2_no_name.png"))
+            .parse()
+            .unwrap(),
+    );
 
     (headers, Body::from_stream(stream))
-
 }

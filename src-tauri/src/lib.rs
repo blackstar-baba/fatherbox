@@ -2,10 +2,10 @@ pub mod api;
 pub mod entity;
 pub mod service;
 
-use std::net::SocketAddr;
-use std::path::PathBuf;
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
+use std::path::PathBuf;
 use tauri::api::path::home_dir;
 
 pub const ROOT_PATH: &str = ".fatherbox";

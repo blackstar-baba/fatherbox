@@ -1,10 +1,11 @@
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait,
+    IntoActiveModel, ModelTrait, QueryFilter, Statement, Value,
+};
+
 use crate::entity::file::{
     ActiveModel as FileActiveModel, Column, DataTransModel as FileDataTransModel, Entity as File,
     Model as FileModel,
-};
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait,
-    IntoActiveModel, ModelTrait, QueryFilter, Set, Statement, Value,
 };
 
 pub struct FileService;

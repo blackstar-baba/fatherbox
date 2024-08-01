@@ -1,5 +1,6 @@
 use axum::Json;
 use serde::{Deserialize, Serialize};
+
 use crate::{AppResponse, RESPONSE_CODE_SUCCESS};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

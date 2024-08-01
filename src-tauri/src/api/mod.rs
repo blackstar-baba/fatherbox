@@ -4,12 +4,11 @@ pub mod file;
 use axum::http::Method;
 use axum::routing::{get, post};
 use axum::Router;
+use log::info;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
-
-use log::info;
 use tokio::runtime;
 use tower_http::cors::CorsLayer;
 
