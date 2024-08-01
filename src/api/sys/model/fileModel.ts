@@ -14,14 +14,13 @@ export interface FileEntry {
 export interface SimpleFileEntry {
   name: string;
   type: string;
-  path: string;
+  id: string;
   size: number;
   createTime: number;
   modifyTime: number;
-  parentPath: string;
+  pid: string;
 }
 
 export type FileParams = BasicPageParams & {
-  path?: string;
-  name?: string;
+  pid: string;
 };

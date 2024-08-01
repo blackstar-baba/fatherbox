@@ -7,14 +7,14 @@
   import { ref, computed, unref } from 'vue';
   import { BasicModal, useModalInner } from '@/components/Modal';
   import { BasicForm, useForm } from '@/components/Form';
-  import { getDirs, createFile, formSchema, workspace } from '@/views/file-manager/file.data';
+  import { getDirs, createFile, formSchema } from '@/views/file-manager/file.data';
 
   defineOptions({ name: 'FileModal' });
 
   const emit = defineEmits(['success', 'register']);
 
   const isUpdate = ref(true);
-  // const rowId = ref('');
+  const rowId = ref('');
 
   const [registerForm, { setFieldsValue, updateSchema, resetFields, validate }] = useForm({
     labelWidth: 100,
@@ -32,20 +32,17 @@
     isUpdate.value = !!data?.isUpdate;
 
     if (unref(isUpdate)) {
-      // rowId.value = data.record.id;
-      setFieldsValue({
-        ...data.record,
-      });
+      rowId.value = data.record.id;
     }
+
+    await setFieldsValue({
+      ...data.record,
+    });
 
     const treeData = await getDirs();
     updateSchema([
-      // {
-      //   field: 'pwd',
-      //   show: !unref(isUpdate),
-      // },
       {
-        field: 'parentPath',
+        field: 'pid',
         componentProps: { treeData },
       },
     ]);
@@ -58,8 +55,7 @@
       const values = await validate();
       setModalProps({ confirmLoading: true });
       console.info(values);
-      // todo create dir
-      await createFile(workspace, values.name, values.type, values.parentPath);
+      await createFile(values.pid, values.name, values.content, values.file);
       closeModal();
       emit('success', { isUpdate: unref(isUpdate), values: { ...values } });
     } finally {

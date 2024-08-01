@@ -9,7 +9,7 @@
   import { BasicForm, useForm } from '@/components/Form';
   import {
     getDirs,
-    createFile,
+    createDir,
     updateFile,
     dirFormSchema,
     DIR_TYPE,
@@ -67,9 +67,8 @@
       if (unref(isUpdate)) {
         await updateFile(rowId.value, values.pid, DIR_TYPE, values.name);
       } else {
-        await createFile(values.pid, DIR_TYPE, values.name);
+        await createDir(values.pid, DIR_TYPE, values.name);
       }
-
       closeModal();
       emit('success', { isUpdate: unref(isUpdate), values: { ...values } });
     } finally {

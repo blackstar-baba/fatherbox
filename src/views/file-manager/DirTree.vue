@@ -50,6 +50,9 @@
 
   async function fetch() {
     treeData.value = await getDirs();
+    if (treeData.value.length > 0) {
+      handleSelect([treeData.value[0].key]);
+    }
   }
 
   async function rightClick(node: any, event: any) {
@@ -80,7 +83,6 @@
 
   function handleUpdate() {
     openModal(true, {
-      // todo how to get pid
       isUpdate: true,
       record: {
         id: rightClickItem.key,

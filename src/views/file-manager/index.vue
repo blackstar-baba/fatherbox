@@ -52,7 +52,7 @@
   const [registerTable, { reload, getSearchInfo }] = useTable({
     title: 'Files',
     api: getFiles,
-    // rowKey: 'id',
+    rowKey: 'id',
     columns,
     formConfig: {
       labelWidth: 50,
@@ -78,14 +78,17 @@
   function handleCreate() {
     openModal(true, {
       isUpdate: false,
+      record: {
+        pid: searchInfo.pid,
+      },
     });
   }
 
   function handleEdit(record: Recordable) {
     console.log(record);
     openModal(true, {
-      record,
       isUpdate: true,
+      record: record,
     });
   }
 
@@ -98,6 +101,7 @@
   }
 
   function handleSuccess({ isUpdate, _values }) {
+    // todo
     if (isUpdate) {
       // 演示不刷新表格直接更新内部数据。
       // 注意：updateTableDataRecord要求表格的rowKey属性为string并且存在于每一行的record的keys中
@@ -108,8 +112,8 @@
     }
   }
 
-  async function handleSelect(dirPath = '') {
-    searchInfo.path = dirPath;
+  async function handleSelect(pid = '') {
+    searchInfo.pid = pid;
     await reload();
   }
 </script>

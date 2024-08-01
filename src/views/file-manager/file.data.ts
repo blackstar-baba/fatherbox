@@ -90,40 +90,23 @@ export const dirFormSchema: FormSchema[] = [
 
 export const formSchema: FormSchema[] = [
   {
-    field: 'type',
-    label: 'type',
-    component: 'RadioButtonGroup',
-    defaultValue: 'dir',
-    componentProps: {
-      options: [
-        { label: 'dir', value: 'dir' },
-        { label: 'file', value: 'file' },
-      ],
-      onChange: (e: any) => {
-        console.log(e);
-      },
-    },
-    colProps: { lg: 24, md: 24 },
-  },
-  {
     field: 'name',
     label: 'name',
     component: 'Input',
     required: true,
   },
-
   {
-    field: 'parentPath',
-    label: 'parentPath',
+    field: 'pid',
+    label: 'directory',
     component: 'TreeSelect',
-    defaultValue: '',
     componentProps: {
       fieldNames: {
-        label: 'name',
-        value: 'path',
+        label: 'title',
+        value: 'key',
       },
       getPopupContainer: () => document.body,
     },
+    required: true,
   },
   {
     field: 'inputOrUpload',
@@ -142,14 +125,13 @@ export const formSchema: FormSchema[] = [
     // dynamicDisabled: ({ values }) => {
     //   return !!values.uploadOrEdit;
     // },
-    ifShow: ({ values }) => values.type == 'file' && !values.path,
+    ifShow: ({ values }) => !values.id,
   },
   {
     field: 'content',
     label: 'content',
     component: 'InputTextArea',
-    ifShow: ({ values }) =>
-      values.type == 'file' && !values.path && values.inputOrUpload === 'input',
+    ifShow: ({ values }) => values.inputOrUpload === 'input',
   },
   {
     field: 'file',
@@ -157,19 +139,8 @@ export const formSchema: FormSchema[] = [
     component: 'LocalUpload',
     componentProps: {},
     colProps: { lg: 24, md: 24 },
-    ifShow: ({ values }) =>
-      values.type == 'file' && !values.path && values.inputOrUpload === 'upload',
+    ifShow: ({ values }) => values.inputOrUpload === 'upload',
   },
-  {
-    field: 'path',
-    label: 'path',
-    component: 'Input',
-    dynamicDisabled: ({ values }) => {
-      return values.path;
-    },
-    ifShow: ({ values }) => values.path,
-  },
-
   // {
   //   field: 'show',
   //   label: '是否显示',
@@ -186,15 +157,11 @@ export const formSchema: FormSchema[] = [
 ];
 
 export const getFiles = (param: FileParams) => {
+  const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
-    return invoke('list_workspace_files', {
-      request: {
-        workspace: workspace,
-        recursive: false,
-        name: param.name,
-        path: param.path ? param.path : '',
-        type: 'file',
-      },
+    return invoke('list_workspace_files_cmd', {
+      wid: wid,
+      pid: param.pid,
     }).then((message: any) => {
       console.log(message);
       const fileEntrys: SimpleFileEntry[] = [];
@@ -205,8 +172,8 @@ export const getFiles = (param: FileParams) => {
           type: element.type,
           createTime: element.createTime,
           modifyTime: element.modifyTime,
-          path: element.path,
-          parentPath: element.parentPath,
+          id: element.id,
+          pid: element.pid,
         });
       });
       // processFileEntrys(message.result, '');
@@ -264,15 +231,35 @@ function getChildren(key: String, map: Map<String, any[]>) {
   return children;
 }
 
-export const createFile = (pid: string, fileType: string, fileName: string) => {
+export const createDir = (pid: string, fileType: string, fileName: string) => {
+  const wid = workspaceStore.getWorkspaceInfo?.id || '';
+  if (window.__TAURI__) {
+    // how to return promise
+    return invoke('create_workspace_dir_cmd', {
+      wid: wid,
+      pid: pid,
+      fileName: fileName,
+    })
+      .then((message: any) => {
+        console.log(message);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+  return Promise.resolve([]);
+};
+
+export const createFile = (pid: string, fileName: string, content: string, path: string) => {
   const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     // how to return promise
     return invoke('create_workspace_file_cmd', {
       wid: wid,
       pid: pid,
-      fileType: fileType,
       fileName: fileName,
+      content: content,
+      path: path,
     })
       .then((message: any) => {
         console.log(message);

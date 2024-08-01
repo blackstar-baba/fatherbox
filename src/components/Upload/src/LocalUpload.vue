@@ -65,7 +65,7 @@
         return;
       }
       files.value.push(selected);
-      // emit('change', files.value[0]);
+      emit('change', files.value[0]);
     }
   }
 

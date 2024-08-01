@@ -1,7 +1,10 @@
-use std::path::PathBuf;
 use chrono::Utc;
+use log::info;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ConnectionTrait, DatabaseConnection};
+use sea_orm::ConnectionTrait;
+use sea_orm::DatabaseConnection;
+use std::fs;
+use std::path::PathBuf;
 use tauri::State;
 use uuid::Uuid;
 
@@ -18,15 +21,20 @@ pub async fn create_workspace_cmd(
     state: State<'_, AppState>,
     workspace: String,
 ) -> Result<AppResponse<Model>, ()> {
-    let result = create_workspace_inner(&state.conn, workspace).await;
+    let workspace_path = &state.workspace_path.join(workspace.clone());
+    if !workspace_path.exists() {
+        // create workspace
+        info!("Create workspace: {}", workspace_path.display());
+        fs::create_dir(workspace_path).unwrap();
+    }
+    let result = create_workspace_inner(&state.conn, workspace.clone()).await;
     if result.is_ok() {
         let app_result = result.clone().unwrap().result;
         let _ = create_workspace_file_inner(
             &state.conn,
-            &state.workspace_path,
             app_result.id,
             "".to_owned(),
-            DIR_TYPE.to_string(),
+            DIR_TYPE.to_owned(),
             app_result.name,
         )
         .await;

@@ -1,21 +1,20 @@
-use std::fs;
-use std::fs::File;
-use std::os::unix::fs::MetadataExt;
-use std::path::{Path, PathBuf};
-use std::time::SystemTime;
-
-use chrono::Utc;
-use sea_orm::{DatabaseConnection, Set};
-use tauri::State;
-use uuid::Uuid;
-
 use app::entity::file::{ActiveModel, DataTransModel, Model};
 use app::service::file_service::FileService;
 use app::service::workspace_service::WorkspaceService;
 use app::{
     AppResponse, AppState, FileEntry, DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR,
-    RESPONSE_CODE_SUCCESS, WORKSPACE_PATH,
+    RESPONSE_CODE_SUCCESS,
 };
+use chrono::Utc;
+use sea_orm::{DatabaseConnection, Set};
+use std::fs;
+use std::fs::File;
+use std::io::Write;
+use std::os::unix::fs::MetadataExt;
+use std::path::Path;
+use std::time::SystemTime;
+use tauri::State;
+use uuid::Uuid;
 
 #[tauri::command]
 pub async fn list_workspace_files_cmd(
@@ -35,22 +34,87 @@ pub async fn list_workspace_dirs_cmd(
 }
 
 #[tauri::command]
+pub async fn create_workspace_dir_cmd(
+    state: State<'_, AppState>,
+    wid: String,
+    pid: String,
+    file_name: String,
+) -> Result<AppResponse<Option<Model>>, ()> {
+    create_workspace_file_inner(&state.conn, wid, pid, DIR_TYPE.to_owned(), file_name).await
+}
+
+#[tauri::command]
 pub async fn create_workspace_file_cmd(
     state: State<'_, AppState>,
     wid: String,
     pid: String,
-    file_type: String,
+    content: Option<String>,
+    path: Option<String>,
     file_name: String,
 ) -> Result<AppResponse<Option<Model>>, ()> {
-    create_workspace_file_inner(
+    let option_workspace_model = WorkspaceService::get_workspace(&state.conn, &wid)
+        .await
+        .unwrap();
+    if option_workspace_model.is_none() {
+        return Ok(AppResponse {
+            code: RESPONSE_CODE_ERROR,
+            r#type: "".to_owned(),
+            message: "".to_owned(),
+            result: None,
+        });
+    };
+    let result = create_workspace_file_inner(
         &state.conn,
-        &state.workspace_path,
-        wid,
+        wid.clone(),
         pid,
-        file_type,
+        FILE_TYPE.to_owned(),
         file_name,
     )
-    .await
+    .await;
+    if result.is_err() {
+        return result;
+    }
+    let app_response = result.unwrap();
+    if app_response.result.is_none() {
+        return Ok(app_response);
+    }
+    let file_model = app_response.result.unwrap();
+    // insert content or copy file
+    let option_workspace_model = WorkspaceService::get_workspace(&state.conn, &wid)
+        .await
+        .unwrap();
+    if option_workspace_model.is_none() {
+        return Ok(AppResponse {
+            code: RESPONSE_CODE_ERROR,
+            r#type: "".to_owned(),
+            message: "".to_owned(),
+            result: None,
+        });
+    };
+    let workspace_model = option_workspace_model.unwrap();
+    let file_path = &state
+        .workspace_path
+        .join(&workspace_model.name)
+        .join(&file_model.id);
+    if !file_path.exists() {
+        if path.is_some() {
+            fs::copy(path.unwrap(), file_path).unwrap();
+        } else {
+            let mut file = File::create(file_path).unwrap();
+            let file_content = match content {
+                None => "".to_owned(),
+                Some(result) => result,
+            };
+            file.write_all(file_content.as_bytes()).unwrap();
+        }
+    }
+
+    return Ok(AppResponse {
+        code: RESPONSE_CODE_SUCCESS,
+        r#type: "".to_owned(),
+        message: "".to_owned(),
+        result: Some(file_model),
+    });
 }
 
 #[tauri::command]
@@ -62,14 +126,7 @@ pub async fn update_workspace_file_cmd(
     file_type: String,
     file_name: String,
 ) -> Result<AppResponse<Option<Model>>, ()> {
-    update_workspace_file_inner(
-        &state.conn,
-        id,
-        wid,
-        pid,
-        file_type,
-        file_name,
-    ).await
+    update_workspace_file_inner(&state.conn, id, wid, pid, file_type, file_name).await
 }
 
 #[tauri::command]
@@ -83,9 +140,35 @@ pub async fn get_workspace_file(
 #[tauri::command]
 pub async fn delete_workspace_file_cmd(
     state: State<'_, AppState>,
+    wid: String,
     id: String,
 ) -> Result<AppResponse<String>, ()> {
-    delete_workspace_file_inner(&state.conn, &state.workspace_path, id).await
+    let option_workspace_model = WorkspaceService::get_workspace(&state.conn, &wid)
+        .await
+        .unwrap();
+    if option_workspace_model.is_none() {
+        return Ok(AppResponse {
+            code: RESPONSE_CODE_ERROR,
+            r#type: "".to_owned(),
+            message: "".to_owned(),
+            result: "".to_owned(),
+        });
+    };
+    let workspace_model = option_workspace_model.unwrap();
+    let result = delete_workspace_file_inner(&state.conn, &id).await;
+    if result.is_err() {
+        return result;
+    }
+    let app_response = result.unwrap();
+    if app_response.code == RESPONSE_CODE_ERROR {
+        return Ok(app_response);
+    }
+    // delete file in file system
+    let file_path = &state.workspace_path.join(&workspace_model.name).join(&id);
+    if file_path.exists() {
+        fs::remove_file(file_path).unwrap();
+    }
+    Ok(app_response)
 }
 
 async fn list_workspace_files_inner(
@@ -121,23 +204,12 @@ async fn list_workspace_dirs_inner(
 
 pub async fn create_workspace_file_inner(
     db: &DatabaseConnection,
-    workspace_path: &PathBuf,
     wid: String,
     pid: String,
     file_type: String,
     file_name: String,
 ) -> Result<AppResponse<Option<Model>>, ()> {
-    let option_workspace_model = WorkspaceService::get_workspace(db, &wid).await.unwrap();
-    if option_workspace_model.is_none() {
-        return Ok(AppResponse {
-            code: RESPONSE_CODE_ERROR,
-            r#type: "".to_owned(),
-            message: "".to_owned(),
-            result: None,
-        });
-    };
-    let workspace_model = option_workspace_model.unwrap();
-    let mut file_path = workspace_path.join(workspace_model.name);
+    // let mut file_path = workspace_path.join(workspace_model.name);
     // check parent
     if &pid != "" {
         let option_parent_file_model = FileService::get_file(db, &pid).await.unwrap();
@@ -150,20 +222,11 @@ pub async fn create_workspace_file_inner(
             });
         };
     }
-
-    let id = Uuid::new_v4().to_string();
-    // create file
-    file_path = file_path.join(&id);
-    if file_type != DIR_TYPE {
-        if !file_path.exists() {
-            File::create(file_path).unwrap();
-        }
-    }
     // create file data
     let model = FileService::create_file(
         db,
         ActiveModel {
-            id: Set(id),
+            id: Set(Uuid::new_v4().to_string()),
             name: Set(file_name),
             r#type: Set(file_type),
             pid: Set(pid),
@@ -189,7 +252,7 @@ pub async fn update_workspace_file_inner(
     db: &DatabaseConnection,
     id: String,
     wid: String,
-    pid:String,
+    pid: String,
     file_type: String,
     file_name: String,
 ) -> Result<AppResponse<Option<Model>>, ()> {
@@ -216,7 +279,9 @@ pub async fn update_workspace_file_inner(
         state: Set(file_model.state),
     };
     // create file
-    let option_update_file_model = FileService::update_file(&db, file_active_model).await.unwrap();
+    let option_update_file_model = FileService::update_file(&db, file_active_model)
+        .await
+        .unwrap();
     if option_update_file_model.is_none() {
         return Ok(AppResponse {
             code: RESPONSE_CODE_ERROR,
@@ -236,11 +301,10 @@ pub async fn update_workspace_file_inner(
 
 pub async fn delete_workspace_file_inner(
     db: &DatabaseConnection,
-    workspace_path: &PathBuf,
-    id: String,
+    id: &str,
 ) -> Result<AppResponse<String>, ()> {
     // get current file
-    let option_file_model = FileService::get_file(db, &id).await.unwrap();
+    let option_file_model = FileService::get_file(db, id).await.unwrap();
     if option_file_model.is_none() {
         return Ok(AppResponse {
             code: RESPONSE_CODE_ERROR,
@@ -251,18 +315,8 @@ pub async fn delete_workspace_file_inner(
     };
     let file_model = option_file_model.unwrap();
     // todo if file is dir & has children, can not delete
-    // delete file in file system
-    let mut file_path = workspace_path
-        .join(&file_model.workspace_name);
-    if file_model.parent_file_name.is_some() {
-        file_path = file_path.join(&file_model.parent_file_name.unwrap())
-    }
-    file_path = file_path.join(&file_model.id);
-    if file_model.r#type != DIR_TYPE {
-      fs::remove_file(file_path).unwrap();
-    }
     // delete file in db
-    FileService::delete_file(db, &id).await.unwrap();
+    FileService::delete_file(db, id).await.unwrap();
     Ok(AppResponse {
         code: RESPONSE_CODE_SUCCESS,
         r#type: "".to_string(),
@@ -383,12 +437,16 @@ fn get_file_entry(
 mod test {
     use std::env::temp_dir;
     use std::fs::File;
+
     use sea_orm::{ConnectionTrait, Schema};
 
     use app::{entity, DIR_TYPE, FILE_TYPE, WORKSPACE_PATH};
 
     use crate::db_utils::{drop_database_file, exist_database_file, init_connection};
-    use crate::file_command::{create_workspace_file_inner, delete_workspace_file_inner, get_workspace_file, get_workspace_file_inner, list_workspace_dirs_inner, list_workspace_files_inner, update_workspace_file_inner};
+    use crate::file_command::{
+        create_workspace_file_inner, delete_workspace_file_inner, get_workspace_file_inner,
+        list_workspace_dirs_inner, list_workspace_files_inner, update_workspace_file_inner,
+    };
     use crate::workspace_command::create_workspace_inner;
 
     #[tokio::test] //由此判断这是一个测试函数
@@ -423,7 +481,6 @@ mod test {
         // create file
         let option_simple_file_model = create_workspace_file_inner(
             &db,
-            &workspace_path,
             workspace_model.id.clone(),
             "".to_string(),
             FILE_TYPE.to_owned(),
@@ -437,7 +494,6 @@ mod test {
         // create dir
         let option_dir_file_model = create_workspace_file_inner(
             &db,
-            &base_path,
             workspace_model.id.clone(),
             "".to_string(),
             DIR_TYPE.to_owned(),
@@ -467,15 +523,28 @@ mod test {
             .unwrap()
             .result;
         assert_eq!(true, file_result.is_some());
-        assert_eq!(list_file_result[0].id.clone(), file_result.unwrap().id.clone());
+        assert_eq!(
+            list_file_result[0].id.clone(),
+            file_result.unwrap().id.clone()
+        );
 
         // update file
         let name = "new_my_dir";
-        let update_result = update_workspace_file_inner(&db, dir_file_model.id.clone(), dir_file_model.wid.clone(), dir_file_model.pid.clone(), dir_file_model.r#type.clone(), name.to_owned()).await.unwrap().result;
+        let update_result = update_workspace_file_inner(
+            &db,
+            dir_file_model.id.clone(),
+            dir_file_model.wid.clone(),
+            dir_file_model.pid.clone(),
+            dir_file_model.r#type.clone(),
+            name.to_owned(),
+        )
+        .await
+        .unwrap()
+        .result;
         assert_eq!(true, update_result.is_some());
         assert_eq!(name, update_result.unwrap().name);
         // delete
-        let _ = delete_workspace_file_inner(&db, &workspace_path, list_file_result[0].id.clone())
+        let _ = delete_workspace_file_inner(&db, &list_file_result[0].id)
             .await
             .unwrap()
             .result;

@@ -15,17 +15,24 @@ use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, Schema};
 use tauri::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
 use tauri::api::path::home_dir;
 
+use crate::db_utils::init_connection;
+use crate::file_command::{
+    create_workspace_dir_cmd, create_workspace_file_cmd, create_workspace_file_inner,
+    delete_workspace_file_cmd, list_workspace_dirs_cmd, list_workspace_files_cmd,
+    update_workspace_file_cmd,
+};
+use crate::model_command::ollama_get_models_cmd;
+use crate::workspace_command::{
+    create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner,
+    list_workspaces_cmd,
+};
 use app::api::{file, Api};
+use app::service::workspace_service::WorkspaceService;
 use app::{
     entity, AppResponse, AppState, Config, FileEntry, FileRequest, ModelData, CONFIG_PATH,
     DEFAULT_WORKSPACE, DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH,
     WORKSPACE_PATH,
 };
-use app::service::workspace_service::WorkspaceService;
-use crate::db_utils::init_connection;
-use crate::file_command::{create_workspace_file_cmd, update_workspace_file_cmd, create_workspace_file_inner, delete_workspace_file_cmd, list_workspace_dirs_cmd, list_workspace_files_cmd};
-use crate::model_command::ollama_get_models_cmd;
-use crate::workspace_command::{create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner, list_workspaces_cmd};
 
 mod db_utils;
 mod file_command;
@@ -87,7 +94,7 @@ async fn main() {
         .init();
 
     // init default path
-    if(home_dir().is_none()) {
+    if home_dir().is_none() {
         error!("Home directory not found.");
         exit(1)
     }
@@ -102,13 +109,13 @@ async fn main() {
     if !config_path.exists() {
         // create config
         info!("Create config path: {}", config_path.display());
-        fs::create_dir(&root_path.join(CONFIG_PATH)).unwrap();
+        fs::create_dir(config_path).unwrap();
     }
     let workspace_path = &root_path.join(WORKSPACE_PATH);
     if !workspace_path.exists() {
         // create workspace
-        info!("Create workspace path: {}", config_path.display());
-        fs::create_dir(&root_path.join(WORKSPACE_PATH)).unwrap();
+        info!("Create workspace path: {}", workspace_path.display());
+        fs::create_dir(workspace_path).unwrap();
     }
     // process config
     let mut config_builder = config::Config::builder();
@@ -143,12 +150,35 @@ async fn main() {
             .await
             .unwrap();
     }
-    let option_workspace_model = WorkspaceService::get_workspace_by_name(&db, DEFAULT_WORKSPACE).await.unwrap();
+    let option_workspace_model = WorkspaceService::get_workspace_by_name(&db, DEFAULT_WORKSPACE)
+        .await
+        .unwrap();
     if option_workspace_model.is_none() {
-        // create default workspace=
-        let workspace = create_workspace_inner(&db, DEFAULT_WORKSPACE.to_string()).await.expect("create default workspace failed").result;
+        // create dir
+        let default_workspace_path = &workspace_path.join(DEFAULT_WORKSPACE);
+        if !default_workspace_path.exists() {
+            // create workspace
+            info!(
+                "Create default workspace: {}",
+                default_workspace_path.display()
+            );
+            fs::create_dir(default_workspace_path).unwrap();
+        }
+        // create default workspace
+        let workspace = create_workspace_inner(&db, DEFAULT_WORKSPACE.to_string())
+            .await
+            .expect("create default workspace failed")
+            .result;
         // create default workspace dir
-        let _ = create_workspace_file_inner(&db, workspace_path, workspace.id, "".to_string(), DIR_TYPE.to_string(), DEFAULT_WORKSPACE.to_string()).await.expect("create default workspace dir failed");
+        let _ = create_workspace_file_inner(
+            &db,
+            workspace.id,
+            "".to_string(),
+            DIR_TYPE.to_string(),
+            DEFAULT_WORKSPACE.to_string(),
+        )
+        .await
+        .expect("create default workspace dir failed");
     }
 
     tauri::Builder::default()
@@ -163,7 +193,7 @@ async fn main() {
         .manage(AppState {
             conn: db,
             root_path: root_path.to_owned(),
-            workspace_path: workspace_path.to_owned()
+            workspace_path: workspace_path.to_owned(),
         })
         // why sync fn must after sync fc
         .invoke_handler(tauri::generate_handler![
@@ -173,6 +203,7 @@ async fn main() {
             delete_workspace_cmd,
             list_workspace_dirs_cmd,
             list_workspace_files_cmd,
+            create_workspace_dir_cmd,
             create_workspace_file_cmd,
             update_workspace_file_cmd,
             delete_workspace_file_cmd,
