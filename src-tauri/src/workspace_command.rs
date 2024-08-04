@@ -32,10 +32,10 @@ pub async fn create_workspace_cmd(
         let app_result = result.clone().unwrap().result;
         let _ = create_workspace_file_inner(
             &state.conn,
-            app_result.id,
-            "".to_owned(),
-            DIR_TYPE.to_owned(),
-            app_result.name,
+            &app_result.id,
+            "",
+            DIR_TYPE,
+            &app_result.name,
         )
         .await;
     };

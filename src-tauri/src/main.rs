@@ -19,7 +19,7 @@ use crate::db_utils::init_connection;
 use crate::file_command::{
     create_workspace_dir_cmd, create_workspace_file_cmd, create_workspace_file_inner,
     delete_workspace_file_cmd, list_workspace_dirs_cmd, list_workspace_files_cmd,
-    update_workspace_file_cmd,
+    update_workspace_dir_cmd, update_workspace_file_cmd,
 };
 use crate::model_command::ollama_get_models_cmd;
 use crate::workspace_command::{
@@ -170,15 +170,9 @@ async fn main() {
             .expect("create default workspace failed")
             .result;
         // create default workspace dir
-        let _ = create_workspace_file_inner(
-            &db,
-            workspace.id,
-            "".to_string(),
-            DIR_TYPE.to_string(),
-            DEFAULT_WORKSPACE.to_string(),
-        )
-        .await
-        .expect("create default workspace dir failed");
+        let _ = create_workspace_file_inner(&db, &workspace.id, "", DIR_TYPE, DEFAULT_WORKSPACE)
+            .await
+            .expect("create default workspace dir failed");
     }
 
     tauri::Builder::default()
@@ -205,6 +199,7 @@ async fn main() {
             list_workspace_files_cmd,
             create_workspace_dir_cmd,
             create_workspace_file_cmd,
+            update_workspace_dir_cmd,
             update_workspace_file_cmd,
             delete_workspace_file_cmd,
             ollama_get_models_cmd

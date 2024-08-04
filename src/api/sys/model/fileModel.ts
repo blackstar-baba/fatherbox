@@ -6,7 +6,7 @@ export interface FileEntry {
   path: string;
   size: number;
   createTime: number;
-  modifyTime: number;
+  updateTime: number;
   children: FileEntry[];
   parentPath: string;
 }
@@ -16,8 +16,8 @@ export interface SimpleFileEntry {
   type: string;
   id: string;
   size: number;
-  createTime: number;
-  modifyTime: number;
+  createTime: string;
+  updateTime: string;
   pid: string;
 }
 

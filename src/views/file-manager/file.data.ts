@@ -3,6 +3,7 @@ import { FileParams, SimpleFileEntry } from '@/api/sys/model/fileModel';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useWorkspaceStore } from '@/store/modules/workspace';
 import { TreeItem } from '@/components/Tree';
+import { formatToDateTime } from '@/utils/dateUtil';
 
 export const workspace = 'default';
 
@@ -14,7 +15,7 @@ export const columns: BasicColumn[] = [
   {
     title: 'name',
     dataIndex: 'name',
-    width: 200,
+    width: 100,
     align: 'left',
   },
   // {
@@ -29,15 +30,15 @@ export const columns: BasicColumn[] = [
   //     return h(Tag, { color: color }, () => text);
   //   },
   // },
-  {
-    title: 'type',
-    dataIndex: 'type',
-    width: 180,
-  },
+  // {
+  //   title: 'type',
+  //   dataIndex: 'type',
+  //   width: 180,
+  // },
   {
     title: 'size',
     dataIndex: 'size',
-    width: 180,
+    width: 80,
   },
   {
     title: 'createTime',
@@ -45,17 +46,11 @@ export const columns: BasicColumn[] = [
     width: 180,
   },
   {
-    title: 'modifyTime',
-    dataIndex: 'modifyTime',
+    title: 'updateTime',
+    dataIndex: 'updateTime',
     width: 180,
   },
 ];
-
-// const isDir = (type: string) => type === 'dir';
-// const isFile = (type: string) => type === 'txt';
-
-// const isMenu = (type: string) => type === '1';
-// const isButton = (type: string) => type === '2';
 
 export const searchFormSchema: FormSchema[] = [
   {
@@ -170,8 +165,8 @@ export const getFiles = (param: FileParams) => {
           name: element.name,
           size: element.size,
           type: element.type,
-          createTime: element.createTime,
-          modifyTime: element.modifyTime,
+          createTime: formatToDateTime(element.createTime * 1000),
+          updateTime: formatToDateTime(element.updateTime * 1000),
           id: element.id,
           pid: element.pid,
         });
@@ -238,6 +233,27 @@ export const createDir = (pid: string, fileType: string, fileName: string) => {
     return invoke('create_workspace_dir_cmd', {
       wid: wid,
       pid: pid,
+      fileName: fileName,
+    })
+      .then((message: any) => {
+        console.log(message);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+  return Promise.resolve([]);
+};
+
+export const updateDir = (id: string, pid: string, fileName: string) => {
+  const wid = workspaceStore.getWorkspaceInfo?.id || '';
+  if (window.__TAURI__) {
+    // how to return promise
+    return invoke('update_workspace_dir_cmd', {
+      id: id,
+      wid: wid,
+      pid: pid,
+      fileType: DIR_TYPE,
       fileName: fileName,
     })
       .then((message: any) => {

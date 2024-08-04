@@ -10,7 +10,7 @@
   import {
     getDirs,
     createDir,
-    updateFile,
+    updateDir,
     dirFormSchema,
     DIR_TYPE,
   } from '@/views/file-manager/file.data';
@@ -65,7 +65,7 @@
       setModalProps({ confirmLoading: true });
       console.info(values);
       if (unref(isUpdate)) {
-        await updateFile(rowId.value, values.pid, DIR_TYPE, values.name);
+        await updateDir(rowId.value, values.pid, values.name);
       } else {
         await createDir(values.pid, DIR_TYPE, values.name);
       }

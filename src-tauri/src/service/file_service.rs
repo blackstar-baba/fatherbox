@@ -1,11 +1,12 @@
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait,
-    IntoActiveModel, ModelTrait, QueryFilter, Statement, Value,
-};
-
 use crate::entity::file::{
     ActiveModel as FileActiveModel, Column, DataTransModel as FileDataTransModel, Entity as File,
     Model as FileModel,
+};
+use chrono::Utc;
+use sea_orm::prelude::Expr;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DbErr, EntityTrait,
+    IntoActiveModel, ModelTrait, QueryFilter, Set, Statement, UpdateResult, Value,
 };
 
 pub struct FileService;
@@ -109,5 +110,25 @@ impl FileService {
             .filter(Column::Pid.eq(pid))
             .all(db)
             .await
+    }
+
+    pub async fn update_file_size(
+        db: &DatabaseConnection,
+        id: &str,
+        size: i64,
+    ) -> Result<u64, DbErr> {
+        return match File::update_many()
+            .col_expr(Column::Size, Expr::value(Value::BigInt(Some(size))))
+            .col_expr(
+                Column::UpdateTime,
+                Expr::value(Value::BigInt(Some(Utc::now().timestamp()))),
+            )
+            .filter(Column::Id.eq(id))
+            .exec(db)
+            .await
+        {
+            Ok(result) => Ok(result.rows_affected),
+            Err(err) => Err(err),
+        };
     }
 }

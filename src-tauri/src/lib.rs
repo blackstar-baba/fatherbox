@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use tauri::api::path::home_dir;
+use thiserror::Error;
 
 pub const ROOT_PATH: &str = ".fatherbox";
 pub const CONFIG_PATH: &str = "config";
@@ -81,6 +82,18 @@ pub struct AppState {
     pub conn: DatabaseConnection,
     pub root_path: PathBuf,
     pub workspace_path: PathBuf,
+}
+
+#[derive(Error, Debug)]
+pub enum AppError {
+    #[error("An IO error occurred: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("A parse error occurred: {0}")]
+    Parse(#[from] std::num::ParseIntError),
+
+    #[error("An unknown error occurred")]
+    Unknown,
 }
 
 pub fn get_work_space_path(work_space_name: &str) -> String {

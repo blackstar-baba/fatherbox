@@ -13,10 +13,10 @@ pub struct Model {
     pub r#type: String,
     pub pid: String,
     pub wid: String,
-    pub size: i32,
+    pub size: i64,
     pub create_time: i64,
     pub update_time: i64,
-    pub state: i32,
+    pub state: i8,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -34,8 +34,8 @@ pub struct DataTransModel {
     pub parent_file_name: Option<String>,
     pub wid: String,
     pub workspace_name: String,
-    pub size: i32,
+    pub size: i64,
     pub create_time: i64,
     pub update_time: i64,
-    pub state: i32,
+    pub state: i8,
 }
