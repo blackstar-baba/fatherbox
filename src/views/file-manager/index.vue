@@ -41,8 +41,7 @@
   import DirTree from './DirTree.vue';
   import { useModal } from '@/components/Modal';
   import FileModal from './FileModal.vue';
-  // import { useGo } from '@/hooks/web/usePage';
-  import { columns, getFiles, searchFormSchema } from '@/views/file-manager/file.data';
+  import { columns, deleteFile, getFiles, searchFormSchema } from '@/views/file-manager/file.data';
 
   defineOptions({ name: 'FileManagement' });
 
@@ -92,28 +91,22 @@
     });
   }
 
-  function handleDelete(record: Recordable) {
-    console.log(record);
+  async function handleDelete(record: Recordable) {
+    await deleteFile(record.id);
+    await reload();
   }
 
   function handleExport() {
     console.log(getSearchInfo());
   }
 
-  function handleSuccess({ isUpdate, _values }) {
-    // todo
-    if (isUpdate) {
-      // 演示不刷新表格直接更新内部数据。
-      // 注意：updateTableDataRecord要求表格的rowKey属性为string并且存在于每一行的record的keys中
-      // const result = updateTableDataRecord(values.id, values);
-      // console.log(result);
-    } else {
-      // reload();
-    }
+  async function handleSuccess({ _values }) {
+    await reload();
   }
 
   async function handleSelect(pid = '') {
     searchInfo.pid = pid;
+    searchInfo.name = '';
     await reload();
   }
 </script>

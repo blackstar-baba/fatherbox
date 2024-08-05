@@ -23,4 +23,5 @@ export interface SimpleFileEntry {
 
 export type FileParams = BasicPageParams & {
   pid: string;
+  name: string;
 };

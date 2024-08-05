@@ -117,16 +117,13 @@ export const formSchema: FormSchema[] = [
         console.log(e);
       },
     },
-    // dynamicDisabled: ({ values }) => {
-    //   return !!values.uploadOrEdit;
-    // },
-    ifShow: ({ values }) => !values.id,
+    ifShow: ({ values }) => !!values.id,
   },
   {
     field: 'content',
     label: 'content',
     component: 'InputTextArea',
-    ifShow: ({ values }) => values.inputOrUpload === 'input',
+    ifShow: ({ values }) => values.inputOrUpload === 'input' && !!values.id,
   },
   {
     field: 'file',
@@ -134,7 +131,7 @@ export const formSchema: FormSchema[] = [
     component: 'LocalUpload',
     componentProps: {},
     colProps: { lg: 24, md: 24 },
-    ifShow: ({ values }) => values.inputOrUpload === 'upload',
+    ifShow: ({ values }) => values.inputOrUpload === 'upload' && !!values.id,
   },
   // {
   //   field: 'show',
@@ -151,12 +148,13 @@ export const formSchema: FormSchema[] = [
   // },
 ];
 
-export const getFiles = (param: FileParams) => {
+export const getFiles = async (param: FileParams) => {
   const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     return invoke('list_workspace_files_cmd', {
       wid: wid,
       pid: param.pid,
+      name: param.name,
     }).then((message: any) => {
       console.log(message);
       const fileEntrys: SimpleFileEntry[] = [];
@@ -178,7 +176,7 @@ export const getFiles = (param: FileParams) => {
   return Promise.resolve([]);
 };
 
-export const getDirs = () => {
+export const getDirs = async () => {
   const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     // how to return promise
@@ -226,7 +224,7 @@ function getChildren(key: String, map: Map<String, any[]>) {
   return children;
 }
 
-export const createDir = (pid: string, fileType: string, fileName: string) => {
+export const createDir = async (pid: string, fileName: string) => {
   const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     // how to return promise
@@ -245,7 +243,7 @@ export const createDir = (pid: string, fileType: string, fileName: string) => {
   return Promise.resolve([]);
 };
 
-export const updateDir = (id: string, pid: string, fileName: string) => {
+export const updateDir = async (id: string, pid: string, fileName: string) => {
   const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     // how to return promise
@@ -253,7 +251,6 @@ export const updateDir = (id: string, pid: string, fileName: string) => {
       id: id,
       wid: wid,
       pid: pid,
-      fileType: DIR_TYPE,
       fileName: fileName,
     })
       .then((message: any) => {
@@ -266,7 +263,7 @@ export const updateDir = (id: string, pid: string, fileName: string) => {
   return Promise.resolve([]);
 };
 
-export const createFile = (pid: string, fileName: string, content: string, path: string) => {
+export const createFile = async (pid: string, fileName: string, content: string, path: string) => {
   const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     // how to return promise
@@ -287,7 +284,7 @@ export const createFile = (pid: string, fileName: string, content: string, path:
   return Promise.resolve([]);
 };
 
-export const updateFile = (id: string, pid: string, fileType: string, fileName: string) => {
+export const updateFile = async (id: string, pid: string, fileName: string, content: string) => {
   const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     // how to return promise
@@ -295,8 +292,8 @@ export const updateFile = (id: string, pid: string, fileType: string, fileName: 
       id: id,
       wid: wid,
       pid: pid,
-      fileType: fileType,
       fileName: fileName,
+      content: content,
     })
       .then((message: any) => {
         console.log(message);
@@ -308,20 +305,19 @@ export const updateFile = (id: string, pid: string, fileType: string, fileName: 
   return Promise.resolve([]);
 };
 
-export const deleteFile = (id: string) => {
-  // const wid = workspaceStore.getWorkspaceInfo?.id || '';
+export const deleteFile = async (id: string) => {
+  const wid = workspaceStore.getWorkspaceInfo?.id || '';
   if (window.__TAURI__) {
     // how to return promise
-    return invoke('delete_workspace_file_cmd', {
-      // wid: wid,
-      id: id,
-    })
-      .then((message: any) => {
-        console.log(message);
-      })
-      .catch((error) => {
-        console.error(error);
+    try {
+      const message = await invoke('delete_workspace_file_cmd', {
+        wid: wid,
+        id: id,
       });
+      console.log(message);
+    } catch (error) {
+      console.error(error);
+    }
   }
   return Promise.resolve([]);
 };

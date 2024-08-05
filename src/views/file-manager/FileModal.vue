@@ -7,7 +7,7 @@
   import { ref, computed, unref } from 'vue';
   import { BasicModal, useModalInner } from '@/components/Modal';
   import { BasicForm, useForm } from '@/components/Form';
-  import { getDirs, createFile, formSchema } from '@/views/file-manager/file.data';
+  import { getDirs, createFile, formSchema, updateFile } from '@/views/file-manager/file.data';
 
   defineOptions({ name: 'FileModal' });
 
@@ -55,7 +55,11 @@
       const values = await validate();
       setModalProps({ confirmLoading: true });
       console.info(values);
-      await createFile(values.pid, values.name, values.content, values.file);
+      if (unref(isUpdate)) {
+        await updateFile(rowId.value, values.pid, values.name, '');
+      } else {
+        await createFile(values.pid, values.name, values.content, values.file);
+      }
       closeModal();
       emit('success', { isUpdate: unref(isUpdate), values: { ...values } });
     } finally {

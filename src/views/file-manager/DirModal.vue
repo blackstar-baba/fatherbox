@@ -7,13 +7,7 @@
   import { ref, computed, unref } from 'vue';
   import { BasicModal, useModalInner } from '@/components/Modal';
   import { BasicForm, useForm } from '@/components/Form';
-  import {
-    getDirs,
-    createDir,
-    updateDir,
-    dirFormSchema,
-    DIR_TYPE,
-  } from '@/views/file-manager/file.data';
+  import { getDirs, createDir, updateDir, dirFormSchema } from '@/views/file-manager/file.data';
 
   defineOptions({ name: 'DirModal' });
 
@@ -67,7 +61,7 @@
       if (unref(isUpdate)) {
         await updateDir(rowId.value, values.pid, values.name);
       } else {
-        await createDir(values.pid, DIR_TYPE, values.name);
+        await createDir(values.pid, values.name);
       }
       closeModal();
       emit('success', { isUpdate: unref(isUpdate), values: { ...values } });

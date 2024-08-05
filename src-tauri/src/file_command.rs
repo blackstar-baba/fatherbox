@@ -6,7 +6,7 @@ use std::path::Path;
 use std::time::SystemTime;
 
 use chrono::Utc;
-use sea_orm::{DatabaseConnection, Set};
+use sea_orm::{DatabaseConnection, DbErr, Set};
 use tauri::State;
 use uuid::Uuid;
 
@@ -23,8 +23,9 @@ pub async fn list_workspace_files_cmd(
     state: State<'_, AppState>,
     wid: String,
     pid: String,
+    name: String,
 ) -> Result<AppResponse<Vec<Model>>, ()> {
-    list_workspace_files_inner(&state.conn, &wid, &pid).await
+    list_workspace_files_inner(&state.conn, &wid, &pid, &name).await
 }
 
 #[tauri::command]
@@ -199,16 +200,28 @@ async fn list_workspace_files_inner(
     db: &DatabaseConnection,
     wid: &str,
     pid: &str,
+    name: &str,
 ) -> Result<AppResponse<Vec<Model>>, ()> {
-    let vec = FileService::list_files_by_workspace_and_type_and_parent(db, wid, FILE_TYPE, pid)
-        .await
-        .unwrap();
-    Ok(AppResponse {
-        code: RESPONSE_CODE_SUCCESS,
-        r#type: "".to_owned(),
-        message: "".to_owned(),
-        result: vec,
-    })
+    match FileService::list_files_by_name(db, wid, FILE_TYPE, pid, name)
+        .await {
+        Ok(result) => {
+            Ok(AppResponse {
+                code: RESPONSE_CODE_SUCCESS,
+                r#type: "".to_owned(),
+                message: "".to_owned(),
+                result,
+            })
+        }
+        Err(err) => {
+            Ok(AppResponse {
+                code: RESPONSE_CODE_SUCCESS,
+                r#type: "".to_owned(),
+                message: err.to_string(),
+                result: vec![],
+            })
+        }
+    }
+
 }
 
 async fn list_workspace_dirs_inner(

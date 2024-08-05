@@ -15,14 +15,14 @@ impl FileService {
     pub async fn create_file(
         db: &DatabaseConnection,
         file: FileActiveModel,
-    ) -> Result<FileModel, sea_orm::DbErr> {
+    ) -> Result<FileModel, DbErr> {
         file.insert(db).await
     }
 
     pub async fn get_file(
         db: &DatabaseConnection,
         id: &str,
-    ) -> Result<Option<FileDataTransModel>, sea_orm::DbErr> {
+    ) -> Result<Option<FileDataTransModel>, DbErr> {
         let query = Statement::from_sql_and_values(
             db.get_database_backend(),
             "SELECT file.id, file.name, file.type, file.pid, pfile.name AS parent_file_name,
@@ -56,7 +56,7 @@ impl FileService {
     pub async fn update_file(
         db: &DatabaseConnection,
         file: FileActiveModel,
-    ) -> Result<Option<FileModel>, sea_orm::DbErr> {
+    ) -> Result<Option<FileModel>, DbErr> {
         if let Some(existing_file) = File::find_by_id(file.id.clone().unwrap()).one(db).await? {
             let mut active_model = existing_file.into_active_model();
 
@@ -75,14 +75,14 @@ impl FileService {
         }
     }
 
-    pub async fn delete_file(db: &DatabaseConnection, id: &str) -> Result<(), sea_orm::DbErr> {
+    pub async fn delete_file(db: &DatabaseConnection, id: &str) -> Result<(), DbErr> {
         if let Some(file) = File::find_by_id(id.to_string()).one(db).await? {
             file.delete(db).await?;
         }
         Ok(())
     }
 
-    pub async fn list_files(db: &DatabaseConnection) -> Result<Vec<FileModel>, sea_orm::DbErr> {
+    pub async fn list_files(db: &DatabaseConnection) -> Result<Vec<FileModel>, DbErr> {
         File::find().all(db).await
     }
 
@@ -90,7 +90,7 @@ impl FileService {
         db: &DatabaseConnection,
         wid: &str,
         r#type: &str,
-    ) -> Result<Vec<FileModel>, sea_orm::DbErr> {
+    ) -> Result<Vec<FileModel>, DbErr> {
         File::find()
             .filter(Column::Type.eq(r#type))
             .filter(Column::Wid.eq(wid))
@@ -98,16 +98,18 @@ impl FileService {
             .await
     }
 
-    pub async fn list_files_by_workspace_and_type_and_parent(
+    pub async fn list_files_by_name(
         db: &DatabaseConnection,
         wid: &str,
         r#type: &str,
         pid: &str,
-    ) -> Result<Vec<FileModel>, sea_orm::DbErr> {
+        name: &str
+    ) -> Result<Vec<FileModel>, DbErr> {
         File::find()
             .filter(Column::Type.eq(r#type))
             .filter(Column::Wid.eq(wid))
             .filter(Column::Pid.eq(pid))
+            .filter(Column::Name.like(name.to_owned() + "%"))
             .all(db)
             .await
     }
