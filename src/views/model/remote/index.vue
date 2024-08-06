@@ -26,6 +26,7 @@
   import { List, ListItem } from 'ant-design-vue';
   import doubao from '@/assets/images/doubao.png';
   import kimi from '@/assets/images/kimi.png';
+  import chatgpt from '@/assets/images/chatgpt.png';
 
   interface DataItem {
     title: string;
@@ -45,6 +46,12 @@
       image: kimi,
       url: 'https://kimi.moonshot.cn/',
       description: 'Help you see the bigger world.',
+    },
+    {
+      title: 'ChatGPT',
+      image: chatgpt,
+      url: 'https://chatgpt.com/',
+      description: 'ChatGPT can help with writing, learning, brainstorming, and more',
     },
   ];
 </script>

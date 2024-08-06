@@ -16,12 +16,18 @@
       },
       "fs": {
         "all": true,
-        "scope":["$HOME", "$HOME/.fatherbox/**"]
+        "scope": [
+          "$HOME",
+          "$HOME/.fatherbox/**"
+        ]
       },
       "path": {
         "all": true
       },
       "http": {
+        "all": true
+      },
+      "shell": {
         "all": true
       }
     },
