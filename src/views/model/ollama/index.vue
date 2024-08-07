@@ -5,7 +5,7 @@
     content="Get up and running with large language models."
   >
     <div class="p-4">
-      choose model: <Select ref="select" v-model:value="model" class="w-50" :options="models" />
+      model: <Select ref="select" v-model:value="model" class="w-50" :options="models" />
     </div>
   </PageWrapper>
 </template>
@@ -20,7 +20,7 @@
   const models = ref<SelectProps['options']>([]);
 
   if (window.__TAURI__) {
-    invoke('ollama_get_models').then((message) => {
+    invoke('ollama_get_models_cmd').then((message: any) => {
       console.info(message);
       let response: Response<ModelItems> = message;
       let options: SelectProps['options'] = [];
