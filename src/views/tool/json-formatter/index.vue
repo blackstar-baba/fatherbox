@@ -76,14 +76,14 @@
     CopyOutlined,
     DoubleRightOutlined,
   } from '@ant-design/icons-vue';
-  import type { TreeProps } from 'ant-design-vue';
   import { PageWrapper } from '@/components/Page';
   import { isArray, isObject } from '@/utils/is';
   import { useMessage } from '@/hooks/web/useMessage';
 
   interface TreeObject {
     title: string;
-    key: number;
+    key: string;
+    isIndex?: boolean;
     children?: TreeObject[]; // 可选属性
   }
 
@@ -127,10 +127,12 @@
     autoExpandParent.value = true;
   });
 
-  function collectParentKey(pKeys: String[], pKey: string, value: string, children: TreeObject[]) {
+  function collectParentKey(pKeys: String[], pKey: string, value: string, children: any) {
     for (let item of children) {
       if (item.title.indexOf(value) > -1) {
-        pKeys.push(pKey);
+        if (!item.isIndex) {
+          pKeys.push(pKey);
+        }
       }
       if (item.children !== undefined) {
         collectParentKey(pKeys, item.key, value, item.children);
@@ -138,8 +140,8 @@
     }
   }
 
-  function jsonTextToTree(pkey, jsonObject): TreeProps['treeData'] {
-    let arr = [];
+  function jsonTextToTree(pkey, jsonObject): TreeObject[] {
+    let arr: TreeObject[] = [];
     for (let key in jsonObject) {
       let curKey = pkey + key;
       let treeObject: TreeObject = {
@@ -155,6 +157,7 @@
           let newTreeObject: TreeObject = {
             title: index,
             key: curKey + ' ' + index,
+            isIndex: true,
             children: jsonTextToTree(curKey + ' ' + index + ' ', value[index]),
           };
           treeObject.children.push(newTreeObject);
@@ -162,7 +165,7 @@
       } else if (value !== undefined && value !== null) {
         treeObject.children = [
           {
-            title: value,
+            title: value.toString(),
             key: curKey + ' ' + value,
           },
         ];
@@ -193,7 +196,7 @@
   function copy() {
     let input = document.createElement('textarea');
     input.style.position = 'fixed';
-    input.style.opacity = 0;
+    input.style.opacity = String(0);
     input.value = jsonText.value;
     document.body.appendChild(input);
     input.select();
