@@ -1,0 +1,18 @@
+{
+  "page": {
+    "demos": {
+      "title": "Demos",
+      "antd": "Ant Design Vue"
+    },
+    "tools": {
+      "title": "Tool",
+      "about": "About",
+      "time-parser": "TimeParser",
+      "analysis": "Analysis",
+      "json-formatter": "JsonFormatter",
+      "uuid-generator": "UuidGenerator",
+      "encryptor": "Encryptor",
+      "image-editor": "ImageEditor"
+    }
+  }
+}

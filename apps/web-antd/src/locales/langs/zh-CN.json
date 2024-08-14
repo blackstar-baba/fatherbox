@@ -1,0 +1,18 @@
+{
+  "page": {
+    "demos": {
+      "title": "演示",
+      "antd": "Ant Design Vue"
+    },
+    "tools": {
+      "title": "工具",
+      "about": "关于",
+      "time-parser": "时间转换",
+      "analysis": "分析",
+      "json-formatter": "Json格式化",
+      "uuid-generator": "Uuid生成",
+      "encryptor": "加密器",
+      "image-editor": "图片编辑器"
+    }
+  }
+}
