@@ -46,10 +46,12 @@
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.12",
     "pinia": "2.2.1",
+    "uuid": "^10.0.0",
     "vue": "^3.4.37",
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
-    "@types/crypto-js": "^4.2.2"
+    "@types/crypto-js": "^4.2.2",
+    "@types/uuid": "^10.0.0"
   }
 }

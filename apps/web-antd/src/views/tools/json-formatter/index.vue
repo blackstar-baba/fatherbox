@@ -211,7 +211,7 @@ function textToTree() {
               placeholder="Search"
             />
           </div>
-          <div class="h-88 overflow-y-auto pt-6">
+          <div class="h-96 overflow-y-auto pt-6">
             <Tree
               :auto-expand-parent="autoExpandParent"
               :expanded-keys="expandedKeys"

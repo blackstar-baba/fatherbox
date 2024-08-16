@@ -14,16 +14,16 @@ const routes: RouteRecordRaw[] = [
     name: 'Tools',
     path: '/',
     children: [
-      // {
-      //   name: 'TimeParser',
-      //   path: '/time-parser',
-      //   component: () => import('#/views/tools/time-parser/index.vue'),
-      //   meta: {
-      //     affixTab: true,
-      //     // icon: 'lucide:area-chart',
-      //     title: $t('page.tools.time-parser'),
-      //   },
-      // },
+      {
+        name: 'TimeParser',
+        path: '/time-parser',
+        component: () => import('#/views/tools/time-parser/index.vue'),
+        meta: {
+          affixTab: true,
+          // icon: 'lucide:area-chart',
+          title: $t('page.tools.time-parser'),
+        },
+      },
       {
         name: 'JsonFormatter',
         path: 'json-formatter',
@@ -33,15 +33,15 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.tools.json-formatter'),
         },
       },
-      // {
-      //   name: 'UuidGenerator',
-      //   path: 'uuid-generator',
-      //   component: () => import('#/views/tools/uuid-generator/index.vue'),
-      //   meta: {
-      //     // affix: true,
-      //     title: $t('page.tools.uuid-generator'),
-      //   },
-      // },
+      {
+        name: 'UuidGenerator',
+        path: 'uuid-generator',
+        component: () => import('#/views/tools/uuid-generator/index.vue'),
+        meta: {
+          // affix: true,
+          title: $t('page.tools.uuid-generator'),
+        },
+      },
       {
         name: 'Encryptor',
         path: 'encryptor',
