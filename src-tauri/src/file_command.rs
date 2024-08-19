@@ -202,26 +202,20 @@ async fn list_workspace_files_inner(
     pid: &str,
     name: &str,
 ) -> Result<AppResponse<Vec<Model>>, ()> {
-    match FileService::list_files_by_name(db, wid, FILE_TYPE, pid, name)
-        .await {
-        Ok(result) => {
-            Ok(AppResponse {
-                code: RESPONSE_CODE_SUCCESS,
-                r#type: "".to_owned(),
-                message: "".to_owned(),
-                result,
-            })
-        }
-        Err(err) => {
-            Ok(AppResponse {
-                code: RESPONSE_CODE_SUCCESS,
-                r#type: "".to_owned(),
-                message: err.to_string(),
-                result: vec![],
-            })
-        }
+    match FileService::list_files_by_name(db, wid, FILE_TYPE, pid, name).await {
+        Ok(result) => Ok(AppResponse {
+            code: RESPONSE_CODE_SUCCESS,
+            r#type: "".to_owned(),
+            message: "".to_owned(),
+            result,
+        }),
+        Err(err) => Ok(AppResponse {
+            code: RESPONSE_CODE_SUCCESS,
+            r#type: "".to_owned(),
+            message: err.to_string(),
+            result: vec![],
+        }),
     }
-
 }
 
 async fn list_workspace_dirs_inner(
@@ -475,6 +469,7 @@ fn get_file_entry(
 #[cfg(test)]
 mod test {
     use std::env::temp_dir;
+    use std::fs;
     use std::fs::File;
 
     use sea_orm::{ConnectionTrait, Schema};
@@ -515,7 +510,7 @@ mod test {
         // create dir
         let test_workspace_path = &workspace_path.join(workspace);
         if !test_workspace_path.exists() {
-            File::create(test_workspace_path).unwrap();
+            fs::create_dir_all(test_workspace_path).unwrap();
         }
         // create file
         let option_simple_file_model =
@@ -535,7 +530,7 @@ mod test {
         let dir_file_model = option_dir_file_model.unwrap();
         assert_eq!("my_dir", dir_file_model.name.clone());
         // list file
-        let list_file_result = list_workspace_files_inner(&db, &workspace_model.id, "")
+        let list_file_result = list_workspace_files_inner(&db, &workspace_model.id, "", "my_file")
             .await
             .unwrap()
             .result;
