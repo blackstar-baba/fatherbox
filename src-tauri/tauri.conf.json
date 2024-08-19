@@ -2,7 +2,7 @@
   "build": {
     "beforeBuildCommand": "pnpm build",
     "beforeDevCommand": "pnpm dev",
-    "devPath": "http://localhost:5555",
+    "devPath": "http://localhost:5666",
     "distDir": "../apps/web-antd/dist"
   },
   "package": {

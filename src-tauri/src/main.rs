@@ -33,11 +33,13 @@ use app::{
     DEFAULT_WORKSPACE, DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH,
     WORKSPACE_PATH,
 };
+use crate::user_command::{get_user_info_cmd, user_login_cmd};
 
 mod db_utils;
 mod file_command;
 mod model_command;
 mod workspace_command;
+mod user_command;
 
 static DEFAULT_CONFIG: &str = include_str!("../config.toml");
 
@@ -192,6 +194,8 @@ async fn main() {
         // why sync fn must after sync fc
         .invoke_handler(tauri::generate_handler![
             my_custom_command,
+            user_login_cmd,
+            get_user_info_cmd,
             list_workspaces_cmd,
             create_workspace_cmd,
             delete_workspace_cmd,

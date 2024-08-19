@@ -2,9 +2,9 @@ export const MOCK_USERS = [
   {
     id: 0,
     password: '123456',
-    realName: 'Vben',
+    realName: 'LocalUser',
     roles: ['super'],
-    username: 'vben',
+    username: 'fatherbox',
   },
   {
     id: 1,
@@ -163,6 +163,10 @@ const createDemosMenus = (role: 'admin' | 'super' | 'user') => {
 };
 
 export const MOCK_MENUS = [
+  {
+    menus: [...dashboardMenus, ...createDemosMenus('super')],
+    username: 'fatherbox',
+  },
   {
     menus: [...dashboardMenus, ...createDemosMenus('super')],
     username: 'vben',

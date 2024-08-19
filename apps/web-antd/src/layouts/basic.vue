@@ -122,7 +122,7 @@ function handleMakeAll() {
         :avatar
         :loading="loginLoading"
         password-placeholder="123456"
-        username-placeholder="vben"
+        username-placeholder="father"
         @submit="authStore.authLogin"
       />
     </template>
