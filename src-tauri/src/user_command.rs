@@ -26,6 +26,7 @@ pub struct UserInfo {
     real_name: String,
     roles: Vec<String>,
     username: String,
+    avatar: String,
 }
 
 #[tauri::command]
@@ -67,6 +68,7 @@ async fn get_user_info(db: &DatabaseConnection) -> Result<UserInfo, ()> {
         real_name: "local user".to_owned(),
         username: "fatherbox".to_owned(),
         roles: vec!["super".to_owned()],
+        avatar: "/avatar.svg".to_string(),
     };
     return Ok(result);
 }
