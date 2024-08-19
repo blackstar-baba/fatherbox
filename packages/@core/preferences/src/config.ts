@@ -48,7 +48,7 @@ const defaultPreferences: Preferences = {
   },
   logo: {
     enable: true,
-    source: '/public/logo.png',
+    source: '/logo.png',
   },
   navigation: {
     accordion: true,
