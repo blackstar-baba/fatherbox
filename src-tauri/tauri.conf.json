@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeBuildCommand": "pnpm build",
-    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm -F @vben/web-antd run build",
+    "beforeDevCommand": "pnpm -F @vben/web-antd run dev",
     "devPath": "http://localhost:5666",
     "distDir": "../apps/web-antd/dist"
   },
