@@ -1,27 +1,22 @@
 {
-  "name": "vben-admin-pro",
-  "version": "5.1.0",
+  "name": "fatherbox-fe",
+  "version": "0.0.1",
   "private": true,
   "keywords": [
-    "monorepo",
-    "turbo",
     "vben",
-    "vben admin",
-    "vben pro",
-    "vue",
-    "vue admin",
-    "vue vben admin",
-    "vue vben admin pro",
-    "vue3"
+    "vue3",
+    "tools",
+    "vue3",
+    "tauri"
   ],
-  "homepage": "https://github.com/vbenjs/vue-vben-admin",
+  "homepage": "https://github.com/blackstar-baba/fatherbox",
   "bugs": "https://github.com/vbenjs/vue-vben-admin/issues",
-  "repository": "vbenjs/vue-vben-admin.git",
+  "repository": "blackstar-baba/fatherbox.git",
   "license": "MIT",
   "author": {
-    "name": "vben",
-    "email": "ann.vben@gmail.com",
-    "url": "https://github.com/anncwb"
+    "name": "blackstar-baba",
+    "email": "535650957@qq.com",
+    "url": "https://github.com/blackstar-baba"
   },
   "type": "module",
   "scripts": {
