@@ -1,87 +1,61 @@
-<div align="center"> <a href="https://github.com/anncwb/vue-vben-admin"> <img alt="VbenAdmin Logo" width="215" src="https://unpkg.com/@vbenjs/static-source@0.1.6/source/logo-v1.webp"> </a> <br> <br>
+<div align="center"> <a href="https://github.com/blackstar-baba/fatherbox"> <img alt="fatherbox Logo" width="107" src="public/logo.png"> </a> <br> <br>
 
-[![license](https://img.shields.io/github/license/anncwb/vue-vben-admin.svg)](LICENSE)
+[![license](https://img.shields.io/github/license/blackstar-baba/fatherbox.svg)](LICENSE)
 
-<h1>Vue Vben Admin</h1>
+<h1>FatherBox</h1>
 </div>
 
 **English** | [中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
 ## Introduction
 
-Vue Vben Admin is a free and open source middle and back-end template. Using the latest `vue3`, `vite`, `TypeScript` and other mainstream technology development, the out-of-the-box middle and back-end front-end solutions can also be used for learning reference.
-
-## Upgrade Notice
-
-This is the latest version, 5.0, and it is not compatible with previous versions. If you are starting a new project, it is recommended to use the latest version. If you wish to view the old version, please use the [v2 branch](https://github.com/vbenjs/vue-vben-admin/tree/v2).
+FatherBox is an open-source, free utility app built using Vben & Tauri technology. Designed to enhance user productivity, it offers a range of tools and features to streamline your workflow efficiently.
 
 ## Feature
 
-- **Latest Technology Stack**: Developed with cutting-edge front-end technologies like Vue 3 and Vite
-- **TypeScript**: A language for application-scale JavaScript
-- **Themes**: Multiple theme colors available with customizable options
-- **Internationalization**: Comprehensive built-in internationalization support
-- **Permissions**: Built-in solution for dynamic route-based permission generation
-
 ## Preview
-
-- [Vben Admin](https://vben.pro/) - Full version Chinese site
-
-Test Account: vben/123456
-
-<p align="center">
-    <img alt="VbenAdmin Logo" width="100%" src="https://anncwb.github.io/anncwb/images/preview1.png">
-    <img alt="VbenAdmin Logo" width="100%" src="https://anncwb.github.io/anncwb/images/preview2.png">
-    <img alt="VbenAdmin Logo" width="100%" src="https://anncwb.github.io/anncwb/images/preview3.png">
-</p>
 
 ### Use Gitpod
 
 Open the project in Gitpod (free online dev environment for GitHub) and start coding immediately.
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/vbenjs/vue-vben-admin)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/blackstar-baba/fatherbox)
 
 ## Documentation
 
-[Document](https://doc.vben.pro/)
+Sorry, no yet.
 
 ## Install and use
 
 - Get the project code
 
 ```bash
-git clone https://github.com/vbenjs/vue-vben-admin.git
+git clone https://github.com/blackstar-baba/fatherbox.git
 ```
 
 - Installation dependencies
 
-```bash
-cd vue-vben-admin
-
-corepack enable
-
-pnpm install
-```
+  - Rust 1.78.0+
+  - Node.js v16.13+
+  - Tauri v1
 
 - run
 
 ```bash
-pnpm dev
+cargo tauri dev
 ```
 
 - build
 
 ```bash
-pnpm build
+cargo tauri build
 ```
 
 ## Change Log
 
-[CHANGELOG](./CHANGELOG.zh_CN.md)
-
 ## How to contribute
 
-You are very welcome to join！[Raise an issue](https://github.com/anncwb/vue-vben-admin/issues/new/choose) Or submit a Pull Request。
+You are very welcome to join！[Raise an issue](https://github.com/blackstar-baba/fatherbox/issues/new/choose) Or submit a Pull Request。
 
 **Pull Request:**
 
@@ -120,27 +94,19 @@ Support modern browsers, not IE
 
 ## Maintainer
 
-[@Vben](https://github.com/anncwb)
+[@blackstar-baba](https://github.com/blackstar-baba)
 
 ## Donate
 
 If you think this project is helpful to you, you can help the author buy a cup of coffee to show your support!
 
-![donate](https://unpkg.com/@vbenjs/static-source@0.1.6/source/sponsor.png)
-
-<a style="display: block;width: 100px;height: 50px;line-height: 50px; color: #fff;text-align: center; background: #408aed;border-radius: 4px;" href="https://www.paypal.com/paypalme/cvvben">Paypal Me</a>
-
 ## Contributor
-
-<a href="https://github.com/vbenjs/vue-vben-admin/graphs/contributors">
-  <img alt="Contributors"
-        src="https://opencollective.com/vbenjs/contributors.svg?button=false" />
-</a>
 
 ## Discord
 
-- [Github Discussions](https://github.com/anncwb/vue-vben-admin/discussions)
+- [Github Discussions](https://github.com/blackstar-baba/fatherbox/discussions)
 
 ## License
 
-[MIT © Vben-2020](./LICENSE)
+- [MIT © blackstar-baba-2024](./LICENSE)
+- This project includes code from the [vue-vben-admin](https://github.com/vbenjs/vue-vben-admin), licensed under the MIT License.
