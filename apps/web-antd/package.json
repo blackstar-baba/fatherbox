@@ -51,8 +51,8 @@
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
+    "@tauri-apps/api": "^1.5.4",
     "@types/crypto-js": "^4.2.2",
-    "@types/uuid": "^10.0.0",
-    "@tauri-apps/api": "^1.5.4"
+    "@types/uuid": "^10.0.0"
   }
 }

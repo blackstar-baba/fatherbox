@@ -16,3 +16,6 @@ CODEOWNERS
 public
 .npmrc
 *-lock.yaml
+
+src-tauri
+src/tauri/target
