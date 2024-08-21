@@ -188,7 +188,7 @@ function copyNullUuid() {
               class="w-85"
               placeholder="6ec0bd7f-11c0-43da-975e-2a8ad9ebae0b"
             />
-            <Button class="ml-2" type="success" @click="validate">
+            <Button class="ml-2" type="primary" @click="validate">
               <template #icon>
                 <CheckOutlined />
               </template>

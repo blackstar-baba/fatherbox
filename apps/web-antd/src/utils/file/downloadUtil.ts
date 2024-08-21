@@ -33,6 +33,9 @@ export function downloadByBase64(
   bom?: BlobPart,
 ) {
   const base64Buf = dataURLtoBlob(buf);
+  if (!base64Buf) {
+    return;
+  }
   downloadByData(base64Buf, filename, mime, bom);
 }
 

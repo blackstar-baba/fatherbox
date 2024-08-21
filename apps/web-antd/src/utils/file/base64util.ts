@@ -4,11 +4,20 @@
 // todo
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable unicorn/prefer-code-point */
-export function dataURLtoBlob(base64Buf: string): Blob {
+export function dataURLtoBlob(base64Buf: string): Blob | undefined {
   const arr = base64Buf.split(',');
   const typeItem = arr[0];
+  if (!typeItem) {
+    return undefined;
+  }
   const mime = typeItem.match(/:(.*?);/)![1];
+  if (!mime) {
+    return undefined;
+  }
   const dataItem = arr[1];
+  if (!dataItem) {
+    return undefined;
+  }
   const bstr = window.atob(dataItem);
   let n = bstr.length;
   const u8arr = new Uint8Array(n);
