@@ -38,5 +38,9 @@ export async function loginApi(data: AuthApi.LoginParams) {
  * 获取用户权限码
  */
 export async function getAccessCodesApi() {
-  return requestClient.get<string[]>('/auth/codes');
+  return window.__TAURI__
+    ? invoke('get_access_codes_cmd', {}).then((message: any) => {
+        return message as string[];
+      })
+    : requestClient.get<string[]>('/auth/codes');
 }

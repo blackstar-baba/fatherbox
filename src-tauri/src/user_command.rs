@@ -43,6 +43,11 @@ pub async fn get_user_info_cmd(state: State<'_, AppState>) -> Result<UserInfo, (
     get_user_info(&state.conn).await
 }
 
+#[tauri::command]
+pub async fn get_access_codes_cmd(state: State<'_, AppState>) -> Result<Vec<String>, ()> {
+    get_access_codes(&state.conn).await
+}
+
 async fn user_login(
     db: &DatabaseConnection,
     username: &str,
@@ -73,12 +78,17 @@ async fn get_user_info(db: &DatabaseConnection) -> Result<UserInfo, ()> {
     return Ok(result);
 }
 
+async fn get_access_codes(db: &DatabaseConnection) -> Result<Vec<String>,()> {
+    let codes = vec!["AC_100100".to_owned(), "AC_100110".to_owned(), "AC_100120".to_owned(), "AC_100010".to_owned()];
+    return Ok(codes);
+}
+
 #[cfg(test)]
 mod tests {
     use std::env::temp_dir;
 
     use crate::db_utils::{drop_database_file, exist_database_file, init_connection};
-    use crate::user_command::{get_user_info, user_login};
+    use crate::user_command::{get_access_codes, get_user_info, user_login};
 
     #[tokio::test]
     async fn test_user_login() {
@@ -96,5 +106,8 @@ mod tests {
         let get_user_info_result = get_user_info(&db).await.unwrap();
         assert_eq!("fatherbox", get_user_info_result.username);
         assert_eq!("0", get_user_info_result.id);
+
+        let access_codes = get_access_codes(&db).await.unwrap();
+        assert_eq!("AC_100100", access_codes[0]);
     }
 }

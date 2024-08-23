@@ -33,7 +33,7 @@ use app::{
     DEFAULT_WORKSPACE, DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH,
     WORKSPACE_PATH,
 };
-use crate::user_command::{get_user_info_cmd, user_login_cmd};
+use crate::user_command::{get_access_codes_cmd, get_user_info_cmd, user_login_cmd};
 
 mod db_utils;
 mod file_command;
@@ -196,6 +196,7 @@ async fn main() {
             my_custom_command,
             user_login_cmd,
             get_user_info_cmd,
+            get_access_codes_cmd,
             list_workspaces_cmd,
             create_workspace_cmd,
             delete_workspace_cmd,
