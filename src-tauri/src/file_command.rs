@@ -1,7 +1,6 @@
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 use std::time::SystemTime;
 
@@ -409,7 +408,7 @@ fn get_file_entry(
                         .unwrap()
                         .as_millis();
 
-                    size = metadata.size();
+                    size = metadata.len();
                 }
                 // let entry_path = entry.path();
                 // if file_type == "file" {
