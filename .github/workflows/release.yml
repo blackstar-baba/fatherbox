@@ -2,8 +2,15 @@ name: 'publish'
 
 on:
   push:
-    branches:
-      - release
+    tags:
+      - "v*.*.*" # Push events to matching v*, i.e. v1.0, v20.15.10
+
+env:
+  HUSKY: "0"
+
+permissions:
+  pull-requests: write
+  contents: write
 
 jobs:
   publish-tauri:
@@ -50,9 +57,8 @@ jobs:
 
       - name: install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
-        run:
-          - corepack enable
-          - pnpm install # change this to npm or pnpm depending on which one you use.
+        run: |
+          pnpm install # change this to npm or pnpm depending on which one you use.
 
       - uses: tauri-apps/tauri-action@v0
         env:
