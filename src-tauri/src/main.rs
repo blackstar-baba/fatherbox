@@ -2,7 +2,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::fs::File;
-use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::time::SystemTime;
@@ -22,6 +21,7 @@ use crate::file_command::{
     update_workspace_dir_cmd, update_workspace_file_cmd,
 };
 use crate::model_command::ollama_get_models_cmd;
+use crate::user_command::{get_access_codes_cmd, get_user_info_cmd, user_login_cmd};
 use crate::workspace_command::{
     create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner,
     list_workspaces_cmd,
@@ -33,13 +33,12 @@ use app::{
     DEFAULT_WORKSPACE, DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH,
     WORKSPACE_PATH,
 };
-use crate::user_command::{get_access_codes_cmd, get_user_info_cmd, user_login_cmd};
 
 mod db_utils;
 mod file_command;
 mod model_command;
-mod workspace_command;
 mod user_command;
+mod workspace_command;
 
 static DEFAULT_CONFIG: &str = include_str!("../config.toml");
 
