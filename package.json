@@ -33,7 +33,7 @@
     "clean": "vsh clean",
     "commit": "czg",
     "dev": "turbo-run dev",
-    "dev:antd": "pnpm -F @fatherbox/fb-web run dev",
+    "dev:fb": "pnpm -F @fatherbox/fb-web run dev",
     "format": "vsh lint --format",
     "lint": "vsh lint",
     "postinstall": "turbo run stub",
