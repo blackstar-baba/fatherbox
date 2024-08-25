@@ -122,7 +122,7 @@ importers:
         specifier: ^2.9.7
         version: 2.9.7(encoding@0.1.13)
 
-  apps/web-antd:
+  apps/fb-web:
     dependencies:
       '@ant-design/icons-vue':
         specifier: ^7.0.1

@@ -1,9 +1,9 @@
 {
   "build": {
     "beforeBuildCommand": "pnpm run build",
-    "beforeDevCommand": "pnpm -F @vben/web-antd run dev",
+    "beforeDevCommand": "pnpm -F @fatherbox/fb-web run dev",
     "devPath": "http://localhost:5666",
-    "distDir": "../apps/web-antd/dist"
+    "distDir": "../apps/fb-web/dist"
   },
   "package": {
     "productName": "fatherbox",

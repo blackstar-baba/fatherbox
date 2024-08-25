@@ -1,5 +1,5 @@
 {
-  "name": "fatherbox-fe",
+  "name": "fatherbox",
   "version": "0.0.1",
   "private": true,
   "keywords": [
@@ -33,11 +33,7 @@
     "clean": "vsh clean",
     "commit": "czg",
     "dev": "turbo-run dev",
-    "dev:antd": "pnpm -F @vben/web-antd run dev",
-    "dev:docs": "pnpm -F @vben/docs run dev",
-    "dev:ele": "pnpm -F @vben/web-ele run dev",
-    "dev:play": "pnpm -F @vben/playground run dev",
-    "dev:naive": "pnpm -F @vben/web-naive run dev",
+    "dev:antd": "pnpm -F @fatherbox/fb-web run dev",
     "format": "vsh lint --format",
     "lint": "vsh lint",
     "postinstall": "turbo run stub",
