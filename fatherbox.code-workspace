@@ -5,8 +5,8 @@
       "path": "apps/backend-mock",
     },
     {
-      "name": "@vben/web-antd",
-      "path": "apps/web-antd",
+      "name": "@fatherbox/fb-web",
+      "path": "apps/fb-web",
     },
     {
       "name": "@vben/commitlint-config",

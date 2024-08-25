@@ -1,18 +1,18 @@
 {
-  "name": "@vben/web-antd",
-  "version": "5.1.0",
-  "homepage": "https://vben.pro",
-  "bugs": "https://github.com/vbenjs/vue-vben-admin/issues",
+  "name": "@fatherbox/fb-web",
+  "version": "0.0.1",
+  "homepage": "https://github.com/blackstar-baba/fatherbox",
+  "bugs": "https://github.com/blackstar-baba/fatherbox/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vbenjs/vue-vben-admin.git",
-    "directory": "apps/web-antd"
+    "url": "git+https://github.com/blackstar-baba/fatherbox.git",
+    "directory": "apps/fb-web"
   },
   "license": "MIT",
   "author": {
-    "name": "vben",
-    "email": "ann.vben@gmail.com",
-    "url": "https://github.com/anncwb"
+    "name": "blackstar-baba",
+    "email": "535650957@qq.com",
+    "url": "https://github.com/blackstar-baba"
   },
   "type": "module",
   "scripts": {
