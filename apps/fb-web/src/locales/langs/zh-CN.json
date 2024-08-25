@@ -1,5 +1,12 @@
 {
   "page": {
+    "dashboard":{
+      "dashboard": "仪表盘",
+      "welcome": "欢迎",
+      "day": "开启美好的一天!",
+      "quicknav": "快速导航",
+      "todo": "待办事项"
+    },
     "demos": {
       "title": "演示",
       "antd": "Ant Design Vue"

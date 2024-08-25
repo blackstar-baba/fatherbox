@@ -20,7 +20,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/tools/time-parser/index.vue'),
         meta: {
           affixTab: true,
-          // icon: 'lucide:area-chart',
+          icon: 'lucide:timer',
           title: $t('page.tools.time-parser'),
         },
       },
@@ -30,6 +30,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/tools/json-formatter/index.vue'),
         meta: {
           // affix: true,
+          icon: 'lucide:file-json',
           title: $t('page.tools.json-formatter'),
         },
       },
@@ -39,6 +40,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/tools/uuid-generator/index.vue'),
         meta: {
           // affix: true,
+          icon: 'lucide:key-round',
           title: $t('page.tools.uuid-generator'),
         },
       },
@@ -48,6 +50,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/tools/encryptor/index.vue'),
         meta: {
           // affix: true,
+          icon: 'mdi:encryption-outline',
           title: $t('page.tools.encryptor'),
         },
       },

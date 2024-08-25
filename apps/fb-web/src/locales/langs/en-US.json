@@ -1,5 +1,12 @@
 {
   "page": {
+    "dashboard":{
+      "dashboard": "Dashboard",
+      "welcome": "Welcome",
+      "day": "have a nice day!",
+      "quicknav": "Quick Nav",
+      "todo": "Todo"
+    },
     "demos": {
       "title": "Demos",
       "antd": "Ant Design Vue"
