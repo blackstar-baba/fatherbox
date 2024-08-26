@@ -15,21 +15,13 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     children: [
       {
-        name: 'Analytics',
-        path: '/analytics',
-        component: () => import('#/views/dashboard/analytics/index.vue'),
+        name: 'Dashboard',
+        path: '/dashboard',
+        component: () => import('#/views/dashboard/dashboard/index.vue'),
         meta: {
           affixTab: true,
-          icon: 'lucide:area-chart',
-          title: $t('page.dashboard.analytics'),
-        },
-      },
-      {
-        name: 'Workspace',
-        path: '/workspace',
-        component: () => import('#/views/dashboard/workspace/index.vue'),
-        meta: {
-          title: $t('page.dashboard.workspace'),
+          icon: 'lucide:layout-dashboard',
+          title: $t('page.dashboard.dashboard'),
         },
       },
     ],
