@@ -19,7 +19,8 @@
       "json-formatter": "JsonFormatter",
       "uuid-generator": "UuidGenerator",
       "encryptor": "Encryptor",
-      "image-editor": "ImageEditor"
+      "image-editor": "ImageEditor",
+      "reg-exp": "RegExp"
     }
   }
 }

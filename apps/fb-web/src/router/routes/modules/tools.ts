@@ -54,6 +54,16 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.tools.encryptor'),
         },
       },
+      {
+        name: 'RegularExpression',
+        path: 'reg-exp',
+        component: () => import('#/views/tools/reg-exp/index.vue'),
+        meta: {
+          // affix: true,
+          icon: 'lucide:regex',
+          title: $t('page.tools.reg-exp'),
+        },
+      },
     ],
   },
 ];
