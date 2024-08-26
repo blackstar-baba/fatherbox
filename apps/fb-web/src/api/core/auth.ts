@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/tauri';
 
-import { requestClient } from '#/api/request';
+import { baseRequestClient, requestClient } from '#/api/request';
 
 export namespace AuthApi {
   /** 登录接口参数 */
@@ -14,9 +14,13 @@ export namespace AuthApi {
     accessToken: string;
     desc: string;
     realName: string;
-    refreshToken: string;
     userId: string;
     username: string;
+  }
+
+  export interface RefreshTokenResult {
+    data: string;
+    status: number;
   }
 }
 
@@ -32,6 +36,31 @@ export async function loginApi(data: AuthApi.LoginParams) {
         return message as AuthApi.LoginResult;
       })
     : requestClient.post<AuthApi.LoginResult>('/auth/login', data);
+}
+
+/**
+ * 刷新accessToken
+ */
+export async function refreshTokenApi() {
+  return window.__TAURI__
+    ? invoke('refresh_token_cmd', {}).then((message: any) => {
+        return message as AuthApi.RefreshTokenResult;
+      })
+    : baseRequestClient.post<AuthApi.RefreshTokenResult>('/auth/refresh', {
+        withCredentials: true,
+      });
+}
+
+/**
+ * 退出登录
+ */
+export async function logoutApi() {
+  // todo
+  return window.__TAURI__
+    ? new Promise((resolve) => {
+        resolve('');
+      })
+    : requestClient.post('/auth/logout');
 }
 
 /**

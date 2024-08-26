@@ -1,10 +1,18 @@
-export const MOCK_USERS = [
+export interface UserInfo {
+  id: number;
+  password: string;
+  realName: string;
+  roles: string[];
+  username: string;
+}
+
+export const MOCK_USERS: UserInfo[] = [
   {
     id: 0,
     password: '123456',
-    realName: 'LocalUser',
+    realName: 'Vben',
     roles: ['super'],
-    username: 'fatherbox',
+    username: 'vben',
   },
   {
     id: 1,
@@ -163,10 +171,6 @@ const createDemosMenus = (role: 'admin' | 'super' | 'user') => {
 };
 
 export const MOCK_MENUS = [
-  {
-    menus: [...dashboardMenus, ...createDemosMenus('super')],
-    username: 'fatherbox',
-  },
   {
     menus: [...dashboardMenus, ...createDemosMenus('super')],
     username: 'vben',

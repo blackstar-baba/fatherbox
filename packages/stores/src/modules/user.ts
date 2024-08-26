@@ -6,6 +6,10 @@ interface BasicUserInfo {
    */
   avatar: string;
   /**
+   *
+   */
+  mail?: string;
+  /**
    * 用户昵称
    */
   realName: string;

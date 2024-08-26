@@ -13,9 +13,9 @@ pub struct LoginResult {
     access_token: String,
     desc: String,
     real_name: String,
-    refresh_token: String,
     user_id: String,
     username: String,
+    mail: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
@@ -27,6 +27,14 @@ pub struct UserInfo {
     roles: Vec<String>,
     username: String,
     avatar: String,
+    mail: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct RefreshTokenResult {
+    data: String,
+    status: i8,
 }
 
 #[tauri::command]
@@ -48,20 +56,27 @@ pub async fn get_access_codes_cmd(state: State<'_, AppState>) -> Result<Vec<Stri
     get_access_codes(&state.conn).await
 }
 
+#[tauri::command]
+pub async fn refresh_token_cmd(
+    state: State<'_, AppState>,
+    access_token: String,
+) -> Result<RefreshTokenResult, ()> {
+    refresh_token(&state.conn, &access_token).await
+}
+
 async fn user_login(
     db: &DatabaseConnection,
     username: &str,
     password: &str,
 ) -> Result<LoginResult, ()> {
     let access_token = BASE64_STANDARD.encode(username);
-    let refresh_token = access_token.clone();
     let result = LoginResult {
         access_token,
         desc: "".to_owned(),
         real_name: "local user".to_owned(),
-        refresh_token,
         user_id: "0".to_owned(),
         username: username.to_owned(),
+        mail: "535650957@qq.com".to_string(),
     };
     return Ok(result);
 }
@@ -74,9 +89,19 @@ async fn get_user_info(db: &DatabaseConnection) -> Result<UserInfo, ()> {
         username: "fatherbox".to_owned(),
         roles: vec!["super".to_owned()],
         avatar: "/avatar.svg".to_string(),
+        mail: "535650957@qq.com".to_string(),
     };
     return Ok(result);
 }
+
+async fn refresh_token(db: &DatabaseConnection, access_token: &str) -> Result<RefreshTokenResult, ()> {
+    return Ok(RefreshTokenResult{
+        data: access_token.to_owned(),
+        status: 0,
+    })
+}
+
+
 
 async fn get_access_codes(db: &DatabaseConnection) -> Result<Vec<String>,()> {
     let codes = vec!["AC_100100".to_owned(), "AC_100110".to_owned(), "AC_100120".to_owned(), "AC_100010".to_owned()];

@@ -21,7 +21,7 @@ use crate::file_command::{
     update_workspace_dir_cmd, update_workspace_file_cmd,
 };
 use crate::model_command::ollama_get_models_cmd;
-use crate::user_command::{get_access_codes_cmd, get_user_info_cmd, user_login_cmd};
+use crate::user_command::{get_access_codes_cmd, get_user_info_cmd, refresh_token_cmd, user_login_cmd};
 use crate::workspace_command::{
     create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner,
     list_workspaces_cmd,
@@ -194,6 +194,7 @@ async fn main() {
         .invoke_handler(tauri::generate_handler![
             my_custom_command,
             user_login_cmd,
+            refresh_token_cmd,
             get_user_info_cmd,
             get_access_codes_cmd,
             list_workspaces_cmd,
