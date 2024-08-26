@@ -1,11 +1,11 @@
 {
   "page": {
-    "dashboard":{
+    "dashboard": {
       "dashboard": "Dashboard",
-      "welcome": "Welcome",
       "day": "have a nice day!",
       "quicknav": "Quick Nav",
-      "todo": "Todo"
+      "todo": "Todo",
+      "welcome": "Welcome"
     },
     "demos": {
       "title": "Demos",
