@@ -17,15 +17,13 @@ import {
   Textarea,
 } from 'ant-design-vue';
 
-const text1 = ref<string>('');
-const text2 = ref<string>('');
+const exp = ref<string>('');
 const template = ref<string>('');
+const flag = ref<string[]>(['g']);
+const text = ref<string>('');
+const maxFlagCount = ref(2);
 
 const templates = ref<SelectProps['options']>([
-  {
-    label: 'template',
-    value: '',
-  },
   {
     label: 'number',
     value: '[0-9]+',
@@ -37,6 +35,33 @@ const templates = ref<SelectProps['options']>([
   {
     label: 'chinese',
     value: String.raw`[\u4e00-\u9fa5]`,
+  },
+]);
+
+const flags = ref<SelectProps['options']>([
+  {
+    label: 'global',
+    value: 'g',
+  },
+  {
+    label: 'ignore case',
+    value: 'i',
+  },
+  {
+    label: 'multiline',
+    value: 'm',
+  },
+  {
+    label: 'dotAll',
+    value: 'd',
+  },
+  {
+    label: 'unicode',
+    value: 'u',
+  },
+  {
+    label: 'sticky',
+    value: 'y',
   },
 ]);
 
@@ -55,19 +80,23 @@ const resultColumns = [
   },
 ];
 
-const handleTemplateChange: SelectProps['onChange'] = (value) => {
-  text1.value = value ? value.toString() : '';
-};
-
 function validate() {
   result.value = [];
-  let exp = new RegExp(text1.value);
+  if (!exp.value) {
+    message.error('expression is null');
+    return;
+  }
+  if (!text.value) {
+    message.error('text is null');
+    return;
+  }
+  let regExp = new RegExp(exp.value, flag.value.join(''));
   // Make sure the regex has the global flag set to find all matches
-  if (!exp.global) {
-    exp = new RegExp(exp.source, `${exp.flags}g`);
+  if (!regExp.global) {
+    regExp = new RegExp(regExp.source, `${regExp.flags}g`);
   }
   // Use matchAll to iterate through all matches and get their indices
-  for (const matchResult of text2.value.matchAll(exp)) {
+  for (const matchResult of text.value.matchAll(regExp)) {
     result.value.push({
       index: matchResult.index!,
       matched: matchResult[0],
@@ -75,12 +104,16 @@ function validate() {
   }
 }
 
+const handleTemplateSelect: SelectProps['onChange'] = (value) => {
+  exp.value = value ? value.toString() : '';
+};
+
 function copyRegExp() {
-  copy(text1.value);
+  copy(exp.value);
 }
 
 function copyText() {
-  copy(text2.value);
+  copy(text.value);
 }
 
 function copy(value: any) {
@@ -95,6 +128,7 @@ function copy(value: any) {
   message.success('copy success');
 }
 </script>
+
 <template>
   <Page
     description="Help for Testing & Creating Regular Expression"
@@ -110,7 +144,16 @@ function copy(value: any) {
               v-model:value="template"
               :options="templates"
               class="ml-2 w-36"
-              @change="handleTemplateChange"
+              placeholder="template"
+              @select="handleTemplateSelect"
+            />
+            <Select
+              v-model:value="flag"
+              :max-tag-count="maxFlagCount"
+              :options="flags"
+              class="ml-2 w-80"
+              mode="multiple"
+              placeholder="flag"
             />
             <Button class="ml-2" @click="copyRegExp()">
               <template #icon>
@@ -120,10 +163,10 @@ function copy(value: any) {
             </Button>
           </div>
           <Textarea
-            v-model:value="text1"
+            v-model:value="exp"
             :maxlength="1000"
             :rows="3"
-            placeholder="fatherbox"
+            placeholder="FatherBox"
             show-count
           />
           <div class="py-2">
@@ -137,10 +180,10 @@ function copy(value: any) {
             </Button>
           </div>
           <Textarea
-            v-model:value="text2"
+            v-model:value="text"
             :maxlength="1000"
             :rows="3"
-            placeholder="fatherbox coming"
+            placeholder="I Love FatherBox"
             show-count
           />
           <div class="py-4">
