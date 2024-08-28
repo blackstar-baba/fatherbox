@@ -19,7 +19,8 @@
       "json-formatter": "Json格式化",
       "uuid-generator": "Uuid生成",
       "encryptor": "加密器",
-      "image-editor": "图片编辑器"
+      "image-editor": "图片编辑器",
+      "reg-exp": "正则表达式"
     }
   }
 }

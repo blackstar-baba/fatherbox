@@ -35,6 +35,11 @@ const quickNavItems: WorkbenchQuickNavItem[] = [
     icon: 'mdi:encryption-outline',
     title: 'Encryptor',
   },
+  {
+    color: '#00d8ff',
+    icon: 'lucide:regex',
+    title: 'RegExp',
+  },
 ];
 
 const todoItems = ref<WorkbenchTodoItem[]>([
