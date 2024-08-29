@@ -8,20 +8,19 @@ import { CopyOutlined, ExpandOutlined } from '@ant-design/icons-vue';
 import {
   Button,
   Card,
-  Col,
+  CheckboxGroup,
+  Input,
   message,
-  Row,
   Select,
   type SelectProps,
   Table,
   Textarea,
 } from 'ant-design-vue';
 
-const exp = ref<string>('');
-const template = ref<string>('');
+const exp = ref<string>('FatherBox');
+const template = ref<string>();
 const flag = ref<string[]>(['g']);
-const text = ref<string>('');
-const maxFlagCount = ref(2);
+const text = ref<string>('I Love FatherBox');
 
 const templates = ref<SelectProps['options']>([
   {
@@ -38,7 +37,7 @@ const templates = ref<SelectProps['options']>([
   },
 ]);
 
-const flags = ref<SelectProps['options']>([
+const flags = [
   {
     label: 'global',
     value: 'g',
@@ -63,7 +62,7 @@ const flags = ref<SelectProps['options']>([
     label: 'sticky',
     value: 'y',
   },
-]);
+];
 
 const result = ref<any[]>();
 
@@ -134,69 +133,54 @@ function copy(value: any) {
     description="Help for Testing & Creating Regular Expression"
     title="RegExp"
   >
-    <Row :gutter="16">
-      <Col :span="24">
-        <Card :bordered="false">
-          <div class="py-2">
-            <span>Regular Expression</span>
-            <LucideInfo class="ml-1 inline size-4" />
-            <Select
-              v-model:value="template"
-              :options="templates"
-              class="ml-2 w-36"
-              placeholder="template"
-              @select="handleTemplateSelect"
-            />
-            <Select
-              v-model:value="flag"
-              :max-tag-count="maxFlagCount"
-              :options="flags"
-              class="ml-2 w-80"
-              mode="multiple"
-              placeholder="flag"
-            />
-            <Button class="ml-2" @click="copyRegExp()">
-              <template #icon>
-                <CopyOutlined />
-              </template>
-              copy
-            </Button>
-          </div>
-          <Textarea
-            v-model:value="exp"
-            :maxlength="1000"
-            :rows="3"
-            placeholder="FatherBox"
-            show-count
-          />
-          <div class="py-2">
-            <span>Text</span>
-            <LucideInfo class="ml-1 inline size-4" />
-            <Button class="ml-2" @click="copyText()">
-              <template #icon>
-                <CopyOutlined />
-              </template>
-              copy
-            </Button>
-          </div>
-          <Textarea
-            v-model:value="text"
-            :maxlength="1000"
-            :rows="3"
-            placeholder="I Love FatherBox"
-            show-count
-          />
-          <div class="py-4">
-            <Button type="primary" @click="validate()">
-              <template #icon>
-                <ExpandOutlined />
-              </template>
-              validate
-            </Button>
-          </div>
-          <Table :columns="resultColumns" :data-source="result" />
-        </Card>
-      </Col>
-    </Row>
+    <Card :bordered="false">
+      <div class="pb-2">
+        <span>Regular Expression</span>
+        <LucideInfo class="ml-1 inline size-4" />
+        <Select
+          v-model:value="template"
+          :options="templates"
+          class="ml-2 w-36"
+          placeholder="template"
+          @select="handleTemplateSelect"
+        />
+        <CheckboxGroup v-model:value="flag" :options="flags" class="ml-2" />
+      </div>
+      <div class="pb-2">
+        <Input v-model:value="exp" class="w-8/12" placeholder="FatherBox" />
+        <Button class="ml-2" @click="copyRegExp()">
+          <template #icon>
+            <CopyOutlined />
+          </template>
+          copy
+        </Button>
+      </div>
+      <div class="py-2">
+        <span>Text</span>
+        <LucideInfo class="ml-1 inline size-4" />
+        <Button class="ml-2" @click="copyText()">
+          <template #icon>
+            <CopyOutlined />
+          </template>
+          copy
+        </Button>
+      </div>
+      <Textarea
+        v-model:value="text"
+        :maxlength="1000"
+        :rows="3"
+        placeholder="I Love FatherBox"
+        show-count
+      />
+      <div class="py-4">
+        <Button type="primary" @click="validate()">
+          <template #icon>
+            <ExpandOutlined />
+          </template>
+          validate
+        </Button>
+      </div>
+      <Table :columns="resultColumns" :data-source="result" />
+    </Card>
   </Page>
 </template>
