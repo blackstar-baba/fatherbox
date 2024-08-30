@@ -1,4 +1,4 @@
-name-template: "v$RESOLVED_VERSION"
+name-template: "FatherBox v$RESOLVED_VERSION"
 tag-template: "v$RESOLVED_VERSION"
 version-template: $MAJOR.$MINOR.$PATCH
 change-template: "* $TITLE (#$NUMBER) @$AUTHOR"
