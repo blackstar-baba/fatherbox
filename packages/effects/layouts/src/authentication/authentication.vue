@@ -5,7 +5,6 @@ import { $t } from '@vben/locales';
 import { preferences, usePreferences } from '@vben/preferences';
 
 import AuthenticationFormView from './form.vue';
-import SloganIcon from './icons/slogan.vue';
 import Toolbar from './toolbar.vue';
 
 interface Props {
@@ -19,9 +18,9 @@ interface Props {
 defineOptions({ name: 'Authentication' });
 
 withDefaults(defineProps<Props>(), {
-  pageDescription: '',
-  pageTitle: '',
-  sloganImage: '',
+  pageDescription: 'enjoy yourself',
+  pageTitle: 'Full-featured Toolbox',
+  sloganImage: '/fatherbox.png',
   toolbar: true,
   toolbarList: () => ['color', 'language', 'layout', 'theme'],
 });
@@ -63,13 +62,8 @@ const logoSource = computed(() => preferences.logo.source);
         <div class="login-background absolute left-0 top-0 size-full"></div>
         <div class="flex-col-center -enter-x mr-20 h-full">
           <template v-if="sloganImage">
-            <img
-              :alt="appName"
-              :src="sloganImage"
-              class="animate-float h-64 w-2/5"
-            />
+            <img :alt="appName" :src="sloganImage" class="h-250 w-2/5" />
           </template>
-          <SloganIcon v-else :alt="appName" class="animate-float h-64 w-2/5" />
           <div class="text-1xl mt-6 font-sans text-white lg:text-2xl">
             {{ pageTitle || $t('authentication.pageTitle') }}
           </div>
