@@ -1,5 +1,9 @@
 {
   "page": {
+    "ai": {
+      "title": "AI",
+      "remote": "Remote"
+    },
     "dashboard": {
       "dashboard": "Dashboard",
       "day": "have a nice day!",
