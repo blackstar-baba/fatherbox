@@ -1,5 +1,9 @@
 {
   "page": {
+    "ai": {
+      "title": "AI",
+      "remote": "远程"
+    },
     "dashboard": {
       "dashboard": "仪表盘",
       "day": "开启美好的一天!",
