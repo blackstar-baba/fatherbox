@@ -270,7 +270,7 @@ const data: DataItem[] = [
             <ListItemMeta :description="item.description">
               <template #title>
                 <span class="underline">
-                  <a :href="item.url">{{ item.title }}</a>
+                  <a :href="item.url" target="_blank">{{ item.title }}</a>
                 </span>
               </template>
               <template #avatar>
