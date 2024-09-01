@@ -2,7 +2,8 @@
   "page": {
     "ai": {
       "title": "AI",
-      "remote": "远程"
+      "remote": "远程",
+      "local": "本地"
     },
     "dashboard": {
       "dashboard": "仪表盘",
