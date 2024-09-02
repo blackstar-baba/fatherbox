@@ -30,7 +30,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/ai/local/index.vue'),
         meta: {
           affixTab: true,
-          icon: 'carbon:ai-launch',
+          icon: 'hugeicons:ai-chat-02',
           title: $t('page.ai.local'),
         },
       },
