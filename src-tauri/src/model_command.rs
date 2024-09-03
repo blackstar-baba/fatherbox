@@ -144,7 +144,7 @@ pub fn chat_files_request_cmd(
 }
 
 #[tauri::command]
-pub async fn ollama_get_models_cmd() -> Result<AppResponse<ModelData>, ()> {
+pub async fn get_models_cmd() -> Result<ModelData, ()> {
     let client = ClientBuilder::new().build().unwrap();
     let request = HttpRequestBuilder::new("GET", "http://localhost:11434/api/tags")
         .unwrap()
@@ -153,20 +153,10 @@ pub async fn ollama_get_models_cmd() -> Result<AppResponse<ModelData>, ()> {
         let data = response.read().await.unwrap().data;
         // println!("{}",data);
         let model_data: ModelData = serde_json::from_value(data).unwrap();
-        return Ok(AppResponse {
-            code: RESPONSE_CODE_SUCCESS,
-            r#type: "".to_string(),
-            message: "".to_string(),
-            result: model_data,
-        });
+        return Ok(model_data);
     }
     let model_data = ModelData { models: vec![] };
-    return Ok(AppResponse {
-        code: RESPONSE_CODE_SUCCESS,
-        r#type: "".to_string(),
-        message: "".to_string(),
-        result: model_data,
-    });
+    return Ok(model_data);
 }
 
 #[cfg(test)]

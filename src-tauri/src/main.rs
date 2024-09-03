@@ -20,7 +20,7 @@ use crate::file_command::{
     delete_workspace_file_cmd, list_workspace_dirs_cmd, list_workspace_files_cmd,
     update_workspace_dir_cmd, update_workspace_file_cmd,
 };
-use crate::model_command::{chat_files_request_cmd, chat_request_cmd, chat_stream_request_cmd, ollama_get_models_cmd};
+use crate::model_command::{chat_files_request_cmd, chat_request_cmd, chat_stream_request_cmd, get_models_cmd};
 use crate::user_command::{get_access_codes_cmd, get_user_info_cmd, refresh_token_cmd, user_login_cmd};
 use crate::workspace_command::{
     create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner,
@@ -207,7 +207,7 @@ async fn main() {
             update_workspace_dir_cmd,
             update_workspace_file_cmd,
             delete_workspace_file_cmd,
-            ollama_get_models_cmd,
+            get_models_cmd,
             chat_request_cmd,
             chat_stream_request_cmd,
             chat_files_request_cmd
