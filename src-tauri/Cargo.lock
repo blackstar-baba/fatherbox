@@ -161,6 +161,7 @@ dependencies = [
  "futures",
  "http-body-util",
  "log",
+ "reqwest",
  "sea-orm",
  "serde",
  "serde_json",
