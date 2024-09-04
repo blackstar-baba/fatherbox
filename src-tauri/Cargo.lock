@@ -161,6 +161,7 @@ dependencies = [
  "futures",
  "http-body-util",
  "log",
+ "once_cell",
  "reqwest",
  "sea-orm",
  "serde",

@@ -5,8 +5,14 @@ import { Page } from '@vben/common-ui';
 import { LucideInfo } from '@vben/icons';
 
 import { Card, Select, type SelectProps } from 'ant-design-vue';
+import { v4 as uuidv4 } from 'uuid';
 
-import { chatRequest, getModels } from '#/api/core/ai';
+import {
+  chatRequest,
+  getChatHistoryMessages,
+  getChats,
+  getModels,
+} from '#/api/core/ai';
 
 import 'deep-chat';
 
@@ -14,12 +20,13 @@ const models = ref<SelectProps['options']>([]);
 const model = ref('');
 const templates = ref<SelectProps['options']>([]);
 const template = ref('');
+const chats = ref<SelectProps['options']>([]);
+const chatId = ref('');
 const chatElementRef = ref<any>(null);
 
-const history = ref([
-  { role: 'user', text: 'Hey, how are you today?' },
-  { role: 'ai', text: 'I am doing very well!' },
-]);
+const history = ref([]);
+// { role: 'user', text: 'Hey, how are you today?' },
+// { role: 'ai', text: 'I am doing very well!' },
 
 const avatars = ref({
   ai: { src: '/logo.png', styles: { avatar: { marginLeft: '-3px' } } },
@@ -37,34 +44,71 @@ const style = ref({
   width: '1024px',
 });
 
+function getChatHistory(id: string) {
+  getChatHistoryMessages(id).then((data: any) => {
+    history.value = data;
+  });
+}
+
+function updateChats(id: string) {
+  getChats().then((data: any) => {
+    chats.value = [];
+    data.forEach((charInfo: any) => {
+      chats.value?.push({
+        label: charInfo.name,
+        value: charInfo.id,
+      });
+      chatId.value = id;
+    });
+  });
+}
+
 onMounted(() => {
+  // get chats
+  getChats().then((data: any) => {
+    chats.value = [];
+    chatId.value = '';
+    data.forEach((charInfo: any) => {
+      chats.value?.push({
+        label: charInfo.name,
+        value: charInfo.id,
+      });
+    });
+    if (chats.value.length > 0) {
+      chatId.value = chats.value[0]?.value;
+      getChatHistory(chatId.value);
+    }
+  });
+  // get models
   getModels().then((data: any) => {
     models.value = [];
     model.value = '';
     data.models.forEach((model: any) => {
-      models.value.push({
+      models.value?.push({
         label: model.name,
         value: model.name,
       });
     });
     if (models.value.length > 0) {
-      model.value = models.value[0].name;
+      model.value = models.value[0]?.value;
     }
   });
 
-  // Step 2: Access the chat component and set up the connect handler
   if (chatElementRef.value) {
     chatElementRef.value.connect = {
       handler: (body: any, signals: any) => {
         try {
-          // console.info(body);
-          // Example: Using fetch to get data from a server
-          // todo use stream to do this
-          // process error
+          // todo div auto scale
+          // default model if exist
+          const existChat: boolean = chatId.value !== '';
           body.model = model.value;
           body.stream = false;
+          body.id = existChat ? chatId.value : uuidv4();
           chatRequest(body)
             .then((data: any) => {
+              if (!existChat) {
+                updateChats(chatId.value);
+              }
               signals.onResponse({
                 text: data.text.toString() || 'Handler response',
               });

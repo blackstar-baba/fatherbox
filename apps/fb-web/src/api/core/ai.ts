@@ -26,6 +26,11 @@ export interface Model {
 export interface ModelData {
   models: Model[];
 }
+
+export interface ChatInfo {
+  id: string;
+  name: string;
+}
 /**
  * 获取用户信息
  */
@@ -53,6 +58,30 @@ export async function getModels() {
         const response: ModelData = {
           models: [],
         };
+        resolve(response);
+      });
+}
+
+export async function getChats() {
+  return window.__TAURI__
+    ? invoke('get_chats_cmd', {}).then((message: any) => {
+        return message as ChatInfo[];
+      })
+    : new Promise((resolve) => {
+        const response: ChatInfo[] = [];
+        resolve(response);
+      });
+}
+
+export async function getChatHistoryMessages(id: string) {
+  return window.__TAURI__
+    ? invoke('get_chat_history_messages_cmd', {
+        id,
+      }).then((message: any) => {
+        return message as DeepChatRequestMessage[];
+      })
+    : new Promise((resolve) => {
+        const response: DeepChatRequestMessage[] = [];
         resolve(response);
       });
 }
