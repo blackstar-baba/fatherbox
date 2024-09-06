@@ -183,14 +183,6 @@ async fn main() {
     }
 
     tauri::Builder::default()
-        .setup(|_app| {
-            // start api
-            let api_settings = config.api.unwrap();
-            let mut api = Api::new(api_settings);
-            let _api_handle = api.start().unwrap();
-            // Ok(api_handle.join().unwrap())
-            Ok(())
-        })
         .manage(AppState {
             conn: db,
             root_path: root_path.to_owned(),
