@@ -98,6 +98,8 @@ async fn main() {
         .with_env_filter(level)
         .init();
 
+    info!("Tracing level is {}", level);
+
     // init default path
     if home_dir().is_none() {
         error!("Home directory not found.");
