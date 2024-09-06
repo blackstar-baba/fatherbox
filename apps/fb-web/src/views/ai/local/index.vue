@@ -75,7 +75,7 @@ onMounted(() => {
       });
     });
     if (chats.value.length > 0) {
-      chatId.value = chats.value[0]?.value;
+      chatId.value = chats.value[0]?.value as string;
       getChatHistory(chatId.value);
     }
   });
@@ -90,7 +90,7 @@ onMounted(() => {
       });
     });
     if (models.value.length > 0) {
-      model.value = models.value[0]?.value;
+      model.value = models.value[0]?.value as string;
     }
   });
 

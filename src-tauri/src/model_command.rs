@@ -11,7 +11,7 @@ use log::{debug, error, info};
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::{Error, json};
+use serde_json::{json, Error};
 use tauri::api::http::{Body, ClientBuilder, HttpRequestBuilder, ResponseType};
 use tauri::Window;
 
@@ -72,30 +72,31 @@ pub struct OllamaMessage {
 pub struct OllamaResponse {
     model: String,
     created_at: String,
-    message:OllamaMessage,
+    message: OllamaMessage,
     done: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ChatInfo {
     id: String,
-    name: String
+    name: String,
 }
 
 static GLOBAL_CHATS: Lazy<RwLock<Box<Vec<ChatInfo>>>> = Lazy::new(|| {
-    let m= Box::new(vec![]);
+    let m = Box::new(vec![]);
     RwLock::new(m)
 });
 
-static GLOBAL_CHAT_MESSAGES: Lazy<RwLock<HashMap<String, Box<Vec<DeepChatRequestMessage>>>>> = Lazy::new(|| {
-    let m = HashMap::new();
-    RwLock::new(m)
-});
+static GLOBAL_CHAT_MESSAGES: Lazy<RwLock<HashMap<String, Box<Vec<DeepChatRequestMessage>>>>> =
+    Lazy::new(|| {
+        let m = HashMap::new();
+        RwLock::new(m)
+    });
 
 #[tauri::command]
 pub async fn get_chats_cmd() -> Result<Vec<ChatInfo>, ()> {
     // todo write chat info to database
-    let  vec = GLOBAL_CHATS.read().unwrap();
+    let vec = GLOBAL_CHATS.read().unwrap();
     Ok(*vec.clone())
 }
 
@@ -104,18 +105,14 @@ pub async fn get_chat_history_messages_cmd(id: String) -> Result<Vec<DeepChatReq
     // todo write chat messages to database
     let mut map = GLOBAL_CHAT_MESSAGES.read().unwrap();
     return match map.get(&id) {
-        None => {
-            Ok(vec![])
-        }
-        Some(messages) => {
-            Ok((**messages).clone())
-        }
+        None => Ok(vec![]),
+        Some(messages) => Ok((**messages).clone()),
     };
 }
 
 #[tauri::command]
 pub async fn chat_request_cmd(body: DeepChatRequestBody) -> Result<DeepChatTextResponse, ()> {
-    let history_messages = get_history_message(&body.id,&body.messages[0].text).unwrap();
+    let history_messages = get_history_message(&body.id, &body.messages[0].text).unwrap();
     // write message
     {
         let mut write_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
@@ -150,10 +147,10 @@ pub async fn chat_request_cmd(body: DeepChatRequestBody) -> Result<DeepChatTextR
         .unwrap()
         .response_type(ResponseType::Json)
         .body(Body::Json(serde_json::to_value(request).unwrap()));
-    debug!("request {:?}",request);
+    debug!("request {:?}", request);
     match client.send(request).await {
         Ok(response) => {
-            debug!("response {:?}",response);
+            debug!("response {:?}", response);
             match response.read().await {
                 Ok(response_data) => {
                     match serde_json::from_value::<OllamaResponse>(response_data.data) {
@@ -191,12 +188,12 @@ pub async fn chat_request_cmd(body: DeepChatRequestBody) -> Result<DeepChatTextR
     });
 }
 
-fn get_history_message(id: &str, name: &str) -> Result<Vec<DeepChatRequestMessage>, ()>{
+fn get_history_message(id: &str, name: &str) -> Result<Vec<DeepChatRequestMessage>, ()> {
     let exist = {
         let read_guard = GLOBAL_CHATS.read().unwrap();
         let mut exist = false;
         let chat_infos = read_guard.as_ref();
-        for chat_info in  chat_infos{
+        for chat_info in chat_infos {
             if chat_info.id == id {
                 exist = true;
                 break;
@@ -205,22 +202,18 @@ fn get_history_message(id: &str, name: &str) -> Result<Vec<DeepChatRequestMessag
         exist
     };
     if !exist {
-        let mut write_guard =  GLOBAL_CHATS.write().unwrap();
-        write_guard.push(ChatInfo{
+        let mut write_guard = GLOBAL_CHATS.write().unwrap();
+        write_guard.push(ChatInfo {
             id: id.to_string(),
             name: name.to_string(),
         });
-        let mut write_messages_guard =  GLOBAL_CHAT_MESSAGES.write().unwrap();
+        let mut write_messages_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
         write_messages_guard.insert(id.to_string(), Box::new(vec![]));
     }
     let mut map = GLOBAL_CHAT_MESSAGES.read().unwrap();
     return match map.get(id) {
-        None => {
-            Ok(vec![])
-        }
-        Some(vec) => {
-            Ok((**vec).clone())
-        }
+        None => Ok(vec![]),
+        Some(vec) => Ok((**vec).clone()),
     };
 }
 
@@ -279,7 +272,10 @@ pub async fn get_models_cmd() -> Result<ModelData, ()> {
 
 #[cfg(test)]
 mod test {
-    use crate::model_command::{chat_request_cmd, ChatInfo, DeepChatRequestBody, DeepChatRequestMessage, GLOBAL_CHAT_MESSAGES, GLOBAL_CHATS};
+    use crate::model_command::{
+        chat_request_cmd, ChatInfo, DeepChatRequestBody, DeepChatRequestMessage, GLOBAL_CHATS,
+        GLOBAL_CHAT_MESSAGES,
+    };
 
     #[tokio::test] //由此判断这是一个测试函数
     async fn test_chat_request() {
@@ -291,9 +287,10 @@ mod test {
             }],
             model: "llama3:latest".to_string(),
             stream: false,
-        }).await;
-        assert_eq!(result.is_err(),false);
-        println!("{:?}",result.unwrap().text);
+        })
+        .await;
+        assert_eq!(result.is_err(), false);
+        println!("{:?}", result.unwrap().text);
         // request twice
         let result = chat_request_cmd(DeepChatRequestBody {
             id: "1".to_string(),
@@ -303,9 +300,10 @@ mod test {
             }],
             model: "llama3:latest".to_string(),
             stream: false,
-        }).await;
-        assert_eq!(result.is_err(),false);
-        println!("{:?}",result.unwrap().text);
+        })
+        .await;
+        assert_eq!(result.is_err(), false);
+        println!("{:?}", result.unwrap().text);
     }
     #[tokio::test] //由此判断这是一个测试函数
     async fn test_write_global() {
@@ -315,10 +313,13 @@ mod test {
         }
 
         let mut map = GLOBAL_CHAT_MESSAGES.write().unwrap();
-        map.insert("1".to_string(), Box::new(vec![DeepChatRequestMessage{
-            role: "hello".to_string(),
-            text: "world".to_string(),
-        }]));
+        map.insert(
+            "1".to_string(),
+            Box::new(vec![DeepChatRequestMessage {
+                role: "hello".to_string(),
+                text: "world".to_string(),
+            }]),
+        );
 
         let result = map.get("1").unwrap();
         assert_eq!(result[0].role, "hello");
@@ -328,7 +329,7 @@ mod test {
     #[tokio::test] //由此判断这是一个测试函数
     async fn test_chats() {
         let mut vec = GLOBAL_CHATS.write().unwrap();
-        vec.push(ChatInfo{
+        vec.push(ChatInfo {
             id: "1".to_string(),
             name: "hello,world".to_string(),
         });
