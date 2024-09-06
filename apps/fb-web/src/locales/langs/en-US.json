@@ -2,7 +2,8 @@
   "page": {
     "ai": {
       "title": "AI",
-      "remote": "Remote"
+      "remote": "Remote",
+      "local": "Local"
     },
     "dashboard": {
       "dashboard": "Dashboard",

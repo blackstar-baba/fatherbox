@@ -41,20 +41,6 @@ pub struct AppResponse<T> {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ModelData {
-    pub models: Vec<Model>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Model {
-    name: String,
-    model: String,
-    modified_at: String,
-    size: i64,
-    digest: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FileEntry {
     pub name: String,

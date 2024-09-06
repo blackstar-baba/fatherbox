@@ -24,6 +24,16 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.ai.remote'),
         },
       },
+      {
+        name: 'Local',
+        path: '/local',
+        component: () => import('#/views/ai/local/index.vue'),
+        meta: {
+          affixTab: true,
+          icon: 'hugeicons:ai-chat-02',
+          title: $t('page.ai.local'),
+        },
+      },
     ],
   },
 ];
