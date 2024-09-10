@@ -16,6 +16,10 @@
       "title": "演示",
       "antd": "Ant Design Vue"
     },
+    "editors": {
+      "title": "编辑器",
+      "markdown": "Markdown"
+    },
     "tools": {
       "title": "工具",
       "about": "关于",

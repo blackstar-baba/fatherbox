@@ -16,6 +16,10 @@
       "title": "Demos",
       "antd": "Ant Design Vue"
     },
+    "editors": {
+      "title": "Editors",
+      "markdown": "Markdown"
+    },
     "tools": {
       "title": "Tool",
       "about": "About",
