@@ -47,6 +47,8 @@ function handleFileChange(event: any) {
     fileReader.readAsText(file);
   }
 }
+
+// how to get locale & dark mode
 </script>
 
 <template>
@@ -74,9 +76,7 @@ function handleFileChange(event: any) {
         Export
       </Button>
     </div>
-    <!--    <MilkEditor :default-text="text" />-->
-    <!--    <MilkDownEditor />-->
-    <!--    // todo 还是用vditor,从v2迁移过来,不太可行，还是用腾讯的吧，看好1～4年应该还会维护。-->
+    <!--    // todo 汉化的处理，皮肤的处理，自适应大小-->
     <Cherry />
   </Page>
 </template>

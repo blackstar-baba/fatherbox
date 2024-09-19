@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+
+// import {usePreferences} from '@vben-core/preferences';
+import { useI18n } from '@vben/locales';
 
 import Cherry from 'cherry-markdown';
 
@@ -47,6 +50,17 @@ const setCherryContent = (val: string) => {
 defineExpose({
   getCherryHtml,
   setCherryContent,
+});
+
+// const { theme } = usePreferences();
+
+const { locale } = useI18n();
+watch([() => locale.value], ([locale]) => {
+  if (locale === 'en-US') {
+    cherryRef.value?.setLocale('en_US');
+  } else {
+    cherryRef.value?.setLocale('zh_CN');
+  }
 });
 
 // const fileUpload = (file, callback) => {
