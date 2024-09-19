@@ -12,8 +12,8 @@ import { downloadByData } from '#/utils/file/downloadUtil';
 
 import Cherry from './cherry.vue';
 
+const cherryRef = ref();
 const text = ref('### Hello World');
-
 const fileInput = ref<HTMLInputElement>();
 const fileName = ref('demo.md');
 
@@ -25,15 +25,13 @@ function importDoc() {
 async function exportDoc() {
   if (window.__TAURI__) {
     const filePath = await save({ defaultPath: fileName.value });
-    if (filePath) {
-      await writeTextFile(filePath, text.value);
+    if (filePath && cherryRef) {
+      await writeTextFile(filePath, cherryRef.value.getContent());
     }
   } else {
-    downloadByData(text.value, fileName.value);
+    downloadByData(cherryRef.value.getContent(), fileName.value);
   }
 }
-
-// todo how to get changed in cherry-editor
 
 function handleFileChange(event: any) {
   const file = event.target.files[0];
@@ -42,6 +40,9 @@ function handleFileChange(event: any) {
     const fileReader = new FileReader();
     fileReader.addEventListener('load', () => {
       text.value = fileReader.result as string;
+      if (cherryRef.value) {
+        cherryRef.value.setContent(text.value);
+      }
     });
     // eslint-disable-next-line unicorn/prefer-blob-reading-methods
     fileReader.readAsText(file);
@@ -76,8 +77,7 @@ function handleFileChange(event: any) {
         Export
       </Button>
     </div>
-    <!--    // todo 汉化的处理，皮肤的处理，自适应大小-->
-    <Cherry />
+    <Cherry ref="cherryRef" />
   </Page>
 </template>
 

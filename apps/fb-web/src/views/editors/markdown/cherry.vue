@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-// import {usePreferences} from '@vben-core/preferences';
 import { useI18n } from '@vben/locales';
+import { usePreferences } from '@vben-core/preferences';
 
 import Cherry from 'cherry-markdown';
 
@@ -22,24 +22,19 @@ const props = defineProps({
     type: String,
   },
 });
-const emits = defineEmits(['update:modelValue', 'setHtml']);
+
 const cherryRef = ref<Cherry>();
 
-const getCherryContent = () => {
+const setContent = (val: string) => {
+  cherryRef.value?.setMarkdown(val);
+};
+
+const getContent = () => {
   return cherryRef.value?.getMarkdown();
 };
 
-const getCherryHtml = () => {
+const getHtml = () => {
   return cherryRef.value?.getHtml();
-};
-
-// 变更事件回调
-const afterChange = () => {
-  emits('setHtml', getCherryContent(), getCherryHtml());
-};
-
-const setCherryContent = (val: string) => {
-  cherryRef.value?.setMarkdown(val);
 };
 
 // 图片加载回调
@@ -48,11 +43,10 @@ const setCherryContent = (val: string) => {
 // };
 
 defineExpose({
-  getCherryHtml,
-  setCherryContent,
+  getContent,
+  getHtml,
+  setContent,
 });
-
-// const { theme } = usePreferences();
 
 const { locale } = useI18n();
 watch([() => locale.value], ([locale]) => {
@@ -61,6 +55,11 @@ watch([() => locale.value], ([locale]) => {
   } else {
     cherryRef.value?.setLocale('zh_CN');
   }
+});
+
+const { theme } = usePreferences();
+watch([() => theme.value], ([theme]) => {
+  cherryRef.value?.setTheme(theme);
 });
 
 // const fileUpload = (file, callback) => {
@@ -91,7 +90,7 @@ watch([() => locale.value], ([locale]) => {
 const initMd = () => {
   cherryRef.value = new Cherry({
     callback: {
-      afterChange,
+      // afterChange,
       // beforeImageMounted,
     },
     editor: {

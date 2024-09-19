@@ -138,6 +138,9 @@ importers:
       '@ant-design/icons-vue':
         specifier: ^7.0.1
         version: 7.0.1(vue@3.4.38(typescript@5.5.4))
+      '@vben-core/preferences':
+        specifier: workspace:*
+        version: link:../../packages/@core/preferences
       '@vben/access':
         specifier: workspace:*
         version: link:../../packages/effects/access
@@ -220,9 +223,6 @@ importers:
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
-      '@vben-core/preferences':
-        specifier: workspace:*
-        version: link:../../packages/@core/preferences
 
   internal/lint-configs/commitlint-config:
     dependencies:

@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
+    "@vben-core/preferences": "workspace:*",
     "@vben/access": "workspace:*",
     "@vben/chart-ui": "workspace:*",
     "@vben/common-ui": "workspace:*",
@@ -55,7 +56,6 @@
   "devDependencies": {
     "@tauri-apps/api": "^1.5.4",
     "@types/crypto-js": "^4.2.2",
-    "@types/uuid": "^10.0.0",
-    "@vben-core/preferences": "workspace:*"
+    "@types/uuid": "^10.0.0"
   }
 }
