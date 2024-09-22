@@ -24,6 +24,16 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.editors.markdown'),
         },
       },
+      {
+        name: 'Flow',
+        path: '/flow',
+        component: () => import('#/views/editors/flow/index.vue'),
+        meta: {
+          affixTab: true,
+          icon: 'mdi:flowchart-outline',
+          title: $t('page.editors.flow'),
+        },
+      },
     ],
   },
 ];
