@@ -27,8 +27,10 @@
   },
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
+    "@ckpack/vue-color": "^1.6.0",
     "@logicflow/core": "^2.0.4",
     "@logicflow/extension": "^2.0.8",
+    "@logicflow/vue-node-registry": "^1.0.5",
     "@vben-core/preferences": "workspace:*",
     "@vben/access": "workspace:*",
     "@vben/chart-ui": "workspace:*",

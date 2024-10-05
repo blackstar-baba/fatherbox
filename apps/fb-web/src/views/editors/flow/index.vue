@@ -8,8 +8,8 @@ import { save } from '@tauri-apps/api/dialog';
 import { writeTextFile } from '@tauri-apps/api/fs';
 import { Button } from 'ant-design-vue';
 
+import Diagram from '#/components/flow/Diagram.vue';
 import { downloadByData } from '#/utils/file/downloadUtil';
-import FlowChart from '#/views/editors/flow/flow-chart.vue';
 
 const cherryRef = ref();
 const text = ref('### Hello World');
@@ -73,6 +73,14 @@ function handleFileChange(event: any) {
         Export
       </Button>
     </div>
-    <FlowChart />
+    <div class="flow-container">
+      <Diagram />
+    </div>
   </Page>
 </template>
+<style scoped>
+.flow-container {
+  width: 100%;
+  background-color: #f8f9fa;
+}
+</style>
