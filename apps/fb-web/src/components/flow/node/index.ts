@@ -1,4 +1,6 @@
 // 基础图形
+import type LogicFlow from '@logicflow/core';
+
 import DownArrow from './arrow/DownArrowNode';
 import HorizontalArrow from './arrow/HorizontalArrowNode';
 // 多边形绘制的箭头
@@ -38,7 +40,7 @@ import TimesNode from './path/TimesNode';
 import TrapezoidNode from './path/TrapezoidNode';
 import TriangleNode from './path/TriangleNode';
 
-export const registerCustomElement = (lf) => {
+export const registerCustomElement = (lf: LogicFlow) => {
   // 注册基础图形
   lf.register(CircleNode);
   lf.register(RectNode);
