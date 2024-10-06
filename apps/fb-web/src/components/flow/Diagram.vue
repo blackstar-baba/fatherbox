@@ -1,6 +1,6 @@
 <script lang="ts">
 import LogicFlow from '@logicflow/core';
-import { SelectionSelect } from '@logicflow/extension';
+import { SelectionSelect, Snapshot } from '@logicflow/extension';
 import { useResizeObserver } from '@vueuse/core';
 import { ConfigProvider, theme } from 'ant-design-vue';
 
@@ -121,6 +121,12 @@ export default {
       element.click();
       element.remove();
     },
+    getContent() {
+      return JSON.stringify(this.lf?.getGraphData());
+    },
+    async getImg() {
+      return this.lf?.getSnapshotBlob();
+    },
     initLocation() {
       const rect = (this.$refs.diagram as any).getBoundingClientRect();
       this.top = rect.top;
@@ -148,6 +154,7 @@ export default {
         },
         metaKeyMultipleSelected: true,
         overlapMode: 1,
+        plugins: [Snapshot],
       });
       lf.setTheme({
         baseEdge: { strokeWidth: 1 },
@@ -169,6 +176,9 @@ export default {
           this.$_getProperty();
         });
       });
+    },
+    setContent(data: string) {
+      this.lf?.render(JSON.parse(data));
     },
   },
   // eslint-disable-next-line vue/order-in-components
