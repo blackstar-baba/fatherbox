@@ -1,8 +1,10 @@
 <script lang="ts">
 import LogicFlow from '@logicflow/core';
-import { SelectionSelect, Snapshot } from '@logicflow/extension';
+import { SelectionSelect } from '@logicflow/extension';
 import { useResizeObserver } from '@vueuse/core';
 import { ConfigProvider, theme } from 'ant-design-vue';
+
+import Snapshot from '#/components/flow/snapshot';
 
 import DiagramSidebar from './DiagramSidebar.vue';
 import DiagramToolbar from './DiagramToolbar.vue';
@@ -41,6 +43,7 @@ export default {
   // eslint-disable-next-line vue/order-in-components
   data() {
     const lf: any = null;
+    const snapshot: any = null;
     return {
       activeEdges: [],
       activeNodes: [],
@@ -50,6 +53,7 @@ export default {
       lf,
       properties: {},
       sidebarWidth: 200,
+      snapshot,
       top: 0,
       width: 0,
     };
@@ -68,7 +72,6 @@ export default {
         type,
       });
     },
-    // 获取可以进行设置的属性
     $_getProperty() {
       let properties = {};
       const { edges, nodes } = this.lf.getSelectElements();
@@ -124,8 +127,8 @@ export default {
     getContent() {
       return JSON.stringify(this.lf?.getGraphData());
     },
-    async getImg() {
-      return this.lf?.getSnapshotBlob();
+    getImg() {
+      return this.snapshot?.getSnapshotBlob();
     },
     initLocation() {
       const rect = (this.$refs.diagram as any).getBoundingClientRect();
@@ -135,7 +138,7 @@ export default {
       this.height = rect.height;
     },
     initLogicFlow(data: any) {
-      // 引入框选插件
+      // use selection plugin
       LogicFlow.use(SelectionSelect);
       const lf = new LogicFlow({
         autoWrap: true,
@@ -154,7 +157,6 @@ export default {
         },
         metaKeyMultipleSelected: true,
         overlapMode: 1,
-        plugins: [Snapshot],
       });
       lf.setTheme({
         baseEdge: { strokeWidth: 1 },
@@ -162,8 +164,10 @@ export default {
         // edgeText: { lineHeight: 1.5, overflowMode: 'autoWrap' },
         // nodeText: { lineHeight: 1.5, overflowMode: 'autoWrap' },
       });
-      // 注册自定义元素
+      // register nodes
       registerCustomElement(lf);
+      // init plugin
+      this.snapshot = new Snapshot({ lf });
       lf.setDefaultEdgeType('pro-polyline');
       lf.render(data);
       this.lf = lf;
@@ -224,7 +228,6 @@ export default {
     :theme="{
       algorithm: theme.defaultAlgorithm,
       token: {
-        // colorPrimary: '#1890ff', // 独立的主题色
         colorBgContainer: '#ffffff',
         colorBgElevated: '#ffffff',
         colorBorder: '#d9d9d9',
@@ -254,7 +257,7 @@ export default {
           </div>
         </div>
       </div>
-      <!-- 右侧属性面板 -->
+      <!-- right property panel -->
       <PropertyPanel
         v-if="activeNodes.length > 0 || activeEdges.length > 0"
         :elements-style="properties"

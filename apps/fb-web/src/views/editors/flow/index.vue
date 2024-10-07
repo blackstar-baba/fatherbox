@@ -34,10 +34,10 @@ async function exportFlow() {
 
 // logic flow export safari issue: https://github.com/didi/LogicFlow/issues/1466
 async function exportImg() {
-  const img = await flowRef.value.getImg();
+  const img = flowRef.value.getImg();
   const blob = img.data;
   if (window.__TAURI__) {
-    const filePath = await save({ defaultPath: 'flow.png' });
+    const filePath = await save({ defaultPath: 'flow.svg' });
     if (filePath && flowRef) {
       // 将 Blob 转换为 ArrayBuffer
       const arrayBuffer = await blob.arrayBuffer();
@@ -45,7 +45,7 @@ async function exportImg() {
       await writeBinaryFile(filePath, arrayBuffer);
     }
   } else {
-    downloadByData(blob, 'flow.png');
+    downloadByData(blob, 'flow.svg');
   }
 }
 
