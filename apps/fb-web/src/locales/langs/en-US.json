@@ -18,7 +18,8 @@
     },
     "editors": {
       "title": "Editors",
-      "markdown": "Markdown"
+      "markdown": "Markdown",
+      "flow": "Flow"
     },
     "tools": {
       "title": "Tool",

@@ -18,7 +18,8 @@
     },
     "editors": {
       "title": "编辑器",
-      "markdown": "Markdown"
+      "markdown": "Markdown",
+      "flow": "流程图"
     },
     "tools": {
       "title": "工具",
