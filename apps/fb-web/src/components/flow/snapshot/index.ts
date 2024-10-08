@@ -63,7 +63,7 @@ export class Snapshot {
       style.innerHTML = this.getClassRules();
       const foreignObject = document.createElement('foreignObject');
       foreignObject.append(style);
-      copy.append(foreignObject);
+      (copy as HTMLElement).append(foreignObject);
     }
     return copy;
   }
