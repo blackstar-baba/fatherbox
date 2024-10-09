@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, type HTMLAttributes } from 'vue';
+import { computed } from 'vue';
 
-import { cn } from '@vben-core/shared';
+import { cn } from '@vben-core/shared/utils';
 
+import { X } from 'lucide-vue-next';
 import {
   DialogClose,
   DialogContent,
@@ -13,9 +14,7 @@ import {
   useForwardPropsEmits,
 } from 'radix-vue';
 
-const props = defineProps<
-  { class?: HTMLAttributes['class'] } & DialogContentProps
->();
+const props = defineProps<{ class?: any } & DialogContentProps>();
 const emits = defineEmits<DialogContentEmits>();
 
 const delegatedProps = computed(() => {
@@ -58,7 +57,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
         <DialogClose
           class="hover:bg-secondary absolute right-4 top-4 rounded-md p-0.5 transition-colors"
         >
-          <Cross2Icon class="h-4 w-4" />
+          <X class="h-4 w-4" />
           <span class="sr-only">Close</span>
         </DialogClose>
       </DialogContent>

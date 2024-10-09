@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, type HTMLAttributes } from 'vue';
+import { computed } from 'vue';
 
-import { cn } from '@vben-core/shared';
+import { cn } from '@vben-core/shared/utils';
 
-import { ChevronRightIcon } from '@radix-icons/vue';
+import { ChevronRight } from 'lucide-vue-next';
 import {
   ContextMenuSubTrigger,
   type ContextMenuSubTriggerProps,
@@ -12,7 +12,7 @@ import {
 
 const props = defineProps<
   {
-    class?: HTMLAttributes['class'];
+    class?: any;
     inset?: boolean;
   } & ContextMenuSubTriggerProps
 >();
@@ -38,6 +38,6 @@ const forwardedProps = useForwardProps(delegatedProps);
     "
   >
     <slot></slot>
-    <ChevronRightIcon class="ml-auto h-4 w-4" />
+    <ChevronRight class="ml-auto h-4 w-4" />
   </ContextMenuSubTrigger>
 </template>

@@ -26,11 +26,11 @@
     "#/*": "./src/*"
   },
   "dependencies": {
-    "@ant-design/icons-vue": "^7.0.1",
-    "@ckpack/vue-color": "^1.6.0",
-    "@logicflow/core": "^2.0.4",
-    "@logicflow/extension": "^2.0.8",
-    "@logicflow/vue-node-registry": "^1.0.5",
+    "@ant-design/icons-vue": "catalog:",
+    "@ckpack/vue-color": "catalog:",
+    "@logicflow/core": "catalog:",
+    "@logicflow/extension": "catalog:",
+    "@logicflow/vue-node-registry": "catalog:",
     "@vben-core/preferences": "workspace:*",
     "@vben/access": "workspace:*",
     "@vben/chart-ui": "workspace:*",
@@ -46,21 +46,21 @@
     "@vben/styles": "workspace:*",
     "@vben/types": "workspace:*",
     "@vben/utils": "workspace:*",
-    "@vueuse/core": "^11.0.1",
-    "ant-design-vue": "^4.2.3",
-    "cherry-markdown": "^0.8.47",
-    "crypto-js": "^4.2.0",
-    "dayjs": "^1.11.13",
-    "deep-chat": "^2.0.1",
-    "pinia": "2.2.2",
-    "roughjs": "^4.6.6",
-    "uuid": "^10.0.0",
-    "vue": "^3.4.38",
-    "vue-router": "^4.4.3"
+    "@vueuse/core": "catalog:",
+    "ant-design-vue": "catalog:",
+    "cherry-markdown": "catalog:",
+    "crypto-js": "catalog:",
+    "dayjs": "catalog:",
+    "deep-chat": "catalog:",
+    "pinia": "catalog:",
+    "roughjs": "catalog:",
+    "uuid": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:"
   },
   "devDependencies": {
-    "@tauri-apps/api": "^1.5.4",
-    "@types/crypto-js": "^4.2.2",
-    "@types/uuid": "^10.0.0"
+    "@tauri-apps/api": "catalog:",
+    "@types/crypto-js": "catalog:",
+    "@types/uuid": "catalog:"
   }
 }

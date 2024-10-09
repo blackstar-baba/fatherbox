@@ -4,7 +4,8 @@ import type { InitialOptions, Preferences } from './types';
 
 import { markRaw, reactive, readonly, watch } from 'vue';
 
-import { isMacOs, merge, StorageManager } from '@vben-core/shared';
+import { StorageManager } from '@vben-core/shared/cache';
+import { isMacOs, merge } from '@vben-core/shared/utils';
 
 import {
   breakpointsTailwind,
@@ -170,8 +171,9 @@ class PreferenceManager {
     // 加载并合并当前存储的偏好设置
     const mergedPreference = merge(
       {},
-      overrides,
-      this.loadCachedPreferences() || defaultPreferences,
+      // overrides,
+      this.loadCachedPreferences() || {},
+      this.initialPreferences,
     );
 
     // 更新偏好设置

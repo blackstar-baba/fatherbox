@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, type HTMLAttributes } from 'vue';
+import { computed } from 'vue';
 
-import { cn } from '@vben-core/shared';
+import { cn } from '@vben-core/shared/utils';
 
-import { CheckIcon } from '@radix-icons/vue';
+import { Check } from 'lucide-vue-next';
 import {
   ContextMenuCheckboxItem,
   type ContextMenuCheckboxItemEmits,
@@ -12,9 +12,7 @@ import {
   useForwardPropsEmits,
 } from 'radix-vue';
 
-const props = defineProps<
-  { class?: HTMLAttributes['class'] } & ContextMenuCheckboxItemProps
->();
+const props = defineProps<{ class?: any } & ContextMenuCheckboxItemProps>();
 const emits = defineEmits<ContextMenuCheckboxItemEmits>();
 
 const delegatedProps = computed(() => {
@@ -38,7 +36,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
   >
     <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <ContextMenuItemIndicator>
-        <CheckIcon class="h-4 w-4" />
+        <Check class="h-4 w-4" />
       </ContextMenuItemIndicator>
     </span>
     <slot></slot>

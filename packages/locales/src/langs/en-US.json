@@ -54,6 +54,14 @@
       "internalServerError": "Internal Server Error. Something went wrong on our end. Please try again later."
     }
   },
+  "formRules": {
+    "required": "Please enter {0}",
+    "selectRequired": "Please select {0}"
+  },
+  "placeholder": {
+    "input": "Please enter",
+    "select": "Please select"
+  },
   "widgets": {
     "document": "Document",
     "qa": "Q&A",
@@ -93,10 +101,13 @@
     "loginSuccess": "Login Successful",
     "loginSuccessDesc": "Welcome Back",
     "loginSubtitle": "Enter your account details to manage your projects",
+    "selectAccount": "Quick Select Account",
     "username": "Username",
     "password": "Password",
     "usernameTip": "Please enter username",
+    "passwordErrorTip": "Password is incorrect",
     "passwordTip": "Please enter password",
+    "verifyRequiredTip": "Please complete the verification first",
     "rememberMe": "Remember Me",
     "createAnAccount": "Create an Account",
     "createAccount": "Create Account",
@@ -115,6 +126,7 @@
     "forgetPassword": "Forget Password?",
     "forgetPasswordSubtitle": "Enter your email and we'll send you instructions to reset your password",
     "emailTip": "Please enter email",
+    "emailValidErrorTip": "The email format you entered is incorrect",
     "sendResetLink": "Send Reset Link",
     "email": "Email",
     "qrcodeSubtitle": "Scan the QR code with your phone to login",
@@ -125,7 +137,8 @@
     "codeTip": "Security code is required",
     "mobile": "Mobile",
     "mobileLogin": "Mobile Login",
-    "mobile-tip": "Please enter phone number",
+    "mobileTip": "Please enter mobile number",
+    "mobileErrortip": "The phone number format is incorrect",
     "sendCode": "Get Security code",
     "sendText": "Resend in {0}s",
     "thirdPartyLogin": "Or continue with",
@@ -175,6 +188,7 @@
     "position": {
       "title": "Preferences Postion",
       "header": "Header",
+      "auto": "Auto",
       "fixed": "Fixed"
     },
     "sidebar": {
@@ -302,6 +316,22 @@
       "notification": "Enable Notification",
       "sidebarToggle": "Enable Sidebar Toggle",
       "lockScreen": "Enable Lock Screen"
+    }
+  },
+  "ui": {
+    "captcha": {
+      "title": "Please complete the security verification",
+      "sliderSuccessText": "Passed",
+      "sliderDefaultText": "Slider and drag",
+      "alt": "Supports img tag src attribute value",
+      "sliderRotateDefaultTip": "Click picture to refresh",
+      "sliderRotateFailTip": "Validation failed",
+      "sliderRotateSuccessTip": "Validation successful, time {0} seconds",
+      "refreshAriaLabel": "Refresh captcha",
+      "confirmAriaLabel": "Confirm selection",
+      "confirm": "Confirm",
+      "pointAriaLabel": "Click point",
+      "clickInOrder": "Please click in order"
     }
   }
 }
