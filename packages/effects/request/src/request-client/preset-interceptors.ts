@@ -60,6 +60,8 @@ export const authenticateResponseInterceptor = ({
         client.refreshTokenQueue.forEach((callback) => callback(''));
         client.refreshTokenQueue = [];
         console.error('Refresh token failed, please login again.');
+        await doReAuthenticate();
+
         throw refreshError;
       } finally {
         client.isRefreshing = false;
@@ -85,7 +87,7 @@ export const errorMessageResponseInterceptor = (
         errMsg = $t('fallback.http.requestTimeout');
       }
       if (errMsg) {
-        makeErrorMessage?.(errMsg);
+        makeErrorMessage?.(errMsg, error);
         return Promise.reject(error);
       }
 
@@ -117,7 +119,7 @@ export const errorMessageResponseInterceptor = (
           errorMessage = $t('fallback.http.internalServerError');
         }
       }
-      makeErrorMessage?.(errorMessage);
+      makeErrorMessage?.(errorMessage, error);
       return Promise.reject(error);
     },
   };

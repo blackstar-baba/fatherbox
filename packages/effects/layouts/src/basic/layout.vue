@@ -11,7 +11,7 @@ import {
   usePreferences,
 } from '@vben/preferences';
 import { useLockStore, useUserStore } from '@vben/stores';
-import { mapTree } from '@vben/utils';
+import { deepToRaw, mapTree } from '@vben/utils';
 import { VbenAdminLayout } from '@vben-core/layout-ui';
 import { Toaster, VbenBackTop, VbenLogo } from '@vben-core/shadcn-ui';
 
@@ -40,6 +40,7 @@ const {
   isMobile,
   isSideMixedNav,
   layout,
+  preferencesButtonPosition,
   sidebarCollapsed,
   theme,
 } = usePreferences();
@@ -77,23 +78,17 @@ const isMenuRounded = computed(() => {
 });
 
 const logoCollapsed = computed(() => {
-  const shouldCollapse = isHeaderNav.value || isMixedNav.value;
-
-  if (shouldCollapse) {
+  if (isMobile.value && sidebarCollapsed.value) {
+    return true;
+  }
+  if (isHeaderNav.value || isMixedNav.value) {
     return false;
   }
-
-  const shouldExpandOnMobile = !sidebarCollapsed.value && isMobile.value;
-
-  if (shouldExpandOnMobile) {
-    return false;
-  }
-
   return sidebarCollapsed.value || isSideMixedNav.value;
 });
 
 const showHeaderNav = computed(() => {
-  return isHeaderNav.value || isMixedNav.value;
+  return !isMobile.value && (isHeaderNav.value || isMixedNav.value);
 });
 
 // 侧边多列菜单
@@ -118,7 +113,7 @@ const {
 
 function wrapperMenus(menus: MenuRecordRaw[]) {
   return mapTree(menus, (item) => {
-    return { ...item, name: $t(item.name) };
+    return { ...deepToRaw(item), name: $t(item.name) };
   });
 }
 
@@ -145,6 +140,19 @@ watch(
   },
   {
     immediate: true,
+  },
+);
+
+watch(
+  () => preferences.app.layout,
+  async (val) => {
+    if (val === 'sidebar-mixed-nav' && preferences.sidebar.hidden) {
+      updatePreferences({
+        sidebar: {
+          hidden: false,
+        },
+      });
+    }
   },
 );
 
@@ -207,7 +215,10 @@ const headerSlots = computed(() => {
     </template>
     <!-- 头部区域 -->
     <template #header>
-      <LayoutHeader :theme="theme">
+      <LayoutHeader
+        :theme="theme"
+        @clear-preferences-and-logout="clearPreferencesAndLogout"
+      >
         <template
           v-if="!showHeaderNav && preferences.breadcrumb.enable"
           #breadcrumb
@@ -297,11 +308,8 @@ const headerSlots = computed(() => {
     <template #content>
       <LayoutContent />
     </template>
-    <template
-      v-if="preferences.transition.loading"
-      #content-overlay="{ overlayStyle }"
-    >
-      <LayoutContentSpinner :overlay-style="overlayStyle" />
+    <template v-if="preferences.transition.loading" #content-overlay>
+      <LayoutContentSpinner />
     </template>
 
     <!-- 页脚 -->
@@ -326,12 +334,7 @@ const headerSlots = computed(() => {
         <slot v-if="lockStore.isLockScreen" name="lock-screen"></slot>
       </Transition>
 
-      <template
-        v-if="
-          preferences.app.enablePreferences &&
-          preferences.app.preferencesButtonPosition === 'fixed'
-        "
-      >
+      <template v-if="preferencesButtonPosition.fixed">
         <Preferences
           class="z-100 fixed bottom-20 right-0"
           @clear-preferences-and-logout="clearPreferencesAndLogout"

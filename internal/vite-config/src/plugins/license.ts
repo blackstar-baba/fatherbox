@@ -11,9 +11,9 @@ import { dateUtil, readPackageJSON } from '@vben/node-utils';
 
 /**
  * 用于注入版权信息
- * @returns
+ * @returns PluginOption | undefined
  */
-
+// todo update this
 async function viteLicensePlugin(
   root = process.cwd(),
 ): Promise<PluginOption | undefined> {

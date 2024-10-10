@@ -1,16 +1,10 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  VbenAvatar,
-  VbenButton,
-  VbenInputPassword,
-} from '@vben-core/shadcn-ui';
+import { $t } from '@vben/locales';
+import { useVbenForm, z } from '@vben-core/form-ui';
+import { useVbenModal } from '@vben-core/popup-ui';
+import { VbenAvatar, VbenButton } from '@vben-core/shadcn-ui';
 
 interface Props {
   avatar?: string;
@@ -28,85 +22,85 @@ interface RegisterEmits {
 defineOptions({
   name: 'LockScreenModal',
 });
+
 withDefaults(defineProps<Props>(), {
   avatar: '',
   text: '',
 });
+
 const emit = defineEmits<{
   submit: RegisterEmits['submit'];
 }>();
-const formState = reactive({
-  lockScreenPassword: '',
-  submitted: false,
-});
-const openModal = defineModel<boolean>('open');
-const passwordStatus = computed(() => {
-  return formState.submitted && !formState.lockScreenPassword
-    ? 'error'
-    : 'default';
+
+const [Form, { resetForm, validate }] = useVbenForm(
+  reactive({
+    commonConfig: {
+      hideLabel: true,
+      hideRequiredMark: true,
+    },
+    schema: computed(() => [
+      {
+        component: 'VbenInputPassword' as const,
+        componentProps: {
+          placeholder: $t('widgets.lockScreen.placeholder'),
+        },
+        fieldName: 'lockScreenPassword',
+        formFieldProps: { validateOnBlur: false },
+        label: $t('authentication.password'),
+        rules: z
+          .string()
+          .min(1, { message: $t('widgets.lockScreen.placeholder') }),
+      },
+    ]),
+    showDefaultActions: false,
+  }),
+);
+
+const [Modal] = useVbenModal({
+  onConfirm() {
+    handleSubmit();
+  },
+  onOpenChange(isOpen) {
+    if (isOpen) {
+      resetForm();
+    }
+  },
 });
 
-function handleClose() {
-  openModal.value = false;
-}
-
-function handleSubmit() {
-  formState.submitted = true;
-  if (passwordStatus.value !== 'default') {
-    return;
+async function handleSubmit() {
+  const { valid, values } = await validate();
+  if (valid) {
+    emit('submit', values?.lockScreenPassword);
   }
-  emit('submit', {
-    lockScreenPassword: formState.lockScreenPassword,
-  });
 }
 </script>
 
 <template>
-  <div>
-    <Dialog :open="openModal">
-      <DialogContent
-        class="top-0 h-full w-full -translate-y-0 border-none p-0 shadow-xl sm:top-[20%] sm:h-[unset] sm:w-[600px] sm:rounded-2xl"
-        @close="handleClose"
-      >
-        <DialogDescription />
-        <DialogHeader>
-          <DialogTitle
-            class="border-border flex h-8 items-center px-5 font-normal"
-          >
-            {{ $t('widgets.lockScreen.title') }}
-          </DialogTitle>
-        </DialogHeader>
-        <div
-          class="mb-10 flex w-full flex-col items-center"
-          @keypress.enter.prevent="handleSubmit"
-        >
-          <div class="w-2/3">
-            <div class="ml-2 flex w-full flex-col items-center">
-              <VbenAvatar
-                :src="avatar"
-                class="size-24"
-                dot-class="bottom-0 right-1 border-2 size-4 bg-green-500"
-              />
-              <div class="text-foreground my-6 flex items-center font-medium">
-                {{ text }}
-              </div>
-            </div>
-            <VbenInputPassword
-              v-model="formState.lockScreenPassword"
-              :error-tip="$t('widgets.lockScreen.placeholder')"
-              :label="$t('widgets.lockScreen.password')"
-              :placeholder="$t('widgets.lockScreen.placeholder')"
-              :status="passwordStatus"
-              name="password"
-              required
-              type="password"
-            />
-            <VbenButton class="w-full" @click="handleSubmit">
-              {{ $t('widgets.lockScreen.screenButton') }}
-            </VbenButton>
+  <Modal
+    :footer="false"
+    :fullscreen-button="false"
+    :title="$t('widgets.lockScreen.title')"
+  >
+    <div
+      class="mb-10 flex w-full flex-col items-center px-10"
+      @keydown.enter.prevent="handleSubmit"
+    >
+      <div class="w-full">
+        <div class="ml-2 flex w-full flex-col items-center">
+          <VbenAvatar
+            :src="avatar"
+            class="size-20"
+            dot-class="bottom-0 right-1 border-2 size-4 bg-green-500"
+          />
+          <div class="text-foreground my-6 flex items-center font-medium">
+            {{ text }}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  </div>
+        <Form />
+        <VbenButton class="mt-1 w-full" @click="handleSubmit">
+          {{ $t('widgets.lockScreen.screenButton') }}
+        </VbenButton>
+      </div>
+    </div>
+  </Modal>
 </template>

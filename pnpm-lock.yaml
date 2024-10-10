@@ -145,13 +145,13 @@ catalogs:
       specifier: ^2.4.6
       version: 2.4.6
     '@vueuse/core':
-      specifier: ^11.0.1
+      specifier: ^11.1.0
       version: 11.1.0
     '@vueuse/integrations':
       specifier: ^11.1.0
       version: 11.1.0
     ant-design-vue:
-      specifier: ^4.2.3
+      specifier: ^4.2.5
       version: 4.2.5
     archiver:
       specifier: ^7.0.1
@@ -475,7 +475,7 @@ catalogs:
       specifier: ^10.0.3
       version: 10.0.3
     vue-router:
-      specifier: ^4.4.3
+      specifier: ^4.4.5
       version: 4.4.5
     vue-tsc:
       specifier: ^2.1.6
@@ -642,9 +642,6 @@ importers:
       '@vben/access':
         specifier: workspace:*
         version: link:../../packages/effects/access
-      '@vben/chart-ui':
-        specifier: workspace:*
-        version: link:../../packages/effects/chart-ui
       '@vben/common-ui':
         specifier: workspace:*
         version: link:../../packages/effects/common-ui
@@ -663,6 +660,9 @@ importers:
       '@vben/locales':
         specifier: workspace:*
         version: link:../../packages/locales
+      '@vben/plugins':
+        specifier: workspace:*
+        version: link:../../packages/effects/plugins
       '@vben/preferences':
         specifier: workspace:*
         version: link:../../packages/preferences
@@ -1328,32 +1328,23 @@ importers:
         specifier: 3.5.10
         version: 3.5.10(typescript@5.6.2)
 
-  packages/effects/chart-ui:
-    dependencies:
-      '@vben/preferences':
-        specifier: workspace:*
-        version: link:../../preferences
-      '@vueuse/core':
-        specifier: 'catalog:'
-        version: 11.1.0(vue@3.5.10(typescript@5.6.2))
-      echarts:
-        specifier: 'catalog:'
-        version: 5.5.1
-      vue:
-        specifier: 3.5.10
-        version: 3.5.10(typescript@5.6.2)
-
   packages/effects/common-ui:
     dependencies:
+      '@vben-core/form-ui':
+        specifier: workspace:*
+        version: link:../../@core/ui-kit/form-ui
+      '@vben-core/popup-ui':
+        specifier: workspace:*
+        version: link:../../@core/ui-kit/popup-ui
       '@vben-core/shadcn-ui':
         specifier: workspace:*
         version: link:../../@core/ui-kit/shadcn-ui
+      '@vben-core/shared':
+        specifier: workspace:*
+        version: link:../../@core/base/shared
       '@vben/constants':
         specifier: workspace:*
         version: link:../../constants
-      '@vben/hooks':
-        specifier: workspace:*
-        version: link:../hooks
       '@vben/icons':
         specifier: workspace:*
         version: link:../../icons
@@ -1363,6 +1354,9 @@ importers:
       '@vben/types':
         specifier: workspace:*
         version: link:../../types
+      '@vueuse/core':
+        specifier: 'catalog:'
+        version: 11.1.0(vue@3.5.10(typescript@5.6.2))
       '@vueuse/integrations':
         specifier: 'catalog:'
         version: 11.1.0(async-validator@4.2.5)(axios@1.7.7)(focus-trap@7.6.0)(nprogress@0.2.0)(qrcode@1.5.4)(sortablejs@1.15.3)(vue@3.5.10(typescript@5.6.2))
@@ -1409,15 +1403,27 @@ importers:
 
   packages/effects/layouts:
     dependencies:
+      '@vben-core/composables':
+        specifier: workspace:*
+        version: link:../../@core/composables
+      '@vben-core/form-ui':
+        specifier: workspace:*
+        version: link:../../@core/ui-kit/form-ui
       '@vben-core/layout-ui':
         specifier: workspace:*
         version: link:../../@core/ui-kit/layout-ui
       '@vben-core/menu-ui':
         specifier: workspace:*
         version: link:../../@core/ui-kit/menu-ui
+      '@vben-core/popup-ui':
+        specifier: workspace:*
+        version: link:../../@core/ui-kit/popup-ui
       '@vben-core/shadcn-ui':
         specifier: workspace:*
         version: link:../../@core/ui-kit/shadcn-ui
+      '@vben-core/shared':
+        specifier: workspace:*
+        version: link:../../@core/base/shared
       '@vben-core/tabs-ui':
         specifier: workspace:*
         version: link:../../@core/ui-kit/tabs-ui
@@ -1454,6 +1460,21 @@ importers:
       vue-router:
         specifier: 'catalog:'
         version: 4.4.5(vue@3.5.10(typescript@5.6.2))
+
+  packages/effects/plugins:
+    dependencies:
+      '@vben/preferences':
+        specifier: workspace:*
+        version: link:../../preferences
+      '@vueuse/core':
+        specifier: 'catalog:'
+        version: 11.1.0(vue@3.5.10(typescript@5.6.2))
+      echarts:
+        specifier: 'catalog:'
+        version: 5.5.1
+      vue:
+        specifier: 3.5.10
+        version: 3.5.10(typescript@5.6.2)
 
   packages/effects/request:
     dependencies:
