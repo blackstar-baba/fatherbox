@@ -7,12 +7,15 @@ import { ToastAction, useToast } from '@vben-core/shadcn-ui';
 interface Props {
   // 轮训时间，分钟
   checkUpdatesInterval?: number;
+  // 检查更新的地址
+  checkUpdateUrl?: string;
 }
 
 defineOptions({ name: 'CheckUpdates' });
 
 const props = withDefaults(defineProps<Props>(), {
   checkUpdatesInterval: 1,
+  checkUpdateUrl: import.meta.env.BASE_URL || '/',
 });
 
 const lastVersionTag = ref('');
@@ -28,7 +31,7 @@ async function getVersionTag() {
     ) {
       return null;
     }
-    const response = await fetch('/', {
+    const response = await fetch(props.checkUpdateUrl, {
       cache: 'no-cache',
       method: 'HEAD',
     });
@@ -61,7 +64,7 @@ async function checkForUpdates() {
 }
 function handleNotice(versionTag: string) {
   const { dismiss } = toast({
-    action: h('div', [
+    action: h('div', { class: 'inline-flex items-center' }, [
       h(
         ToastAction,
         {
@@ -76,7 +79,8 @@ function handleNotice(versionTag: string) {
         ToastAction,
         {
           altText: $t('common.refresh'),
-          class: 'bg-primary hover:bg-primary-hover mx-1',
+          class:
+            'bg-primary text-primary-foreground hover:bg-primary-hover mx-1',
           onClick: () => {
             lastVersionTag.value = versionTag;
             window.location.reload();
@@ -94,7 +98,11 @@ function handleNotice(versionTag: string) {
 }
 
 function start() {
-  // 每5分钟检查一次
+  if (props.checkUpdatesInterval <= 0) {
+    return;
+  }
+
+  // 每 checkUpdatesInterval(默认值为1) 分钟检查一次
   timer.value = setInterval(
     checkForUpdates,
     props.checkUpdatesInterval * 60 * 1000,

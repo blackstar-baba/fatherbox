@@ -20,7 +20,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/dashboard/dashboard/index.vue'),
         meta: {
           affixTab: true,
-          icon: 'lucide:layout-dashboard',
+          icon: 'lucide:area-chart',
           title: $t('page.dashboard.dashboard'),
         },
       },

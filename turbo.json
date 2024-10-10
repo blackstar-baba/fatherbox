@@ -16,7 +16,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "dist.zip"]
     },
     "preview": {
       "dependsOn": ["^build"],
@@ -30,7 +30,7 @@
       "dependsOn": ["^build"],
       "outputs": [".nitro/**", ".output/**"]
     },
-    "stub": {},
+    "test:e2e": {},
     "dev": {
       "dependsOn": [],
       "outputs": [],

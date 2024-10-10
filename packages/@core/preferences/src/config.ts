@@ -10,7 +10,7 @@ const defaultPreferences: Preferences = {
     compact: false,
     contentCompact: 'wide',
     defaultAvatar:
-      'https://unpkg.com/@vbenjs/static-source@0.1.6/source/avatar-v1.webp',
+      'https://unpkg.com/@vbenjs/static-source@0.1.7/source/avatar-v1.webp',
     dynamicTitle: true,
     enableCheckUpdates: true,
     enablePreferences: true,
@@ -19,8 +19,8 @@ const defaultPreferences: Preferences = {
     layout: 'sidebar-nav',
     locale: 'zh-CN',
     loginExpiredMode: 'page',
-    name: 'Father Box',
-    preferencesButtonPosition: 'fixed',
+    name: 'Vben Admin',
+    preferencesButtonPosition: 'auto',
     watermark: false,
   },
   breadcrumb: {
@@ -31,8 +31,8 @@ const defaultPreferences: Preferences = {
     styleType: 'normal',
   },
   copyright: {
-    companyName: 'blackstar-baba',
-    companySiteLink: 'https://github.com/blackstar-baba/fatherbox',
+    companyName: 'Vben',
+    companySiteLink: 'https://www.vben.pro',
     date: '2024',
     enable: true,
     icp: '',
@@ -49,7 +49,7 @@ const defaultPreferences: Preferences = {
   },
   logo: {
     enable: true,
-    source: '/logo.png',
+    source: 'https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-v1.webp',
   },
   navigation: {
     accordion: true,
@@ -70,12 +70,12 @@ const defaultPreferences: Preferences = {
     expandOnHover: true,
     extraCollapse: true,
     hidden: false,
-    width: 230,
+    width: 224,
   },
   tabbar: {
     dragable: true,
     enable: true,
-    height: 36,
+    height: 38,
     keepAlive: true,
     persist: true,
     showIcon: true,
@@ -87,7 +87,7 @@ const defaultPreferences: Preferences = {
   theme: {
     builtinType: 'default',
     colorDestructive: 'hsl(348 100% 61%)',
-    colorPrimary: 'hsl(231 98% 65%)',
+    colorPrimary: 'hsl(212 100% 45%)',
     colorSuccess: 'hsl(144 57% 58%)',
     colorWarning: 'hsl(42 84% 61%)',
     mode: 'dark',

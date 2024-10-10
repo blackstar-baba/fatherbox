@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, type HTMLAttributes } from 'vue';
+import { computed } from 'vue';
 
-import { cn } from '@vben-core/shared';
+import { cn } from '@vben-core/shared/utils';
 
-import { CaretSortIcon } from '@radix-icons/vue';
+import { ChevronDown } from 'lucide-vue-next';
 import {
   SelectIcon,
   SelectTrigger,
@@ -11,9 +11,7 @@ import {
   useForwardProps,
 } from 'radix-vue';
 
-const props = defineProps<
-  { class?: HTMLAttributes['class'] } & SelectTriggerProps
->();
+const props = defineProps<{ class?: any } & SelectTriggerProps>();
 
 const delegatedProps = computed(() => {
   const { class: _, ...delegated } = props;
@@ -29,14 +27,14 @@ const forwardedProps = useForwardProps(delegatedProps);
     v-bind="forwardedProps"
     :class="
       cn(
-        'border-input ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
+        'border-input ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-10 w-full items-center justify-between whitespace-nowrap rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
         props.class,
       )
     "
   >
     <slot></slot>
     <SelectIcon as-child>
-      <CaretSortIcon class="h-4 w-4 opacity-50" />
+      <ChevronDown class="h-4 w-4 opacity-50" />
     </SelectIcon>
   </SelectTrigger>
 </template>

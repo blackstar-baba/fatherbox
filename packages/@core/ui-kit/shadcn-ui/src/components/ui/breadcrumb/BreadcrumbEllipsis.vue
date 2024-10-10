@@ -1,12 +1,10 @@
 <script lang="ts" setup>
-import type { HTMLAttributes } from 'vue';
+import { cn } from '@vben-core/shared/utils';
 
-import { cn } from '@vben-core/shared';
-
-import { DotsHorizontalIcon } from '@radix-icons/vue';
+import { MoreHorizontal } from 'lucide-vue-next';
 
 const props = defineProps<{
-  class?: HTMLAttributes['class'];
+  class?: any;
 }>();
 </script>
 
@@ -17,7 +15,7 @@ const props = defineProps<{
     role="presentation"
   >
     <slot>
-      <DotsHorizontalIcon class="h-4 w-4" />
+      <MoreHorizontal class="h-4 w-4" />
     </slot>
     <span class="sr-only">More</span>
   </span>

@@ -24,6 +24,8 @@ function defineApplicationConfig(userConfigPromise?: DefineApplicationOptions) {
     const env = loadEnv(mode, root);
 
     const plugins = await loadApplicationPlugins({
+      archiver: true,
+      archiverPluginOptions: {},
       compress: false,
       compressTypes: ['brotli', 'gzip'],
       devtools: true,
@@ -79,7 +81,11 @@ function defineApplicationConfig(userConfigPromise?: DefineApplicationOptions) {
         port,
         warmup: {
           // 预热文件
-          clientFiles: ['./index.html', './src/{views,layouts,router,store}/*'],
+          clientFiles: [
+            './index.html',
+            './bootstrap.ts',
+            './src/{views,layouts,router,store,api}/*',
+          ],
         },
       },
     };
@@ -106,6 +112,7 @@ function createCssOptions(injectGlobalScss = true) {
               }
               return content;
             },
+            api: 'modern-compiler',
           },
         }
       : {},

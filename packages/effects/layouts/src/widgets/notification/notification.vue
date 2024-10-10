@@ -67,7 +67,7 @@ function handleClick(item: NotificationItem) {
   >
     <template #trigger>
       <div class="flex-center mr-2 h-full" @click.stop="toggle()">
-        <VbenIconButton class="bell-button relative">
+        <VbenIconButton class="bell-button text-foreground relative">
           <span
             v-if="dot"
             class="bg-primary absolute right-0.5 top-0.5 h-2 w-2 rounded"
@@ -81,6 +81,7 @@ function handleClick(item: NotificationItem) {
       <div class="flex items-center justify-between p-4 py-3">
         <div class="text-foreground">{{ $t('widgets.notifications') }}</div>
         <VbenIconButton
+          :disabled="notifications.length <= 0"
           :tooltip="$t('widgets.markAllAsRead')"
           @click="handleMakeAll"
         >
@@ -131,7 +132,12 @@ function handleClick(item: NotificationItem) {
       <div
         class="border-border flex items-center justify-between border-t px-4 py-3"
       >
-        <VbenButton size="sm" variant="ghost" @click="handleClear">
+        <VbenButton
+          :disabled="notifications.length <= 0"
+          size="sm"
+          variant="ghost"
+          @click="handleClear"
+        >
           {{ $t('widgets.clearNotifications') }}
         </VbenButton>
         <VbenButton size="sm" @click="handleViewAll">

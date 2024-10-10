@@ -27,8 +27,10 @@ withDefaults(defineProps<Props>(), {
   theme: 'light',
 });
 
+const emit = defineEmits<{ clearPreferencesAndLogout: [] }>();
+
 const accessStore = useAccessStore();
-const { globalSearchShortcutKey } = usePreferences();
+const { globalSearchShortcutKey, preferencesButtonPosition } = usePreferences();
 const slots = useSlots();
 const rightSlots = computed(() => {
   const list = [{ index: 100, name: 'user-dropdown' }];
@@ -39,10 +41,7 @@ const rightSlots = computed(() => {
     });
   }
 
-  if (
-    preferences.app.enablePreferences &&
-    preferences.app.preferencesButtonPosition === 'header'
-  ) {
+  if (preferencesButtonPosition.value.header) {
     list.push({
       index: 10,
       name: 'preferences',
@@ -93,6 +92,10 @@ const leftSlots = computed(() => {
   });
   return list.sort((a, b) => a.index - b.index);
 });
+
+function clearPreferencesAndLogout() {
+  emit('clearPreferencesAndLogout');
+}
 </script>
 
 <template>
@@ -121,21 +124,24 @@ const leftSlots = computed(() => {
           <GlobalSearch
             :enable-shortcut-key="globalSearchShortcutKey"
             :menus="accessStore.accessMenus"
-            class="mr-4"
+            class="mr-1 sm:mr-4"
           />
         </template>
 
         <template v-else-if="slot.name === 'preferences'">
-          <PreferencesButton class="mr-2" />
+          <PreferencesButton
+            class="mr-1"
+            @clear-preferences-and-logout="clearPreferencesAndLogout"
+          />
         </template>
         <template v-else-if="slot.name === 'theme-toggle'">
-          <ThemeToggle class="mr-2 mt-[2px]" />
+          <ThemeToggle class="mr-1 mt-[2px]" />
         </template>
         <template v-else-if="slot.name === 'language-toggle'">
-          <LanguageToggle class="mr-2" />
+          <LanguageToggle class="mr-1" />
         </template>
         <template v-else-if="slot.name === 'fullscreen'">
-          <VbenFullScreen class="mr-2" />
+          <VbenFullScreen class="mr-1" />
         </template>
       </slot>
     </template>

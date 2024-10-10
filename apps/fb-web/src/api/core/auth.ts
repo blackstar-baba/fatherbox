@@ -12,10 +12,6 @@ export namespace AuthApi {
   /** 登录接口返回值 */
   export interface LoginResult {
     accessToken: string;
-    desc: string;
-    realName: string;
-    userId: string;
-    username: string;
   }
 
   export interface RefreshTokenResult {
@@ -60,7 +56,9 @@ export async function logoutApi() {
     ? new Promise((resolve) => {
         resolve('');
       })
-    : requestClient.post('/auth/logout');
+    : baseRequestClient.post('/auth/logout', {
+        withCredentials: true,
+      });
 }
 
 /**

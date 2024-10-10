@@ -8,6 +8,7 @@ import { SearchX, X } from '@vben/icons';
 import { $t } from '@vben/locales';
 import { mapTree, traverseTreeValues, uniqueByField } from '@vben/utils';
 import { VbenIcon, VbenScrollbar } from '@vben-core/shadcn-ui';
+import { isHttpUrl } from '@vben-core/shared/utils';
 
 import { onKeyStroke, useLocalStorage, useThrottleFn } from '@vueuse/core';
 
@@ -99,7 +100,11 @@ async function handleEnter() {
     searchHistory.value.push(to);
     handleClose();
     await nextTick();
-    router.push(to.path);
+    if (isHttpUrl(to.path)) {
+      window.open(to.path, '_blank');
+    } else {
+      router.push({ path: to.path, replace: true });
+    }
   }
 }
 
@@ -157,14 +162,14 @@ const code = new Set([
   '*',
   '+',
   '.',
-  '[',
-  ']',
   '?',
+  '[',
   '\\',
+  ']',
   '^',
   '{',
-  '}',
   '|',
+  '}',
 ]);
 
 // 转换函数，用于转义特殊字符
@@ -217,14 +222,14 @@ onMounted(() => {
 
 <template>
   <VbenScrollbar>
-    <div class="!flex h-full justify-center px-4 sm:max-h-[450px]">
+    <div class="!flex h-full justify-center px-2 sm:max-h-[450px]">
       <!-- 无搜索结果 -->
       <div
         v-if="keyword && searchResults.length === 0"
         class="text-muted-foreground text-center"
       >
-        <SearchX class="mx-auto size-12" />
-        <p class="my-10 text-xs">
+        <SearchX class="mx-auto mt-4 size-12" />
+        <p class="mb-10 mt-6 text-xs">
           {{ $t('widgets.search.noResults') }}
           <span class="text-foreground text-sm font-medium">
             "{{ keyword }}"

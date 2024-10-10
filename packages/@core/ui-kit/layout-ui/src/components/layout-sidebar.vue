@@ -4,6 +4,8 @@ import { computed, shallowRef, useSlots, watchEffect } from 'vue';
 
 import { VbenScrollbar } from '@vben-core/shadcn-ui';
 
+import { useScrollLock } from '@vueuse/core';
+
 import { SidebarCollapseButton, SidebarFixedButton } from './widgets';
 
 interface Props {
@@ -102,6 +104,7 @@ const expandOnHovering = defineModel<boolean>('expandOnHovering');
 const expandOnHover = defineModel<boolean>('expandOnHover');
 const extraVisible = defineModel<boolean>('extraVisible');
 
+const isLocked = useScrollLock(document.body);
 const slots = useSlots();
 
 const asideRef = shallowRef<HTMLDivElement | null>();
@@ -206,7 +209,11 @@ function calcMenuWidthStyle(isHiddenDom: boolean): CSSProperties {
   };
 }
 
-function handleMouseenter() {
+function handleMouseenter(e: MouseEvent) {
+  if (e?.offsetX < 10) {
+    return;
+  }
+
   // 未开启和未折叠状态不生效
   if (expandOnHover.value) {
     return;
@@ -214,12 +221,17 @@ function handleMouseenter() {
   if (!expandOnHovering.value) {
     collapse.value = false;
   }
+  if (props.isSidebarMixed) {
+    isLocked.value = true;
+  }
   expandOnHovering.value = true;
 }
 
 function handleMouseleave() {
   emit('leave');
-
+  if (props.isSidebarMixed) {
+    isLocked.value = false;
+  }
   if (expandOnHover.value) {
     return;
   }
@@ -289,7 +301,7 @@ function handleMouseleave() {
       </div>
       <VbenScrollbar
         :style="extraContentStyle"
-        class="border-border border-t py-2"
+        class="border-border py-2"
         shadow
         shadow-border
       >

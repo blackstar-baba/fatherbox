@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { ToolbarType } from './types';
+
 import { computed } from 'vue';
 
 import {
@@ -9,7 +11,7 @@ import {
 } from '../widgets';
 
 interface Props {
-  toolbarList?: ('color' | 'language' | 'layout' | 'theme')[];
+  toolbarList?: ToolbarType[];
 }
 
 defineOptions({
@@ -29,10 +31,9 @@ const showTheme = computed(() => props.toolbarList.includes('theme'));
 <template>
   <div
     :class="{
-      'bg-background dark:bg-accent rounded-3xl px-3 py-1':
-        toolbarList.length > 1,
+      'bg-accent rounded-3xl px-3 py-1': toolbarList.length > 1,
     }"
-    class="flex-center absolute right-2 top-4"
+    class="flex-center absolute right-2 top-4 z-10"
   >
     <!-- Only show on medium and larger screens -->
     <div class="hidden md:flex">

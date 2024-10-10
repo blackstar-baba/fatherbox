@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from 'vue';
-
-import { cn } from '@vben-core/shared';
+import { cn } from '@vben-core/shared/utils';
 
 const props = defineProps<{
-  class?: HTMLAttributes['class'];
+  class?: any;
 }>();
 </script>
 
@@ -12,7 +10,7 @@ const props = defineProps<{
   <div
     :class="
       cn(
-        'bg-card text-card-foreground border-border rounded-xl border shadow-sm',
+        'bg-card text-card-foreground border-border rounded-xl border',
         props.class,
       )
     "

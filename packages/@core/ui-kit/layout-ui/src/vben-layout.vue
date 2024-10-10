@@ -4,6 +4,7 @@ import type { VbenLayoutProps } from './vben-layout';
 import type { CSSProperties } from 'vue';
 import { computed, ref, watch } from 'vue';
 
+import { SCROLL_FIXED_CLASS } from '@vben-core/composables';
 import { Menu } from '@vben-core/icons';
 import { VbenIconButton } from '@vben-core/shadcn-ui';
 
@@ -50,7 +51,7 @@ const props = withDefaults(defineProps<Props>(), {
   sidebarWidth: 180,
   sideCollapseWidth: 60,
   tabbarEnable: true,
-  tabbarHeight: 36,
+  tabbarHeight: 40,
   zIndex: 200,
 });
 
@@ -184,9 +185,6 @@ const headerFixed = computed(() => {
 });
 
 const showSidebar = computed(() => {
-  // if (isMixedNav.value && !props.sideHidden) {
-  //   return false;
-  // }
   return isSideMode.value && sidebarEnable.value;
 });
 
@@ -242,7 +240,7 @@ const tabbarStyle = computed((): CSSProperties => {
   let marginLeft = 0;
 
   // 如果不是混合导航，tabbar 的宽度为 100%
-  if (!isMixedNav.value) {
+  if (!isMixedNav.value || props.sidebarHidden) {
     width = '100%';
   } else if (sidebarEnable.value) {
     // 鼠标在侧边栏上时，且侧边栏展开时的宽度
@@ -481,9 +479,12 @@ function handleHeaderToggle() {
       class="flex flex-1 flex-col overflow-hidden transition-all duration-300 ease-in"
     >
       <div
-        :class="{
-          'shadow-[0_16px_24px_hsl(var(--background))]': scrollY > 20,
-        }"
+        :class="[
+          {
+            'shadow-[0_16px_24px_hsl(var(--background))]': scrollY > 20,
+          },
+          SCROLL_FIXED_CLASS,
+        ]"
         :style="headerWrapperStyle"
         class="overflow-hidden transition-all duration-200"
       >
@@ -537,8 +538,8 @@ function handleHeaderToggle() {
       >
         <slot name="content"></slot>
 
-        <template #overlay="{ overlayStyle }">
-          <slot :overlay-style="overlayStyle" name="content-overlay"></slot>
+        <template #overlay>
+          <slot name="content-overlay"></slot>
         </template>
       </LayoutContent>
 

@@ -4,21 +4,12 @@
   "configurations": [
     {
       "type": "chrome",
-      "name": "vben admin playground dev",
-      "request": "launch",
-      "url": "http://localhost:5555",
-      "env": { "NODE_ENV": "development" },
-      "sourceMaps": true,
-      "webRoot": "${workspaceFolder}/playground/src"
-    },
-    {
-      "type": "chrome",
-      "name": "vben admin antd dev",
+      "name": "father box dev",
       "request": "launch",
       "url": "http://localhost:5666",
       "env": { "NODE_ENV": "development" },
       "sourceMaps": true,
-      "webRoot": "${workspaceFolder}/apps/fb-web/src"
+      "webRoot": "${workspaceFolder}"
     }
   ]
 }
