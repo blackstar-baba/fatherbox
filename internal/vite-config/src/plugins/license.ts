@@ -13,7 +13,6 @@ import { dateUtil, readPackageJSON } from '@vben/node-utils';
  * 用于注入版权信息
  * @returns PluginOption | undefined
  */
-// todo update this
 async function viteLicensePlugin(
   root = process.cwd(),
 ): Promise<PluginOption | undefined> {
@@ -30,15 +29,15 @@ async function viteLicensePlugin(
       handler: (_options: NormalizedOutputOptions, bundle: OutputBundle) => {
         const date = dateUtil().format('YYYY-MM-DD ');
         const copyrightText = `/*!
-  * Vben Admin
+  * FatherBox
   * Version: ${version}
-  * Author: vben
-  * Copyright (C) 2024 Vben
+  * Author: blackstar-baba
+  * Copyright (C) 2024 blackstar-baba
   * License: MIT License
   * Description: ${description}
   * Date Created: ${date}
   * Homepage: ${homepage}
-  * Contact: ann.vben@gmail.com
+  * Contact: 535650957@qq.com
 */
               `.trim();
 
