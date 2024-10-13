@@ -1,4 +1,6 @@
-export * from './dataUtil';
+import { message } from 'ant-design-vue';
+
+export * from './dateUtil';
 
 export function openWindow(
   url: string,
@@ -15,4 +17,16 @@ export function openWindow(
   noreferrer && feature.push('noreferrer=yes');
 
   window.open(url, target, feature.join(','));
+}
+
+export function copy(value: any) {
+  const input = document.createElement('textarea');
+  input.style.position = 'fixed';
+  input.style.opacity = '0';
+  input.value = value;
+  document.body.append(input);
+  input.select();
+  document.execCommand('Copy');
+  input.remove();
+  message.info('copy success');
 }
