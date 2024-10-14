@@ -1,4 +1,8 @@
 {
+  "authentication": {
+    "pageDesc": "enjoy yourself",
+    "pageTitle": "Full-featured Toolbox"
+  },
   "page": {
     "ai": {
       "title": "AI",

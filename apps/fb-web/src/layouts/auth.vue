@@ -16,6 +16,7 @@ const logo = computed(() => preferences.logo.source);
     :logo="logo"
     :page-description="$t('authentication.pageDesc')"
     :page-title="$t('authentication.pageTitle')"
+    slogan-image="/fatherbox.png"
   >
     <!-- 自定义工具栏 -->
     <!-- <template #toolbar></template> -->
