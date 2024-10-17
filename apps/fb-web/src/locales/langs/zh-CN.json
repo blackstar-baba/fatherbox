@@ -1,4 +1,8 @@
 {
+  "authentication": {
+    "pageDesc": "玩的开心",
+    "pageTitle": "全功能工具箱"
+  },
   "page": {
     "ai": {
       "title": "AI",
