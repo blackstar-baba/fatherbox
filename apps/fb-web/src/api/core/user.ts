@@ -10,7 +10,7 @@ import { requestClient } from '#/api/request';
 export async function getUserInfoApi() {
   return window.__TAURI__
     ? invoke('get_user_info_cmd', {}).then((message: any) => {
-        return message as UserInfo;
+        return message.result as UserInfo;
       })
     : requestClient.get<UserInfo>('/user/info');
 }

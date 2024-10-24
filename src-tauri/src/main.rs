@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::time::SystemTime;
 use std::{env, fs};
-
+use std::sync::{Arc, Mutex, RwLock};
 use clap::Parser;
 use config::FileFormat;
 use log::{error, info};
@@ -14,7 +14,7 @@ use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, Schema};
 use tauri::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
 use tauri::api::path::home_dir;
 
-use crate::db_utils::init_connection;
+use app::util::db_util::init_connection;
 use crate::file_command::{
     create_workspace_dir_cmd, create_workspace_file_cmd, create_workspace_file_inner,
     delete_workspace_file_cmd, list_workspace_dirs_cmd, list_workspace_files_cmd,
@@ -24,21 +24,20 @@ use crate::model_command::{
     chat_files_request_cmd, chat_request_cmd, chat_stream_request_cmd,
     get_chat_history_messages_cmd, get_chats_cmd, get_models_cmd,
 };
-use crate::user_command::{
-    get_access_codes_cmd, get_user_info_cmd, refresh_token_cmd, user_login_cmd,
-};
+use crate::user_command::{get_access_codes_cmd, get_user_info_cmd, refresh_token_cmd, user_login_cmd, user_logout_cmd, user_register_cmd};
 use crate::workspace_command::{
     create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner,
     list_workspaces_cmd,
 };
 use app::api::{file, Api};
+use app::service::file_service::FileService;
 use app::service::workspace_service::WorkspaceService;
 use app::{
     entity, AppResponse, AppState, Config, FileEntry, FileRequest, CONFIG_PATH, DEFAULT_WORKSPACE,
     DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH, WORKSPACE_PATH,
 };
+use app::adapter::user_adapter::{register, RegisterBody};
 
-mod db_utils;
 mod file_command;
 mod model_command;
 mod user_command;
@@ -135,8 +134,85 @@ async fn main() {
     };
     let config: Config = config_builder.build().unwrap().try_deserialize().unwrap();
 
-    // process db
-    let db_file_path = home_dir().unwrap().join(ROOT_PATH).join("data.sqlite");
+    // init user db
+    let db_result = init_user_db().await;
+    if db_result.is_err() {
+        error!("Init user db error: {}", db_result.err().unwrap());
+        exit(1);
+    }
+    let db = db_result.unwrap().unwrap();
+    tauri::Builder::default()
+        .manage(AppState {
+            conn: db,
+            root_path: root_path.to_owned(),
+            workspace_path: workspace_path.to_owned(),
+            user_id: Arc::new(RwLock::new("".to_string())),
+        })
+        // why sync fn must after sync fc
+        .invoke_handler(tauri::generate_handler![
+            my_custom_command,
+            user_register_cmd,
+            user_login_cmd,
+            user_logout_cmd,
+            refresh_token_cmd,
+            get_user_info_cmd,
+            get_access_codes_cmd,
+            list_workspaces_cmd,
+            create_workspace_cmd,
+            delete_workspace_cmd,
+            list_workspace_dirs_cmd,
+            list_workspace_files_cmd,
+            create_workspace_dir_cmd,
+            create_workspace_file_cmd,
+            update_workspace_dir_cmd,
+            update_workspace_file_cmd,
+            delete_workspace_file_cmd,
+            get_models_cmd,
+            get_chats_cmd,
+            get_chat_history_messages_cmd,
+            chat_request_cmd,
+            chat_stream_request_cmd,
+            chat_files_request_cmd
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
+
+async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
+    let db_file_path = home_dir().unwrap().join(ROOT_PATH).join("user.sqlite");
+    info!("begin init db use file {:?}", db_file_path);
+    let db_exist = db_file_path.exists();
+    let db = match init_connection(&db_file_path).await {
+        Ok(conn) => conn,
+        Err(err) => {
+            info!("init connection catch err: {:?}", err);
+            exit(1)
+        }
+    };
+    if !db_exist {
+        info!("begin init tables in db");
+        let builder = db.get_database_backend();
+        let schema = Schema::new(builder);
+        db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::User)))
+            .await
+            .unwrap();
+    }
+    let default_username = "user";
+    let default_user_password = "123456";
+
+    let response = register(&db, &RegisterBody {
+        username: default_username.to_string(),
+        password: default_user_password.to_string(),
+    }).await;
+    if response.code!= RESPONSE_CODE_SUCCESS {
+        error!("create default user error: {}", response.message);
+        exit(1);
+    }
+    Ok(Some(db))
+}
+
+async fn init_file_db(workspace_path: &PathBuf) -> Result<Option<DatabaseConnection>, DbErr> {
+    let db_file_path = home_dir().unwrap().join(ROOT_PATH).join("user.sqlite");
     info!("begin init db use file {:?}", db_file_path);
     let db_exist = db_file_path.exists();
     let db = match init_connection(&db_file_path).await {
@@ -162,7 +238,7 @@ async fn main() {
         .unwrap();
     if option_workspace_model.is_none() {
         // create dir
-        let default_workspace_path = &workspace_path.join(DEFAULT_WORKSPACE);
+        let default_workspace_path = workspace_path.join(DEFAULT_WORKSPACE);
         if !default_workspace_path.exists() {
             // create workspace
             info!(
@@ -181,39 +257,7 @@ async fn main() {
             .await
             .expect("create default workspace dir failed");
     }
-
-    tauri::Builder::default()
-        .manage(AppState {
-            conn: db,
-            root_path: root_path.to_owned(),
-            workspace_path: workspace_path.to_owned(),
-        })
-        // why sync fn must after sync fc
-        .invoke_handler(tauri::generate_handler![
-            my_custom_command,
-            user_login_cmd,
-            refresh_token_cmd,
-            get_user_info_cmd,
-            get_access_codes_cmd,
-            list_workspaces_cmd,
-            create_workspace_cmd,
-            delete_workspace_cmd,
-            list_workspace_dirs_cmd,
-            list_workspace_files_cmd,
-            create_workspace_dir_cmd,
-            create_workspace_file_cmd,
-            update_workspace_dir_cmd,
-            update_workspace_file_cmd,
-            delete_workspace_file_cmd,
-            get_models_cmd,
-            get_chats_cmd,
-            get_chat_history_messages_cmd,
-            chat_request_cmd,
-            chat_stream_request_cmd,
-            chat_files_request_cmd
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    Ok(Some(db))
 }
 
 #[cfg(test)]

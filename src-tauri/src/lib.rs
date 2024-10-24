@@ -1,13 +1,20 @@
 pub mod api;
 pub mod entity;
 pub mod service;
+pub mod adapter;
+pub mod util;
 
-use sea_orm::DatabaseConnection;
+use std::fs;
+use std::fs::File;
+use sea_orm::{Database, DatabaseConnection};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex, RwLock};
+use anyhow::{anyhow, Error};
 use tauri::api::path::home_dir;
 use thiserror::Error;
+use crate::util::db_util::exist_database_file;
 
 pub const ROOT_PATH: &str = ".fatherbox";
 pub const CONFIG_PATH: &str = "config";
@@ -40,6 +47,26 @@ pub struct AppResponse<T> {
     pub result: T,
 }
 
+impl<T> AppResponse<T> {
+    pub fn success(result: T) -> Self {
+        Self {
+            code: RESPONSE_CODE_SUCCESS,
+            r#type: String::new(),
+            message: String::new(),
+            result,
+        }
+    }
+
+    pub fn error(result: T, err_message: &str) -> Self {
+        Self {
+            code: RESPONSE_CODE_ERROR,
+            r#type: String::new(),
+            message: err_message.to_string(),
+            result,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FileEntry {
@@ -68,6 +95,7 @@ pub struct AppState {
     pub conn: DatabaseConnection,
     pub root_path: PathBuf,
     pub workspace_path: PathBuf,
+    pub user_id: Arc<RwLock<String>>,
 }
 
 #[derive(Error, Debug)]
@@ -91,4 +119,23 @@ pub fn get_work_space_path(work_space_name: &str) -> String {
         .to_str()
         .unwrap()
         .to_string()
+}
+
+pub fn set_user_id(state: &AppState, user_id: &str) -> Result<String, Error> {
+    // try write
+    let result =  state.user_id.try_write();
+    if result.is_err() {
+        return Err(anyhow!(result.err().unwrap().to_string()));
+    }
+    let mut exist_user_id = result.unwrap();
+    *exist_user_id = user_id.to_string();
+    Ok(exist_user_id.to_string())
+}
+
+pub fn get_user_id(state: &AppState) -> Result<String, Error> {
+    let result = state.user_id.read();
+    if result.is_err() {
+        return Err(anyhow!(result.err().unwrap().to_string()));
+    }
+    return Ok( result.unwrap().clone())
 }
