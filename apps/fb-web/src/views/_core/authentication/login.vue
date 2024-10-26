@@ -25,7 +25,7 @@ const localUserFormSchema = computed((): VbenFormSchema[] => {
         .string()
         .min(1, { message: $t('authentication.usernameTip') })
         .optional()
-        .default('user'),
+        .default('default'),
     },
     {
       component: 'VbenInputPassword',
