@@ -24,7 +24,7 @@ use crate::model_command::{
     chat_files_request_cmd, chat_request_cmd, chat_stream_request_cmd,
     get_chat_history_messages_cmd, get_chats_cmd, get_models_cmd,
 };
-use crate::user_command::{get_access_codes_cmd, get_user_info_cmd, refresh_token_cmd, user_login_cmd, user_logout_cmd, user_register_cmd};
+use crate::user_command::{ intercepted_command, get_access_codes_cmd, get_user_info_cmd, refresh_token_cmd, user_login_cmd, user_logout_cmd, user_register_cmd};
 use crate::workspace_command::{
     create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner,
     list_workspaces_cmd,
@@ -150,6 +150,7 @@ async fn main() {
         })
         // why sync fn must after sync fc
         .invoke_handler(tauri::generate_handler![
+            intercepted_command,
             my_custom_command,
             user_register_cmd,
             user_login_cmd,
@@ -197,12 +198,14 @@ async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
             .await
             .unwrap();
     }
-    let default_username = "user";
+    let default_username = "default";
     let default_user_password = "123456";
 
     let response = register(&db, &RegisterBody {
         username: default_username.to_string(),
         password: default_user_password.to_string(),
+        confirm_password: default_user_password.to_string(),
+        agree_policy: true,
     }).await;
     if response.code!= RESPONSE_CODE_SUCCESS {
         error!("create default user error: {}", response.message);

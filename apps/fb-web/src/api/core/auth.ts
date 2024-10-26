@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/tauri';
+import { message } from 'ant-design-vue';
 
 import { baseRequestClient, requestClient } from '#/api/request';
 
@@ -28,11 +29,17 @@ export async function loginApi(data: AuthApi.LoginParams) {
   return window.__TAURI__
     ? invoke('user_login_cmd', {
         body: {
-          password: data.password,
-          username: data.username,
+          ...data,
         },
-      }).then((message: any) => {
-        return message.result as AuthApi.LoginResult;
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return {
+            accessToken: '',
+            id: '',
+          } as AuthApi.LoginResult;
+        }
+        return msg.result as AuthApi.LoginResult;
       })
     : requestClient.post<AuthApi.LoginResult>('/auth/login', data);
 }
@@ -72,4 +79,19 @@ export async function getAccessCodesApi() {
         return message as string[];
       })
     : requestClient.get<string[]>('/auth/codes');
+}
+
+export async function registerApi(data: AuthApi.LoginParams) {
+  return window.__TAURI__
+    ? invoke('user_register_cmd', {
+        body: {
+          ...data,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+        }
+        return msg.result as AuthApi.LoginResult;
+      })
+    : requestClient.post<AuthApi.LoginResult>('/auth/register', data);
 }

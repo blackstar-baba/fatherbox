@@ -42,6 +42,8 @@ pub struct UserInfo {
 pub struct RegisterBody {
     pub username: String,
     pub password: String,
+    pub confirm_password: String,
+    pub agree_policy: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
@@ -62,7 +64,7 @@ pub async fn register(db: &DatabaseConnection, body: &RegisterBody) -> AppRespon
     let active_model = user::ActiveModel {
         id: Set(Uuid::new_v4().to_string()),
         username: Set(body.username.clone()),
-        real_name: Set("local_user".to_string()),
+        real_name: Set(body.username.to_string()),
         avatar: Default::default(),
         password: Set(body.password.clone()),
         mail: Default::default(),
@@ -104,7 +106,7 @@ pub async fn login(db: &DatabaseConnection, body: &LoginBody) -> AppResponse<Opt
                 }
             } else {
                 // todo generate access token
-                let access_token = BASE64_STANDARD.encode(body.username.to_owned());
+                let access_token = BASE64_STANDARD.encode(vec[0].id.to_owned());
                 let result = LoginInfo {
                     access_token,
                     desc: "".to_owned(),
@@ -235,9 +237,10 @@ mod tests {
         let register_response = register(
             &db,
             &RegisterBody {
-                real_name: None,
                 username: username.to_string(),
                 password: password.to_string(),
+                confirm_password: password.to_string(),
+                agree_policy: true,
             },
         )
         .await;

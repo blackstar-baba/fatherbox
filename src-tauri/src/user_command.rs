@@ -1,6 +1,8 @@
-use anyhow::Error;
+use axum::response;
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use futures::FutureExt;
-use std::sync::{LockResult, TryLockResult};
+use serde_json::{to_string, to_value, Value};
 use tauri::State;
 
 use app::adapter::user_adapter::{
@@ -9,7 +11,35 @@ use app::adapter::user_adapter::{
 };
 use app::entity::user::Model;
 use app::{get_user_id, set_user_id, AppState};
-use app::{AppResponse, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS};
+use app::{AppResponse, RESPONSE_CODE_SUCCESS};
+
+#[tauri::command]
+pub async fn intercepted_command(
+    state: State<'_, AppState>,
+    command: String,
+    access_token: Option<String>,
+    args: Value,
+) -> Result<Value, ()> {
+    // Pre-processing or logging logic
+    let db = &state.conn;
+    return match command.as_str() {
+        "" => {
+            Ok(to_value(&AppResponse::error(None::<String>, "Command is empty")).unwrap())
+        }
+        "get_user_info" => {
+            if access_token.is_none() {
+                return Ok(to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap());
+            }
+            let result = BASE64_STANDARD.decode(access_token.unwrap()).unwrap();
+            let user_id =  String::from_utf8(result).unwrap();
+            let response = get_user_info(db, &user_id).await;
+            Ok(to_value(&response).unwrap())
+        }
+        _ => {
+            Ok(to_value(&AppResponse::error(None::<String>, "Command not found")).unwrap())
+        }
+    };
+}
 
 #[tauri::command]
 pub async fn user_register_cmd(
@@ -57,7 +87,7 @@ pub async fn get_user_info_cmd(
     match result {
         Ok(user_id) => {
             if user_id.is_empty() {
-                return Ok(AppResponse::error(None,"User not login"))
+                return Ok(AppResponse::error(None, "User not login"));
             }
             get_user_info(&state.conn, &user_id)
                 .map(|response| return Ok(response))
