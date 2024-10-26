@@ -137,5 +137,5 @@ pub fn get_user_id(state: &AppState) -> Result<String, Error> {
     if result.is_err() {
         return Err(anyhow!(result.err().unwrap().to_string()));
     }
-    return Ok( result.unwrap().clone())
+    return Ok(result.unwrap().clone())
 }
