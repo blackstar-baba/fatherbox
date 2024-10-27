@@ -1,3 +1,5 @@
+import { useAccessStore } from '@vben/stores';
+
 import { invoke } from '@tauri-apps/api/tauri';
 import { message } from 'ant-design-vue';
 
@@ -27,8 +29,9 @@ export namespace AuthApi {
  */
 export async function loginApi(data: AuthApi.LoginParams) {
   return window.__TAURI__
-    ? invoke('user_login_cmd', {
-        body: {
+    ? invoke('intercepted_command', {
+        command: 'user_login',
+        args: {
           ...data,
         },
       }).then((msg: any) => {
@@ -61,8 +64,13 @@ export async function refreshTokenApi() {
  * 退出登录
  */
 export async function logoutApi() {
+  const accessStore = useAccessStore();
   return window.__TAURI__
-    ? invoke('user_logout_cmd', {}).then((message: any) => {
+    ? invoke('intercepted_command', {
+        command: 'user_logout',
+        accessToken: accessStore.accessToken,
+        args: {},
+      }).then((message: any) => {
         return message.result;
       })
     : baseRequestClient.post('/auth/logout', {
@@ -83,8 +91,9 @@ export async function getAccessCodesApi() {
 
 export async function registerApi(data: AuthApi.LoginParams) {
   return window.__TAURI__
-    ? invoke('user_register_cmd', {
-        body: {
+    ? invoke('intercepted_command', {
+        command: 'user_register',
+        args: {
           ...data,
         },
       }).then((msg: any) => {

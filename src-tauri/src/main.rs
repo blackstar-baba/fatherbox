@@ -24,7 +24,7 @@ use crate::model_command::{
     chat_files_request_cmd, chat_request_cmd, chat_stream_request_cmd,
     get_chat_history_messages_cmd, get_chats_cmd, get_models_cmd,
 };
-use crate::user_command::{ intercepted_command, get_access_codes_cmd, get_user_info_cmd, refresh_token_cmd, user_login_cmd, user_logout_cmd, user_register_cmd};
+use crate::user_command::{ intercepted_command, get_access_codes_cmd, refresh_token_cmd};
 use crate::workspace_command::{
     create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner,
     list_workspaces_cmd,
@@ -146,17 +146,12 @@ async fn main() {
             conn: db,
             root_path: root_path.to_owned(),
             workspace_path: workspace_path.to_owned(),
-            user_id: Arc::new(RwLock::new("".to_string())),
         })
         // why sync fn must after sync fc
         .invoke_handler(tauri::generate_handler![
             intercepted_command,
             my_custom_command,
-            user_register_cmd,
-            user_login_cmd,
-            user_logout_cmd,
             refresh_token_cmd,
-            get_user_info_cmd,
             get_access_codes_cmd,
             list_workspaces_cmd,
             create_workspace_cmd,

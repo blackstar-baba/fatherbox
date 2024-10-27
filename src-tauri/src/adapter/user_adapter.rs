@@ -198,6 +198,11 @@ pub async fn get_access_codes(db: &DatabaseConnection) -> Result<Vec<String>, ()
     return Ok(codes);
 }
 
+pub async fn logout(
+) -> Result<AppResponse<Option<String>>, ()> {
+    return Ok(AppResponse::success(Some(String::new())))
+}
+
 #[cfg(test)]
 mod tests {
     use std::env::temp_dir;

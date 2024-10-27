@@ -2,15 +2,20 @@
 import type { LoginAndRegisterParams, VbenFormSchema } from '@vben/common-ui';
 
 import { computed, h, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { AuthenticationRegister, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
+
+import { message } from 'ant-design-vue';
 
 import { registerApi } from '#/api';
 
 defineOptions({ name: 'Register' });
 
 const loading = ref(false);
+
+const router = useRouter();
 
 const formSchema = computed((): VbenFormSchema[] => {
   return [
@@ -89,9 +94,9 @@ const formSchema = computed((): VbenFormSchema[] => {
 });
 
 async function handleSubmit(value: LoginAndRegisterParams) {
-  // eslint-disable-next-line no-console
-  console.log('register submit:', value);
   await registerApi(value);
+  message.success('register successfully!');
+  await router.push('/auth/login');
 }
 </script>
 
