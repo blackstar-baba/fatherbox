@@ -70,6 +70,7 @@ interface AuthenticationProps {
 interface LoginAndRegisterParams {
   password: string;
   username: string;
+  nickname: string;
 }
 
 interface LoginCodeParams {

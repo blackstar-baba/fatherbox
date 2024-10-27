@@ -47,7 +47,7 @@ impl UserService {
     ) -> Result<Vec<DataTransModel>, DbErr> {
         let query = Statement::from_sql_and_values(
             db.get_database_backend(),
-            "SELECT u1.id, u1.username, u1.real_name, u1.avatar, u1.mail, u1.type, u1.ref_user_id,
+            "SELECT u1.id, u1.username, u1.nickname, u1.avatar, u1.mail, u1.type, u1.ref_user_id,
             u1.create_time, u1.update_time, u1.state, u2.username as ref_user_name
             FROM user u1
             LEFT JOIN user u2 on u1.ref_user_id = u2.id
@@ -65,7 +65,7 @@ impl UserService {
     ) -> Result<Vec<UserDataTransModel>, DbErr> {
         let query = Statement::from_sql_and_values(
             db.get_database_backend(),
-            "SELECT u1.id, u1.username, u1.real_name, u1.avatar, u1.mail, u1.type, u1.ref_user_id,
+            "SELECT u1.id, u1.username, u1.nickname, u1.avatar, u1.mail, u1.type, u1.ref_user_id,
             u1.create_time, u1.update_time, u1.state, u2.username as ref_user_name
             FROM user u1
             LEFT JOIN user u2 on u1.ref_user_id = u2.id

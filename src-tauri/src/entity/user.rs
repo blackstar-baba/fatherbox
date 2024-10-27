@@ -11,7 +11,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
     pub username: String,
-    pub real_name: String,
+    pub nickname: String,
     pub avatar: Option<Vec<u8>>,
     pub password: String,
     pub mail: Option<String>,
@@ -32,7 +32,7 @@ impl ActiveModelBehavior for ActiveModel {}
 pub struct DataTransModel {
     pub id: String,
     pub username: String,
-    pub real_name: String,
+    pub nickname: String,
     pub avatar: Option<Vec<u8>>,
     pub mail: Option<String>,
     pub r#type: String,

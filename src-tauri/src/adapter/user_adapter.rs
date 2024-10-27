@@ -42,8 +42,7 @@ pub struct UserInfo {
 pub struct RegisterBody {
     pub username: String,
     pub password: String,
-    pub confirm_password: String,
-    pub agree_policy: bool,
+    pub nickname: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
@@ -64,7 +63,7 @@ pub async fn register(db: &DatabaseConnection, body: &RegisterBody) -> AppRespon
     let active_model = user::ActiveModel {
         id: Set(Uuid::new_v4().to_string()),
         username: Set(body.username.clone()),
-        real_name: Set(body.username.to_string()),
+        nickname: Set(body.nickname.clone()),
         avatar: Default::default(),
         password: Set(body.password.clone()),
         mail: Default::default(),
@@ -110,7 +109,7 @@ pub async fn login(db: &DatabaseConnection, body: &LoginBody) -> AppResponse<Opt
                 let result = LoginInfo {
                     access_token,
                     desc: "".to_owned(),
-                    real_name: vec[0].real_name.to_owned(),
+                    real_name: vec[0].nickname.to_owned(),
                     user_id: vec[0].id.to_owned(),
                     username: vec[0].username.to_owned(),
                     mail: vec[0].mail.clone(),
@@ -153,7 +152,7 @@ pub async fn get_user_info(db: &DatabaseConnection, id: &str) -> AppResponse<Opt
                 };
                 let user_info = UserInfo {
                     id: vec[0].id.to_owned(),
-                    real_name: vec[0].real_name.to_owned(),
+                    real_name: vec[0].nickname.to_owned(),
                     username: vec[0].username.to_owned(),
                     roles: vec![],
                     avatar: Some(avatar),
@@ -239,13 +238,13 @@ mod tests {
         // register
         let username = "admin";
         let password = "123456";
+        let nickname = "user";
         let register_response = register(
             &db,
             &RegisterBody {
                 username: username.to_string(),
                 password: password.to_string(),
-                confirm_password: password.to_string(),
-                agree_policy: true,
+                nickname: nickname.to_string(),
             },
         )
         .await;

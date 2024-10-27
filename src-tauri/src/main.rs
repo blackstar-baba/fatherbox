@@ -195,12 +195,12 @@ async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
     }
     let default_username = "default";
     let default_user_password = "123456";
+    let default_nickname = "default user";
 
     let response = register(&db, &RegisterBody {
         username: default_username.to_string(),
         password: default_user_password.to_string(),
-        confirm_password: default_user_password.to_string(),
-        agree_policy: true,
+        nickname: default_nickname.to_string(),
     }).await;
     if response.code!= RESPONSE_CODE_SUCCESS {
         error!("create default user error: {}", response.message);

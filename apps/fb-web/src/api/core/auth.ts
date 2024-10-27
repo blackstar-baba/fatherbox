@@ -12,6 +12,12 @@ export namespace AuthApi {
     username: string;
   }
 
+  export interface RegisterParams {
+    password: string;
+    username: string;
+    nickname: string;
+  }
+
   /** 登录接口返回值 */
   export interface LoginResult {
     accessToken: string;
@@ -89,7 +95,7 @@ export async function getAccessCodesApi() {
     : requestClient.get<string[]>('/auth/codes');
 }
 
-export async function registerApi(data: AuthApi.LoginParams) {
+export async function registerApi(data: AuthApi.RegisterParams) {
   return window.__TAURI__
     ? invoke('intercepted_command', {
         command: 'user_register',
