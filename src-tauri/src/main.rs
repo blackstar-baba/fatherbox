@@ -32,13 +32,13 @@ use crate::workspace_command::{
     list_workspaces_cmd,
 };
 use app::api::{file, Api};
-use app::service::file_service::FileService;
-use app::service::workspace_service::WorkspaceService;
+use app::dao::file_dao::FileService;
+use app::dao::workspace_dao::WorkspaceService;
 use app::{
     entity, AppResponse, AppState, Config, FileEntry, FileRequest, CONFIG_PATH, DEFAULT_WORKSPACE,
     DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH, WORKSPACE_PATH,
 };
-use app::adapter::user_adapter::{get_access_codes, get_user_info, login, LoginBody, logout, refresh_token, register, RegisterBody};
+use app::service::user_service::{get_access_codes, get_user_info, login, LoginBody, logout, refresh_token, register, RegisterBody};
 use crate::route::route_cmd;
 
 mod file_command;

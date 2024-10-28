@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use app::entity::workspace;
 use app::entity::workspace::Model;
-use app::service::workspace_service::WorkspaceService;
+use app::dao::workspace_dao::WorkspaceService;
 use app::AppState;
 use app::{AppResponse, DIR_TYPE, RESPONSE_CODE_SUCCESS};
 
