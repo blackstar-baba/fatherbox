@@ -1,5 +1,7 @@
 {
   "authentication": {
+    "nickname": "昵称",
+    "nicknameTip": "请输入昵称",
     "pageDesc": "玩的开心",
     "pageTitle": "全功能工具箱"
   },

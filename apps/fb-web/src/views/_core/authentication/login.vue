@@ -25,7 +25,7 @@ const localUserFormSchema = computed((): VbenFormSchema[] => {
         .string()
         .min(1, { message: $t('authentication.usernameTip') })
         .optional()
-        .default('user'),
+        .default('default'),
     },
     {
       component: 'VbenInputPassword',
@@ -58,7 +58,6 @@ const localUserFormSchema = computed((): VbenFormSchema[] => {
     :show-code-login="false"
     :show-forget-password="false"
     :show-qrcode-login="false"
-    :show-register="false"
     :show-third-party-login="false"
     @submit="authStore.authLogin"
   />

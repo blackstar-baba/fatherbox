@@ -1,13 +1,20 @@
 pub mod api;
 pub mod entity;
 pub mod service;
+pub mod adapter;
+pub mod util;
 
-use sea_orm::DatabaseConnection;
+use std::fs;
+use std::fs::File;
+use sea_orm::{Database, DatabaseConnection};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex, RwLock};
+use anyhow::{anyhow, Error};
 use tauri::api::path::home_dir;
 use thiserror::Error;
+use crate::util::db_util::exist_database_file;
 
 pub const ROOT_PATH: &str = ".fatherbox";
 pub const CONFIG_PATH: &str = "config";
@@ -38,6 +45,26 @@ pub struct AppResponse<T> {
     pub r#type: String,
     pub message: String,
     pub result: T,
+}
+
+impl<T> AppResponse<T> {
+    pub fn success(result: T) -> Self {
+        Self {
+            code: RESPONSE_CODE_SUCCESS,
+            r#type: String::new(),
+            message: String::new(),
+            result,
+        }
+    }
+
+    pub fn error(result: T, err_message: &str) -> Self {
+        Self {
+            code: RESPONSE_CODE_ERROR,
+            r#type: String::new(),
+            message: err_message.to_string(),
+            result,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

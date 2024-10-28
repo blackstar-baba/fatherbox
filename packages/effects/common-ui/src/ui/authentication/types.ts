@@ -72,6 +72,12 @@ interface LoginAndRegisterParams {
   username: string;
 }
 
+interface RegisterParams {
+  password: string;
+  username: string;
+  nickname: string;
+}
+
 interface LoginCodeParams {
   code: string;
   phoneNumber: string;
@@ -86,7 +92,7 @@ interface LoginCodeEmits {
 }
 
 interface RegisterEmits {
-  submit: [LoginAndRegisterParams];
+  submit: [RegisterParams];
 }
 
 export type {

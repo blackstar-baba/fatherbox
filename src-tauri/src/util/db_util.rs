@@ -34,11 +34,10 @@ pub fn exist_database_file(file_path: &PathBuf) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::env::temp_dir;
-
-    use crate::db_utils::{
+    use crate::util::db_util::{
         close_connection, drop_database_file, exist_database_file, init_connection,
     };
+    use std::env::temp_dir;
 
     #[tokio::test]
     async fn database_test() {

@@ -24,9 +24,9 @@ export const MOCK_USERS: UserInfo[] = [
   {
     id: 2,
     password: '123456',
-    realName: 'Jack',
+    realName: 'default',
     roles: ['user'],
-    username: 'jack',
+    username: 'default',
   },
 ];
 
