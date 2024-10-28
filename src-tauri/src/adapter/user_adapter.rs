@@ -187,23 +187,21 @@ pub async fn get_user_info(db: &DatabaseConnection, id: &str) -> AppResponse<Opt
 pub async fn refresh_token(
     db: &DatabaseConnection,
     access_token: &str,
-) -> Result<RefreshTokenResult, ()> {
-    // todo validate token and refresh
-    return Ok(RefreshTokenResult {
+) -> AppResponse<RefreshTokenResult> {
+    AppResponse::success(RefreshTokenResult {
         data: access_token.to_owned(),
         status: 0,
-    });
+    })
 }
 
-pub async fn get_access_codes(db: &DatabaseConnection) -> Result<Vec<String>, ()> {
-    // todo check this
+pub async fn get_access_codes(db: &DatabaseConnection) -> AppResponse<Vec<String>> {
     let codes = vec![
         "AC_100100".to_owned(),
         "AC_100110".to_owned(),
         "AC_100120".to_owned(),
         "AC_100010".to_owned(),
     ];
-    return Ok(codes);
+    AppResponse::success(codes)
 }
 
 pub async fn logout(

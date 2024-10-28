@@ -12,18 +12,26 @@ pub async fn route_cmd(
     access_token: Option<String>,
     args: Value,
 ) -> Result<Value, ()> {
+    if command.is_empty() {
+        return Ok(to_value(&AppResponse::error(None::<String>, "Command is empty")).unwrap());
+    }
     // Pre-processing or logging logic
     let db = &state.conn;
+    if command == "user_login" {
+        let result: LoginBody = serde_json::from_value(args).unwrap();
+        let response = login(db, &result).await;
+        return Ok(to_value(&response).unwrap())
+    }
+    if access_token.is_none() {
+        return Ok(
+            to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap(),
+        );
+    }
+    let access_token = access_token.unwrap();
+    let result = BASE64_STANDARD.decode(&access_token).unwrap();
+    let user_id = String::from_utf8(result).unwrap();
     return match command.as_str() {
-        "" => Ok(to_value(&AppResponse::error(None::<String>, "Command is empty")).unwrap()),
-        "get_user_info" => {
-            if access_token.is_none() {
-                return Ok(
-                    to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap(),
-                );
-            }
-            let result = BASE64_STANDARD.decode(access_token.unwrap()).unwrap();
-            let user_id = String::from_utf8(result).unwrap();
+        "user_get_info" => {
             let response = get_user_info(db, &user_id).await;
             Ok(to_value(&response).unwrap())
         }
@@ -42,15 +50,10 @@ pub async fn route_cmd(
             Ok(to_value(&response).unwrap())
         }
         "user_refresh_token" => {
-            if access_token.is_none() {
-                return Ok(
-                    to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap(),
-                );
-            }
-            let response = refresh_token(db, &access_token.unwrap()).await;
+            let response = refresh_token(db, &access_token).await;
             Ok(to_value(&response).unwrap())
         }
-        "get_user_access_codes" => {
+        "user_get_access_codes" => {
             let response = get_access_codes(db).await;
             Ok(to_value(&response).unwrap())
         }
