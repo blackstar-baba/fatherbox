@@ -69,7 +69,10 @@ const router = useRouter();
 async function handleSubmit() {
   const { valid, values } = await validate();
   if (valid) {
-    emit('submit', values as { password: string; username: string });
+    emit(
+      'submit',
+      values as { nickname: ''; password: string; username: string },
+    );
   }
 }
 

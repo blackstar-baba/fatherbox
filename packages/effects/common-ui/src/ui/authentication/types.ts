@@ -70,6 +70,11 @@ interface AuthenticationProps {
 interface LoginAndRegisterParams {
   password: string;
   username: string;
+}
+
+interface RegisterParams {
+  password: string;
+  username: string;
   nickname: string;
 }
 
@@ -87,7 +92,7 @@ interface LoginCodeEmits {
 }
 
 interface RegisterEmits {
-  submit: [LoginAndRegisterParams];
+  submit: [RegisterParams];
 }
 
 export type {
