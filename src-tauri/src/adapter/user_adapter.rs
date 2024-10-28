@@ -93,10 +93,10 @@ pub async fn register(db: &DatabaseConnection, body: &RegisterBody) -> AppRespon
     }
 }
 pub async fn login(db: &DatabaseConnection, body: &LoginBody) -> AppResponse<Option<LoginInfo>> {
-    let result = UserService::get_user(db, &body.username, &body.password, "local").await;
+    let result = UserService::get_user_by_name(db, &body.username, "local").await;
     match result {
-        Ok(vec) => {
-            if vec.is_empty() {
+        Ok(model_op) => {
+            if model_op.is_none() {
                 AppResponse {
                     code: RESPONSE_CODE_ERROR,
                     r#type: "".to_string(),
@@ -104,15 +104,24 @@ pub async fn login(db: &DatabaseConnection, body: &LoginBody) -> AppResponse<Opt
                     result: None,
                 }
             } else {
+                let model = model_op.unwrap();
+                if model.password != body.password {
+                    return AppResponse {
+                        code: RESPONSE_CODE_ERROR,
+                        r#type: "".to_string(),
+                        message: "User name, mail or password incorrect".to_string(),
+                        result: None,
+                    }
+                }
                 // todo generate access token
-                let access_token = BASE64_STANDARD.encode(vec[0].id.to_owned());
+                let access_token = BASE64_STANDARD.encode(model.id.to_owned());
                 let result = LoginInfo {
                     access_token,
                     desc: "".to_owned(),
-                    real_name: vec[0].nickname.to_owned(),
-                    user_id: vec[0].id.to_owned(),
-                    username: vec[0].username.to_owned(),
-                    mail: vec[0].mail.clone(),
+                    real_name: model.nickname.to_owned(),
+                    user_id: model.id.to_owned(),
+                    username: model.username.to_owned(),
+                    mail: model.mail.clone(),
                 };
                 AppResponse {
                     code: RESPONSE_CODE_SUCCESS,
