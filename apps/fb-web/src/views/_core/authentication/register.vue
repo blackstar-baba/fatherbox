@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import type { LoginAndRegisterParams, VbenFormSchema } from '@vben/common-ui';
+import type { VbenFormSchema } from '@vben/common-ui';
+
+import type { AuthApi } from '#/api';
 
 import { computed, h, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -102,7 +104,7 @@ const formSchema = computed((): VbenFormSchema[] => {
   ];
 });
 
-async function handleSubmit(value: LoginAndRegisterParams) {
+async function handleSubmit(value: AuthApi.RegisterParams) {
   await registerApi(value);
   message.success('register successfully!');
   await router.push('/auth/login');
