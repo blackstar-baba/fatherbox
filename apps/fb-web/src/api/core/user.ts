@@ -13,7 +13,7 @@ import { requestClient } from '#/api/request';
 export async function getUserInfoApi() {
   const accessStore = useAccessStore();
   return window.__TAURI__
-    ? invoke('intercepted_command', {
+    ? invoke('route_cmd', {
         command: 'get_user_info',
         accessToken: accessStore.accessToken,
         args: {},

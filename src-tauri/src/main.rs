@@ -7,13 +7,16 @@ use std::process::exit;
 use std::time::SystemTime;
 use std::{env, fs};
 use std::sync::{Arc, Mutex, RwLock};
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use clap::Parser;
 use config::FileFormat;
 use log::{error, info};
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, Schema};
+use serde_json::{to_value, Value};
 use tauri::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
 use tauri::api::path::home_dir;
-
+use tauri::State;
 use app::util::db_util::init_connection;
 use crate::file_command::{
     create_workspace_dir_cmd, create_workspace_file_cmd, create_workspace_file_inner,
@@ -24,7 +27,6 @@ use crate::model_command::{
     chat_files_request_cmd, chat_request_cmd, chat_stream_request_cmd,
     get_chat_history_messages_cmd, get_chats_cmd, get_models_cmd,
 };
-use crate::user_command::{ intercepted_command, get_access_codes_cmd, refresh_token_cmd};
 use crate::workspace_command::{
     create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner,
     list_workspaces_cmd,
@@ -36,12 +38,13 @@ use app::{
     entity, AppResponse, AppState, Config, FileEntry, FileRequest, CONFIG_PATH, DEFAULT_WORKSPACE,
     DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH, WORKSPACE_PATH,
 };
-use app::adapter::user_adapter::{register, RegisterBody};
+use app::adapter::user_adapter::{get_access_codes, get_user_info, login, LoginBody, logout, refresh_token, register, RegisterBody};
+use crate::route::route_cmd;
 
 mod file_command;
 mod model_command;
-mod user_command;
 mod workspace_command;
+mod route;
 
 static DEFAULT_CONFIG: &str = include_str!("../config.toml");
 
@@ -149,10 +152,8 @@ async fn main() {
         })
         // why sync fn must after sync fc
         .invoke_handler(tauri::generate_handler![
-            intercepted_command,
+            route_cmd,
             my_custom_command,
-            refresh_token_cmd,
-            get_access_codes_cmd,
             list_workspaces_cmd,
             create_workspace_cmd,
             delete_workspace_cmd,

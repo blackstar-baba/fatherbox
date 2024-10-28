@@ -35,7 +35,7 @@ export namespace AuthApi {
  */
 export async function loginApi(data: AuthApi.LoginParams) {
   return window.__TAURI__
-    ? invoke('intercepted_command', {
+    ? invoke('route_cmd', {
         command: 'user_login',
         args: {
           ...data,
@@ -57,9 +57,22 @@ export async function loginApi(data: AuthApi.LoginParams) {
  * 刷新accessToken
  */
 export async function refreshTokenApi() {
+  const accessStore = useAccessStore();
   return window.__TAURI__
-    ? invoke('refresh_token_cmd', {}).then((message: any) => {
-        return message.result as AuthApi.RefreshTokenResult;
+    ? invoke('refresh_token_cmd', {
+        command: 'user_refresh_token',
+        args: {
+          accessToken: accessStore.accessToken,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return {
+            data: accessStore.accessToken,
+            status: 0,
+          } as AuthApi.RefreshTokenResult;
+        }
+        return msg.result as AuthApi.RefreshTokenResult;
       })
     : baseRequestClient.post<AuthApi.RefreshTokenResult>('/auth/refresh', {
         withCredentials: true,
@@ -72,7 +85,7 @@ export async function refreshTokenApi() {
 export async function logoutApi() {
   const accessStore = useAccessStore();
   return window.__TAURI__
-    ? invoke('intercepted_command', {
+    ? invoke('route_cmd', {
         command: 'user_logout',
         accessToken: accessStore.accessToken,
         args: {},
@@ -88,16 +101,26 @@ export async function logoutApi() {
  * 获取用户权限码
  */
 export async function getAccessCodesApi() {
+  const accessStore = useAccessStore();
   return window.__TAURI__
-    ? invoke('get_access_codes_cmd', {}).then((message: any) => {
-        return message as string[];
+    ? invoke('route_cmd_cmd', {
+        cmd: 'get_user_access_codes',
+        args: {
+          accessToken: accessStore.accessToken,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return [];
+        }
+        return msg as string[];
       })
     : requestClient.get<string[]>('/auth/codes');
 }
 
 export async function registerApi(data: AuthApi.RegisterParams) {
   return window.__TAURI__
-    ? invoke('intercepted_command', {
+    ? invoke('route_cmd', {
         command: 'user_register',
         args: {
           ...data,

@@ -1,18 +1,12 @@
-use axum::response;
-use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
-use futures::FutureExt;
-use sea_orm::DatabaseConnection;
-use serde_json::{to_string, to_value, Value};
+use base64::prelude::BASE64_STANDARD;
+use serde_json::{to_value, Value};
 use tauri::State;
-
-use app::adapter::user_adapter::{get_access_codes, get_user_info, login, refresh_token, register, LoginBody, LoginInfo, RefreshTokenResult, RegisterBody, UserInfo, logout};
-use app::entity::user::Model;
-use app::AppState;
-use app::{AppResponse, RESPONSE_CODE_SUCCESS};
+use app::{AppResponse, AppState};
+use app::adapter::user_adapter::{get_access_codes, get_user_info, login, LoginBody, logout, refresh_token, register, RegisterBody};
 
 #[tauri::command]
-pub async fn intercepted_command(
+pub async fn route_cmd(
     state: State<'_, AppState>,
     command: String,
     access_token: Option<String>,
@@ -34,7 +28,7 @@ pub async fn intercepted_command(
             Ok(to_value(&response).unwrap())
         }
         "user_login" => {
-            let result:LoginBody = serde_json::from_value(args).unwrap();
+            let result: LoginBody = serde_json::from_value(args).unwrap();
             let response = login(db, &result).await;
             Ok(to_value(&response).unwrap())
         }
@@ -43,25 +37,23 @@ pub async fn intercepted_command(
             Ok(to_value(&response).unwrap())
         }
         "user_register" => {
-            let result:RegisterBody = serde_json::from_value(args).unwrap();
-            let response = register(&state.conn, &result)
-                .await;
+            let result: RegisterBody = serde_json::from_value(args).unwrap();
+            let response = register(db, &result).await;
+            Ok(to_value(&response).unwrap())
+        }
+        "user_refresh_token" => {
+            if access_token.is_none() {
+                return Ok(
+                    to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap(),
+                );
+            }
+            let response = refresh_token(db, &access_token.unwrap()).await;
+            Ok(to_value(&response).unwrap())
+        }
+        "get_user_access_codes" => {
+            let response = get_access_codes(db).await;
             Ok(to_value(&response).unwrap())
         }
         _ => Ok(to_value(&AppResponse::error(None::<String>, "Command not found")).unwrap()),
     };
-}
-
-
-#[tauri::command]
-pub async fn get_access_codes_cmd(state: State<'_, AppState>) -> Result<Vec<String>, ()> {
-    get_access_codes(&state.conn).await
-}
-
-#[tauri::command]
-pub async fn refresh_token_cmd(
-    state: State<'_, AppState>,
-    access_token: String,
-) -> Result<RefreshTokenResult, ()> {
-    refresh_token(&state.conn, &access_token).await
 }
