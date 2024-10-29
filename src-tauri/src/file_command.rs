@@ -10,8 +10,8 @@ use tauri::State;
 use uuid::Uuid;
 
 use app::entity::file::{ActiveModel, DataTransModel, Model};
-use app::service::file_service::FileService;
-use app::service::workspace_service::WorkspaceService;
+use app::dao::file_dao::FileService;
+use app::dao::workspace_dao::WorkspaceService;
 use app::{
     AppResponse, AppState, FileEntry, DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR,
     RESPONSE_CODE_SUCCESS,

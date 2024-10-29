@@ -103,11 +103,10 @@ export async function logoutApi() {
 export async function getAccessCodesApi() {
   const accessStore = useAccessStore();
   return window.__TAURI__
-    ? invoke('route_cmd_cmd', {
-        cmd: 'get_user_access_codes',
-        args: {
-          accessToken: accessStore.accessToken,
-        },
+    ? invoke('route_cmd', {
+        command: 'user_get_access_codes',
+        accessToken: accessStore.accessToken,
+        args: {},
       }).then((msg: any) => {
         if (msg.code !== 0) {
           message.error(msg.message);

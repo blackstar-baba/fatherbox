@@ -14,7 +14,7 @@ export async function getUserInfoApi() {
   const accessStore = useAccessStore();
   return window.__TAURI__
     ? invoke('route_cmd', {
-        command: 'get_user_info',
+        command: 'user_get_info',
         accessToken: accessStore.accessToken,
         args: {},
       }).then((msg: any) => {
