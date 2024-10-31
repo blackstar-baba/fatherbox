@@ -13,6 +13,10 @@ FatherBox is an open-source, free utility app built using Vben & Tauri technolog
 
 ## Feature
 
+- Utils, Time Parser JsonFormatter UuidGenerator Encryptor RegExp
+- AI, Local LLM & Remote LLM Links
+- Editors, Markdown & Flow
+
 ## Preview
 
 ### Use Gitpod
@@ -23,9 +27,7 @@ Open the project in Gitpod (free online dev environment for GitHub) and start co
 
 ## Documentation
 
-Sorry, no yet.
-
-## Install and use
+## Dev & Build
 
 - Get the project code
 
@@ -49,6 +51,21 @@ cargo tauri dev
 
 ```bash
 cargo tauri build
+```
+
+## Install
+
+1. Download app in `releases` page, https://github.com/blackstar-baba/fatherbox/releases.
+2. Double click app binary file for install.
+
+## Use
+
+Double click fatherbox app. use username `default` & password `123456` to login <img width="1478" alt="login pag" src="https://github.com/user-attachments/assets/3312c8b9-3a29-48fa-afbf-e24cd03c4b58">
+
+**macos need exec this command before click**:
+
+```
+sudo xattr -rd com.apple.quarantine /Applications/fatherbox.app
 ```
 
 ## Change Log
