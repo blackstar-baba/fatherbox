@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { VbenFormSchema } from '@vben/common-ui';
+import type { Recordable } from '@vben/types';
 
 import type { AuthApi } from '#/api';
 
@@ -63,7 +64,7 @@ const formSchema = computed((): VbenFormSchema[] => {
         rules(values) {
           const { password } = values;
           return z
-            .string()
+            .string({ required_error: $t('authentication.passwordTip') })
             .min(1, { message: $t('authentication.passwordTip') })
             .refine((value) => value === password, {
               message: $t('authentication.confirmPasswordTip'),
@@ -73,7 +74,6 @@ const formSchema = computed((): VbenFormSchema[] => {
       },
       fieldName: 'confirmPassword',
       label: $t('authentication.confirmPassword'),
-      rules: z.string().min(1, { message: $t('authentication.passwordTip') }),
     },
     {
       component: 'VbenCheckbox',
@@ -85,15 +85,10 @@ const formSchema = computed((): VbenFormSchema[] => {
             h(
               'a',
               {
-                class:
-                  'cursor-pointer text-primary ml-1 hover:text-primary-hover',
+                class: 'vben-link ml-1 ',
                 href: '',
               },
-              [
-                $t('authentication.privacyPolicy'),
-                '&',
-                $t('authentication.terms'),
-              ],
+              `${$t('authentication.privacyPolicy')} & ${$t('authentication.terms')}`,
             ),
           ]),
       }),
@@ -104,8 +99,8 @@ const formSchema = computed((): VbenFormSchema[] => {
   ];
 });
 
-async function handleSubmit(value: AuthApi.RegisterParams) {
-  await registerApi(value);
+async function handleSubmit(value: Recordable<any>) {
+  await registerApi(value as AuthApi.RegisterParams);
   message.success('register successfully!');
   await router.push('/auth/login');
 }

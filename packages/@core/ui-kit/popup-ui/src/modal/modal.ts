@@ -4,14 +4,21 @@ import type { Component, Ref } from 'vue';
 
 export interface ModalProps {
   /**
+   * 是否显示边框
+   * @default false
+   */
+  bordered?: boolean;
+  /**
    * 取消按钮文字
    */
   cancelText?: string;
+
   /**
    * 是否居中
    * @default false
    */
   centered?: boolean;
+
   class?: string;
   /**
    * 是否显示右上角的关闭按钮
@@ -133,6 +140,11 @@ export interface ModalApiOptions extends ModalState {
    */
   onCancel?: () => void;
   /**
+   * 弹窗关闭动画结束的回调
+   * @returns
+   */
+  onClosed?: () => void;
+  /**
    * 点击确定按钮的回调
    */
   onConfirm?: () => void;
@@ -142,4 +154,9 @@ export interface ModalApiOptions extends ModalState {
    * @returns
    */
   onOpenChange?: (isOpen: boolean) => void;
+  /**
+   * 弹窗打开动画结束的回调
+   * @returns
+   */
+  onOpened?: () => void;
 }

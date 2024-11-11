@@ -23,6 +23,7 @@ import {
   VbenLoading,
   VisuallyHidden,
 } from '@vben-core/shadcn-ui';
+import { globalShareState } from '@vben-core/shared/global-state';
 import { cn } from '@vben-core/shared/utils';
 
 interface Props extends DrawerProps {
@@ -32,6 +33,8 @@ interface Props extends DrawerProps {
 const props = withDefaults(defineProps<Props>(), {
   drawerApi: undefined,
 });
+
+const components = globalShareState.getComponents();
 
 const id = useId();
 provide('DISMISSABLE_DRAWER_ID', id);
@@ -53,6 +56,9 @@ const {
   contentClass,
   description,
   footer: showFooter,
+  footerClass,
+  header: showHeader,
+  headerClass,
   loading: showLoading,
   modal,
   openAutoFocus,
@@ -126,10 +132,15 @@ function handleFocusOutside(e: Event) {
       @pointer-down-outside="pointerDownOutside"
     >
       <SheetHeader
+        v-if="showHeader"
         :class="
-          cn('!flex flex-row items-center justify-between border-b px-6 py-5', {
-            'px-4 py-3': closable,
-          })
+          cn(
+            '!flex flex-row items-center justify-between border-b px-6 py-5',
+            headerClass,
+            {
+              'px-4 py-3': closable,
+            },
+          )
         "
       >
         <div>
@@ -183,11 +194,17 @@ function handleFocusOutside(e: Event) {
 
       <SheetFooter
         v-if="showFooter"
-        class="w-full flex-row items-center justify-end border-t p-2 px-3"
+        :class="
+          cn(
+            'w-full flex-row items-center justify-end border-t p-2 px-3',
+            footerClass,
+          )
+        "
       >
         <slot name="prepend-footer"></slot>
         <slot name="footer">
-          <VbenButton
+          <component
+            :is="components.DefaultButton || VbenButton"
             v-if="showCancelButton"
             variant="ghost"
             @click="() => drawerApi?.onCancel()"
@@ -195,8 +212,10 @@ function handleFocusOutside(e: Event) {
             <slot name="cancelText">
               {{ cancelText || $t('cancel') }}
             </slot>
-          </VbenButton>
-          <VbenButton
+          </component>
+
+          <component
+            :is="components.PrimaryButton || VbenButton"
             v-if="showConfirmButton"
             :loading="confirmLoading"
             @click="() => drawerApi?.onConfirm()"
@@ -204,7 +223,7 @@ function handleFocusOutside(e: Event) {
             <slot name="confirmText">
               {{ confirmText || $t('confirm') }}
             </slot>
-          </VbenButton>
+          </component>
         </slot>
         <slot name="append-footer"></slot>
       </SheetFooter>

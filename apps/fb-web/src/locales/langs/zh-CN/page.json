@@ -1,0 +1,42 @@
+{
+  "ai": {
+    "title": "AI",
+    "remote": "远程",
+    "local": "本地"
+  },
+  "auth": {
+    "login": "登录",
+    "register": "注册",
+    "codeLogin": "验证码登录",
+    "qrcodeLogin": "二维码登录",
+    "forgetPassword": "忘记密码"
+  },
+  "dashboard": {
+    "title": "概览",
+    "dashboard": "仪表盘",
+    "day": "开启美好的一天!",
+    "quicknav": "快速导航",
+    "todo": "待办事项",
+    "welcome": "欢迎"
+  },
+  "demos": {
+    "title": "演示",
+    "antd": "Ant Design Vue"
+  },
+  "editors": {
+    "title": "编辑器",
+    "markdown": "Markdown",
+    "flow": "流程图"
+  },
+  "tools": {
+    "title": "工具",
+    "about": "关于",
+    "time-parser": "时间转换",
+    "analysis": "分析",
+    "json-formatter": "Json格式化",
+    "uuid-generator": "Uuid生成",
+    "encryptor": "加密器",
+    "image-editor": "图片编辑器",
+    "reg-exp": "正则表达式"
+  }
+}

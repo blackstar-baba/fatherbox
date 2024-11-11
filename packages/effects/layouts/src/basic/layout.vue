@@ -3,17 +3,17 @@ import type { MenuRecordRaw } from '@vben/types';
 
 import { computed, useSlots, watch } from 'vue';
 
-import { useWatermark } from '@vben/hooks';
+import { useRefresh } from '@vben/hooks';
 import { $t } from '@vben/locales';
 import {
   preferences,
   updatePreferences,
   usePreferences,
 } from '@vben/preferences';
-import { useLockStore, useUserStore } from '@vben/stores';
-import { deepToRaw, mapTree } from '@vben/utils';
+import { useLockStore } from '@vben/stores';
+import { cloneDeep, mapTree } from '@vben/utils';
 import { VbenAdminLayout } from '@vben-core/layout-ui';
-import { Toaster, VbenBackTop, VbenLogo } from '@vben-core/shadcn-ui';
+import { VbenBackTop, VbenLogo } from '@vben-core/shadcn-ui';
 
 import { Breadcrumb, CheckUpdates, Preferences } from '../widgets';
 import { LayoutContent, LayoutContentSpinner } from './content';
@@ -44,9 +44,8 @@ const {
   sidebarCollapsed,
   theme,
 } = usePreferences();
-const userStore = useUserStore();
-const { updateWatermark } = useWatermark();
 const lockStore = useLockStore();
+const { refresh } = useRefresh();
 
 const sidebarTheme = computed(() => {
   const dark = isDark.value || preferences.theme.semiDarkSidebar;
@@ -113,7 +112,7 @@ const {
 
 function wrapperMenus(menus: MenuRecordRaw[]) {
   return mapTree(menus, (item) => {
-    return { ...deepToRaw(item), name: $t(item.name) };
+    return { ...cloneDeep(item), name: $t(item.name) };
   });
 }
 
@@ -130,20 +129,6 @@ function clearPreferencesAndLogout() {
 }
 
 watch(
-  () => preferences.app.watermark,
-  async (val) => {
-    if (val) {
-      await updateWatermark({
-        content: `${userStore.userInfo?.username}`,
-      });
-    }
-  },
-  {
-    immediate: true,
-  },
-);
-
-watch(
   () => preferences.app.layout,
   async (val) => {
     if (val === 'sidebar-mixed-nav' && preferences.sidebar.hidden) {
@@ -155,6 +140,9 @@ watch(
     }
   },
 );
+
+// 语言更新后，刷新页面
+watch(() => preferences.app.locale, refresh);
 
 const slots = useSlots();
 const headerSlots = computed(() => {
@@ -267,7 +255,6 @@ const headerSlots = computed(() => {
       />
     </template>
     <template #mixed-menu>
-      <!-- :collapse="!preferences.sidebar.collapsedShowTitle" -->
       <LayoutMixedMenu
         :active-path="extraActiveMenu"
         :menus="wrapperMenus(headerMenus)"
@@ -308,6 +295,7 @@ const headerSlots = computed(() => {
     <template #content>
       <LayoutContent />
     </template>
+
     <template v-if="preferences.transition.loading" #content-overlay>
       <LayoutContentSpinner />
     </template>
@@ -324,7 +312,6 @@ const headerSlots = computed(() => {
 
     <template #extra>
       <slot name="extra"></slot>
-      <Toaster />
       <CheckUpdates
         v-if="preferences.app.enableCheckUpdates"
         :check-updates-interval="preferences.app.checkUpdatesInterval"

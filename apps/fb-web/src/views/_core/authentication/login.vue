@@ -12,7 +12,7 @@ defineOptions({ name: 'Login' });
 
 const authStore = useAuthStore();
 
-const localUserFormSchema = computed((): VbenFormSchema[] => {
+const formSchema = computed((): VbenFormSchema[] => {
   return [
     {
       component: 'VbenInput',
@@ -53,7 +53,7 @@ const localUserFormSchema = computed((): VbenFormSchema[] => {
 
 <template>
   <AuthenticationLogin
-    :form-schema="localUserFormSchema"
+    :form-schema="formSchema"
     :loading="authStore.loginLoading"
     :show-code-login="false"
     :show-forget-password="false"

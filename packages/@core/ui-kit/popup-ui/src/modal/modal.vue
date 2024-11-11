@@ -22,6 +22,7 @@ import {
   VbenLoading,
   VisuallyHidden,
 } from '@vben-core/shadcn-ui';
+import { globalShareState } from '@vben-core/shared/global-state';
 import { cn } from '@vben-core/shared/utils';
 
 import { useModalDraggable } from './use-modal-draggable';
@@ -33,6 +34,8 @@ interface Props extends ModalProps {
 const props = withDefaults(defineProps<Props>(), {
   modalApi: undefined,
 });
+
+const components = globalShareState.getComponents();
 
 const contentRef = ref();
 const wrapperRef = ref<HTMLElement>();
@@ -49,6 +52,7 @@ const { isMobile } = useIsMobile();
 const state = props.modalApi?.useStore?.();
 
 const {
+  bordered,
   cancelText,
   centered,
   class: modalClass,
@@ -167,9 +171,11 @@ function handleFocusOutside(e: Event) {
       ref="contentRef"
       :class="
         cn(
-          'border-border left-0 right-0 top-[10vh] mx-auto flex max-h-[80%] w-[520px] flex-col border p-0',
+          'left-0 right-0 top-[10vh] mx-auto flex max-h-[80%] w-[520px] flex-col p-0 sm:rounded-2xl',
           modalClass,
           {
+            'border-border border': bordered,
+            'shadow-3xl': !bordered,
             'left-0 top-0 size-full max-h-full !translate-x-0 !translate-y-0':
               shouldFullscreen,
             'top-1/2 !-translate-y-1/2': centered && !shouldFullscreen,
@@ -182,18 +188,21 @@ function handleFocusOutside(e: Event) {
       :show-close="closable"
       close-class="top-3"
       @close-auto-focus="handleFocusOutside"
+      @closed="() => modalApi?.onClosed()"
       @escape-key-down="escapeKeyDown"
       @focus-outside="handleFocusOutside"
       @interact-outside="interactOutside"
       @open-auto-focus="handerOpenAutoFocus"
+      @opened="() => modalApi?.onOpened()"
       @pointer-down-outside="pointerDownOutside"
     >
       <DialogHeader
         ref="headerRef"
         :class="
           cn(
-            'border-b px-5 py-4',
+            'px-5 py-4',
             {
+              'border-b': bordered,
               hidden: !header,
               'cursor-move select-none': shouldDraggable,
             },
@@ -251,12 +260,19 @@ function handleFocusOutside(e: Event) {
         v-if="showFooter"
         ref="footerRef"
         :class="
-          cn('flex-row items-center justify-end border-t p-2', footerClass)
+          cn(
+            'flex-row items-center justify-end p-2',
+            {
+              'border-t': bordered,
+            },
+            footerClass,
+          )
         "
       >
         <slot name="prepend-footer"></slot>
         <slot name="footer">
-          <VbenButton
+          <component
+            :is="components.DefaultButton || VbenButton"
             v-if="showCancelButton"
             variant="ghost"
             @click="() => modalApi?.onCancel()"
@@ -264,8 +280,10 @@ function handleFocusOutside(e: Event) {
             <slot name="cancelText">
               {{ cancelText || $t('cancel') }}
             </slot>
-          </VbenButton>
-          <VbenButton
+          </component>
+
+          <component
+            :is="components.PrimaryButton || VbenButton"
             v-if="showConfirmButton"
             :loading="confirmLoading"
             @click="() => modalApi?.onConfirm()"
@@ -273,7 +291,7 @@ function handleFocusOutside(e: Event) {
             <slot name="confirmText">
               {{ confirmText || $t('confirm') }}
             </slot>
-          </VbenButton>
+          </component>
         </slot>
         <slot name="append-footer"></slot>
       </DialogFooter>

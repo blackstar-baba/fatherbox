@@ -81,12 +81,16 @@ const formCollapsed = computed(() => {
 });
 
 const computedSchema = computed(
-  (): ({ commonComponentProps: Record<string, any> } & FormSchema)[] => {
+  (): ({
+    commonComponentProps: Record<string, any>;
+    formFieldProps: Record<string, any>;
+  } & Omit<FormSchema, 'formFieldProps'>)[] => {
     const {
       componentProps = {},
       controlClass = '',
       disabled,
       disabledOnChangeListener = false,
+      emptyStateValue = undefined,
       formFieldProps = {},
       formItemClass = '',
       hideLabel = false,
@@ -107,6 +111,7 @@ const computedSchema = computed(
       return {
         disabled,
         disabledOnChangeListener,
+        emptyStateValue,
         hideLabel,
         hideRequiredMark,
         labelWidth,

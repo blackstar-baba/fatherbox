@@ -8,8 +8,8 @@ import { baseRequestClient, requestClient } from '#/api/request';
 export namespace AuthApi {
   /** 登录接口参数 */
   export interface LoginParams {
-    password: string;
-    username: string;
+    password?: string;
+    username?: string;
   }
 
   export interface RegisterParams {

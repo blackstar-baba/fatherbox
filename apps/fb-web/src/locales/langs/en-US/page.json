@@ -1,0 +1,38 @@
+{
+  "ai": {
+    "title": "AI",
+    "remote": "Remote",
+    "local": "Local"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "codeLogin": "Code Login",
+    "qrcodeLogin": "Qr Code Login",
+    "forgetPassword": "Forget Password"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "dashboard": "Dashboard",
+    "day": "have a nice day!",
+    "quicknav": "Quick Nav",
+    "todo": "Todo",
+    "welcome": "Welcome"
+  },
+  "editors": {
+    "title": "Editors",
+    "markdown": "Markdown",
+    "flow": "Flow"
+  },
+  "tools": {
+    "title": "Tool",
+    "about": "About",
+    "time-parser": "TimeParser",
+    "analysis": "Analysis",
+    "json-formatter": "JsonFormatter",
+    "uuid-generator": "UuidGenerator",
+    "encryptor": "Encryptor",
+    "image-editor": "ImageEditor",
+    "reg-exp": "RegExp"
+  }
+}

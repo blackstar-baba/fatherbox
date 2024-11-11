@@ -1,4 +1,5 @@
 import type { VbenButtonProps } from '@vben-core/shadcn-ui';
+import type { ClassType } from '@vben-core/typings';
 import type { FieldOptions, FormContext, GenericObject } from 'vee-validate';
 import type { ZodTypeAny } from 'zod';
 
@@ -9,8 +10,8 @@ import type { Component, HtmlHTMLAttributes, Ref } from 'vue';
 export type FormLayout = 'horizontal' | 'vertical';
 
 export type BaseFormComponentType =
-  | 'DefaultResetActionButton'
-  | 'DefaultSubmitActionButton'
+  | 'DefaultButton'
+  | 'PrimaryButton'
   | 'VbenCheckbox'
   | 'VbenInput'
   | 'VbenInputPassword'
@@ -154,6 +155,10 @@ export interface FormCommonConfig {
    */
   disabledOnChangeListener?: boolean;
   /**
+   * 所有表单项的空状态值,默认都是undefined，naive-ui的空状态值是null
+   */
+  emptyStateValue?: null | undefined;
+  /**
    * 所有表单项的控件样式
    * @default {}
    */
@@ -201,6 +206,12 @@ export type HandleResetFn = (
   values: Record<string, any>,
 ) => Promise<void> | void;
 
+export type FieldMappingTime = [
+  string,
+  [string, string],
+  ([string, string] | string)?,
+][];
+
 export interface FormSchema<
   T extends BaseFormComponentType = BaseFormComponentType,
 > extends FormCommonConfig {
@@ -245,6 +256,11 @@ export interface FormRenderProps<
    */
   collapsedRows?: number;
   /**
+   * 是否触发resize事件
+   * @default false
+   */
+  collapseTriggerResize?: boolean;
+  /**
    * 表单项通用后备配置，当子项目没配置时使用这里的配置，子项目配置优先级高于此配置
    */
   commonConfig?: FormCommonConfig;
@@ -280,8 +296,9 @@ export interface FormRenderProps<
 }
 
 export interface ActionButtonOptions extends VbenButtonProps {
+  [key: string]: any;
+  content?: string;
   show?: boolean;
-  text?: string;
 }
 
 export interface VbenFormProps<
@@ -293,7 +310,11 @@ export interface VbenFormProps<
   /**
    * 表单操作区域class
    */
-  actionWrapperClass?: any;
+  actionWrapperClass?: ClassType;
+  /**
+   * 表单字段映射成时间格式
+   */
+  fieldMappingTime?: FieldMappingTime;
   /**
    * 表单重置回调
    */
@@ -303,10 +324,13 @@ export interface VbenFormProps<
    */
   handleSubmit?: HandleSubmitFn;
   /**
+   * 表单值变化回调
+   */
+  handleValuesChange?: (values: Record<string, any>) => void;
+  /**
    * 重置按钮参数
    */
   resetButtonOptions?: ActionButtonOptions;
-
   /**
    * 是否显示默认操作按钮
    * @default true
@@ -317,6 +341,12 @@ export interface VbenFormProps<
    * 提交按钮参数
    */
   submitButtonOptions?: ActionButtonOptions;
+
+  /**
+   * 是否在回车时提交表单
+   * @default false
+   */
+  submitOnEnter?: boolean;
 }
 
 export type ExtendedFormApi = {
@@ -328,10 +358,10 @@ export type ExtendedFormApi = {
 export interface VbenFormAdapterOptions<
   T extends BaseFormComponentType = BaseFormComponentType,
 > {
-  components: Partial<Record<T, Component>>;
   config?: {
     baseModelPropName?: string;
     disabledOnChangeListener?: boolean;
+    emptyStateValue?: null | undefined;
     modelPropNameMap?: Partial<Record<T, string>>;
   };
   defineRules?: {
