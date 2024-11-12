@@ -2,15 +2,11 @@
 import type { VbenFormSchema } from '@vben/common-ui';
 import type { Recordable } from '@vben/types';
 
-import type { AuthApi } from '#/api';
-
 import { computed, h, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { AuthenticationRegister, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
-
-import { message } from 'ant-design-vue';
 
 import { registerApi } from '#/api';
 
@@ -100,8 +96,8 @@ const formSchema = computed((): VbenFormSchema[] => {
 });
 
 async function handleSubmit(value: Recordable<any>) {
-  await registerApi(value as AuthApi.RegisterParams);
-  message.success('register successfully!');
+  await registerApi(value);
+  // todo fix this
   await router.push('/auth/login');
 }
 </script>
