@@ -96,9 +96,10 @@ const formSchema = computed((): VbenFormSchema[] => {
 });
 
 async function handleSubmit(value: Recordable<any>) {
-  await registerApi(value);
-  // todo fix this
-  await router.push('/auth/login');
+  const loginResult = await registerApi(value);
+  if (loginResult) {
+    await router.push('/auth/login');
+  }
 }
 </script>
 

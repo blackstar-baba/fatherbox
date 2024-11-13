@@ -127,10 +127,10 @@ export async function registerApi(data: AuthApi.RegisterParams) {
       }).then((msg: any) => {
         if (msg.code === 0) {
           message.success('register successfully!');
-          return msg.result as AuthApi.LoginResult;
         } else {
           message.error(msg.message);
         }
+        return msg.result as AuthApi.LoginResult;
       })
     : requestClient.post<AuthApi.LoginResult>('/auth/register', data);
 }
