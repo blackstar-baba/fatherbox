@@ -40,13 +40,13 @@ const algos = ref<SelectProps['options']>([
 
 function encrypt() {
   switch (algo.value) {
-    case 'md5': {
-      text2.value = MD5(text1.value).toString();
-      break;
-    }
     case 'base64': {
       const wordArray = Utf8.parse(text1.value);
       text2.value = Base64.stringify(wordArray);
+      break;
+    }
+    case 'md5': {
+      text2.value = MD5(text1.value).toString();
       break;
     }
     default:
@@ -56,13 +56,13 @@ function encrypt() {
 
 function decrypt() {
   switch (algo.value) {
-    case 'md5': {
-      message.warning('Unsupported md5 decrypt');
-      break;
-    }
     case 'base64': {
       const parsedWordArray = Base64.parse(text1.value);
       text2.value = Utf8.stringify(parsedWordArray);
+      break;
+    }
+    case 'md5': {
+      message.warning('Unsupported md5 decrypt');
       break;
     }
     default:

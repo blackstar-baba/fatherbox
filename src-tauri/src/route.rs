@@ -42,6 +42,10 @@ pub async fn invoke_user_cmd(
         let result: LoginBody = serde_json::from_value(args).unwrap();
         let response = login(db, &result).await;
         return to_value(&response).unwrap()
+    } else if command == "user_register" {
+        let result: RegisterBody = serde_json::from_value(args).unwrap();
+        let response = register(db, &result).await;
+        return to_value(&response).unwrap()
     }
     if access_token.is_none() {
         return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap()
@@ -61,11 +65,6 @@ pub async fn invoke_user_cmd(
         }
         "user_logout" => {
             let response = logout().await;
-            to_value(&response).unwrap()
-        }
-        "user_register" => {
-            let result: RegisterBody = serde_json::from_value(args).unwrap();
-            let response = register(db, &result).await;
             to_value(&response).unwrap()
         }
         "user_refresh_token" => {

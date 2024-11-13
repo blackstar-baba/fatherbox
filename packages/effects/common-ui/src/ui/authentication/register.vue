@@ -1,7 +1,6 @@
 <script setup lang="ts">
+import type { Recordable } from '@vben/types';
 import type { VbenFormSchema } from '@vben-core/form-ui';
-
-import type { RegisterEmits } from './types';
 
 import { computed, reactive } from 'vue';
 import { useRouter } from 'vue-router';
@@ -19,7 +18,7 @@ interface Props {
    */
   loading?: boolean;
   /**
-   * @zh_CN 登陆路径
+   * @zh_CN 登录路径
    */
   loginPath?: string;
   /**
@@ -50,10 +49,10 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  submit: RegisterEmits['submit'];
+  submit: [Recordable<any>];
 }>();
 
-const [Form, { validate }] = useVbenForm(
+const [Form, formApi] = useVbenForm(
   reactive({
     commonConfig: {
       hideLabel: true,
@@ -67,7 +66,8 @@ const [Form, { validate }] = useVbenForm(
 const router = useRouter();
 
 async function handleSubmit() {
-  const { valid, values } = await validate();
+  const { valid } = await formApi.validate();
+  const values = await formApi.getValues();
   if (valid) {
     emit(
       'submit',
@@ -79,6 +79,10 @@ async function handleSubmit() {
 function goToLogin() {
   router.push(props.loginPath);
 }
+
+defineExpose({
+  getFormApi: () => formApi,
+});
 </script>
 
 <template>
@@ -110,10 +114,7 @@ function goToLogin() {
     </VbenButton>
     <div class="mt-4 text-center text-sm">
       {{ $t('authentication.alreadyHaveAccount') }}
-      <span
-        class="text-primary hover:text-primary-hover cursor-pointer text-sm font-normal"
-        @click="goToLogin()"
-      >
+      <span class="vben-link text-sm font-normal" @click="goToLogin()">
         {{ $t('authentication.goToLogin') }}
       </span>
     </div>

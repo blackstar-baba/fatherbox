@@ -203,7 +203,7 @@ async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
         password: default_user_password.to_string(),
         nickname: default_nickname.to_string(),
     }).await;
-    if response.code!= RESPONSE_CODE_SUCCESS {
+    if response.code!= RESPONSE_CODE_SUCCESS && response.message != "User already exists" {
         error!("create default user error: {}", response.message);
         exit(1);
     }

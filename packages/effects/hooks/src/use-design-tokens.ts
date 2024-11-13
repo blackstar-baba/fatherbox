@@ -216,13 +216,14 @@ export function useElementPlusDesignTokens() {
           : getCssVariableValue('--destructive-50'),
 
         '--el-color-info-light-8': border,
-        '--el-color-info-light-9': background,
-
+        '--el-color-info-light-9': getCssVariableValue('--info'), // getCssVariableValue('--secondary'),
         '--el-color-primary': getCssVariableValue('--primary-500'),
         '--el-color-primary-dark-2': getCssVariableValue('--primary'),
         '--el-color-primary-light-3': getCssVariableValue('--primary-400'),
         '--el-color-primary-light-5': getCssVariableValue('--primary-300'),
-        '--el-color-primary-light-7': getCssVariableValue('--primary-200'),
+        '--el-color-primary-light-7': isDark.value
+          ? border
+          : getCssVariableValue('--primary-200'),
         '--el-color-primary-light-8': isDark.value
           ? border
           : getCssVariableValue('--primary-100'),
@@ -258,10 +259,17 @@ export function useElementPlusDesignTokens() {
         '--el-fill-color-blank': background,
         '--el-fill-color-light': getCssVariableValue('--accent'),
         '--el-fill-color-lighter': getCssVariableValue('--accent-lighter'),
+
+        // 解决ElLoading背景色问题
+        '--el-mask-color': isDark.value
+          ? 'rgba(0,0,0,.8)'
+          : 'rgba(255,255,255,.9)',
+
         '--el-text-color-primary': getCssVariableValue('--foreground'),
 
         '--el-text-color-regular': getCssVariableValue('--foreground'),
       };
+
       updateCSSVariables(variables, `__vben_design_styles__`);
     },
     { immediate: true },

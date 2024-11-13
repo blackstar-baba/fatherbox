@@ -37,9 +37,10 @@ exports[`defaultPreferences immutability test > should not modify the config obj
     "enable": true,
     "icp": "",
     "icpLink": "",
+    "settingShow": true,
   },
   "footer": {
-    "enable": true,
+    "enable": false,
     "fixed": false,
   },
   "header": {
@@ -73,7 +74,7 @@ exports[`defaultPreferences immutability test > should not modify the config obj
     "width": 224,
   },
   "tabbar": {
-    "dragable": true,
+    "draggable": true,
     "enable": true,
     "height": 38,
     "keepAlive": true,
@@ -81,7 +82,6 @@ exports[`defaultPreferences immutability test > should not modify the config obj
     "showIcon": true,
     "showMaximize": true,
     "showMore": true,
-    "showRefresh": true,
     "styleType": "chrome",
   },
   "theme": {
@@ -93,7 +93,7 @@ exports[`defaultPreferences immutability test > should not modify the config obj
     "mode": "dark",
     "radius": "0.5",
     "semiDarkHeader": false,
-    "semiDarkSidebar": true,
+    "semiDarkSidebar": false,
   },
   "transition": {
     "enable": true,
@@ -107,6 +107,7 @@ exports[`defaultPreferences immutability test > should not modify the config obj
     "languageToggle": true,
     "lockScreen": true,
     "notification": true,
+    "refresh": true,
     "sidebarToggle": true,
     "themeToggle": true,
   },

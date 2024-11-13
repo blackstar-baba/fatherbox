@@ -8,14 +8,14 @@ import { baseRequestClient, requestClient } from '#/api/request';
 export namespace AuthApi {
   /** 登录接口参数 */
   export interface LoginParams {
-    password: string;
-    username: string;
+    password?: string;
+    username?: string;
   }
 
   export interface RegisterParams {
-    password: string;
-    username: string;
-    nickname: string;
+    password?: string;
+    username?: string;
+    nickname?: string;
   }
 
   /** 登录接口返回值 */
@@ -125,7 +125,9 @@ export async function registerApi(data: AuthApi.RegisterParams) {
           ...data,
         },
       }).then((msg: any) => {
-        if (msg.code !== 0) {
+        if (msg.code === 0) {
+          message.success('register successfully!');
+        } else {
           message.error(msg.message);
         }
         return msg.result as AuthApi.LoginResult;

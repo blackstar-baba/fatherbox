@@ -60,6 +60,24 @@ pub struct RefreshTokenResult {
 }
 
 pub async fn register(db: &DatabaseConnection, body: &RegisterBody) -> AppResponse<Option<Model>> {
+    let result = UserService::get_user_by_name(db, &body.username, "local").await;
+     if result.is_err() {
+         return AppResponse {
+             code: RESPONSE_CODE_ERROR,
+             r#type: "".to_string(),
+             message: result.err().unwrap().to_string(),
+             result: None,
+         };
+     }
+    if result.unwrap().is_some() {
+        return AppResponse {
+            code: RESPONSE_CODE_ERROR,
+            r#type: "".to_string(),
+            message: "User already exists".to_string(),
+            result: None,
+        };
+    }
+
     let active_model = user::ActiveModel {
         id: Set(Uuid::new_v4().to_string()),
         username: Set(body.username.clone()),
