@@ -8,9 +8,8 @@ import { save } from '@tauri-apps/api/dialog';
 import { writeTextFile } from '@tauri-apps/api/fs';
 import { Button } from 'ant-design-vue';
 
+import Cherry from '#/components/markdown/cherry.vue';
 import { downloadByData } from '#/utils/file/downloadUtil';
-
-import Cherry from './cherry.vue';
 
 const cherryRef = ref();
 const text = ref('### Hello World');
@@ -40,9 +39,7 @@ function handleFileChange(event: any) {
     const fileReader = new FileReader();
     fileReader.addEventListener('load', () => {
       text.value = fileReader.result as string;
-      if (cherryRef.value) {
-        cherryRef.value.setContent(text.value);
-      }
+      cherryRef.value?.setContent(text.value);
     });
     // eslint-disable-next-line unicorn/prefer-blob-reading-methods
     fileReader.readAsText(file);
@@ -54,7 +51,8 @@ function handleFileChange(event: any) {
 
 <template>
   <Page
-    description="use local models running on ollama, need install ollama and download llms first."
+    auto-content-height
+    description="Cherry Markdown Editor is a Javascript Markdown editor. It has the advantages such as out-of-the-box, lightweight and easy to extend."
     title="Markdown Editor"
   >
     <div class="mb-2">

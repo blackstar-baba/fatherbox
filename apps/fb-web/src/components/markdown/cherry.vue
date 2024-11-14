@@ -9,10 +9,6 @@ import Cherry from 'cherry-markdown';
 import 'cherry-markdown/dist/cherry-markdown.min.css';
 
 const props = defineProps({
-  height: {
-    default: 500,
-    type: Number,
-  },
   mdId: {
     default: 'markdown-container',
     type: String,
@@ -49,13 +45,6 @@ defineExpose({
 });
 
 const { locale } = useI18n();
-watch([() => locale.value], ([locale]) => {
-  if (locale === 'en-US') {
-    cherryRef.value?.setLocale('en_US');
-  } else {
-    cherryRef.value?.setLocale('zh_CN');
-  }
-});
 
 const { theme } = usePreferences();
 watch([() => theme.value], ([theme]) => {
@@ -108,6 +97,7 @@ const initMd = () => {
       },
     },
     id: props.mdId,
+    locale: locale.value === 'en-US' ? 'en_US' : 'zh_CN',
     toolbars: {
       bubble: [
         'bold',
@@ -142,11 +132,11 @@ const initMd = () => {
         'header',
         '|',
         'list',
-        'image',
+        // 'image',
         {
           insert: [
-            'audio',
-            'video',
+            // 'audio',
+            // 'video',
             'link',
             'hr',
             'br',
@@ -156,8 +146,8 @@ const initMd = () => {
             'table',
             'line-table',
             'bar-table',
-            'pdf',
-            'word',
+            // 'pdf',
+            // 'word',
           ],
         },
         'graph',
@@ -183,5 +173,5 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-  <div :id="mdId" :style="{ height: `${height}px` }"></div>
+  <div :id="mdId" :style="{ height: '100%' }"></div>
 </template>
