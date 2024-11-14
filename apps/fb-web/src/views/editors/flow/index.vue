@@ -67,7 +67,7 @@ function handleFileChange(event: any) {
 </script>
 
 <template>
-  <Page description="flow chart" title="Flow Editor">
+  <Page auto-content-height description="flow chart" title="Flow Editor">
     <div class="mb-2">
       <Button type="primary" @click="importFlow">
         <template #icon>
@@ -94,7 +94,7 @@ function handleFileChange(event: any) {
         Export Image
       </Button>
     </div>
-    <div class="flow-container">
+    <div class="flow-container" style="height: 100%">
       <Diagram ref="flowRef" />
     </div>
   </Page>

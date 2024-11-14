@@ -1,6 +1,6 @@
 <template>
   <!-- 除号 -->
-  <svg class="svg-node">
+  <svg>
     <g style="visibility: visible" transform="translate(0.5,0.5)">
       <circle
         cx="13.5"

@@ -31,10 +31,10 @@ export default {
     },
     computeToolbarLeft() {
       // need divide menu width
-      return 250;
+      return 220;
     },
     computeToolbarTop() {
-      return this.top + this.height - 150;
+      return this.top + this.height - 160;
     },
     theme() {
       return theme;
@@ -236,7 +236,7 @@ export default {
       },
     }"
   >
-    <div class="diagram">
+    <div class="diagram" style="height: 100%">
       <DiagramToolbar
         v-if="lf"
         :active-edges="activeEdges"
@@ -302,9 +302,10 @@ export default {
 }
 
 .diagram-sidebar {
-  width: 185px;
+  width: 180px;
   height: calc(100% - 40px);
-  padding: 10px;
+  padding: 5px;
+  overflow-y: auto;
   border-right: 1px solid #dadce0;
 }
 
