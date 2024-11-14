@@ -52,7 +52,7 @@ function handleFileChange(event: any) {
 <template>
   <Page
     auto-content-height
-    description="use local models running on ollama, need install ollama and download llms first."
+    description="Cherry Markdown Editor is a Javascript Markdown editor. It has the advantages such as out-of-the-box, lightweight and easy to extend."
     title="Markdown Editor"
   >
     <div class="mb-2">

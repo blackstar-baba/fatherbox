@@ -4,7 +4,6 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from '@vben/locales';
 import { usePreferences } from '@vben-core/preferences';
 
-import { useResizeObserver } from '@vueuse/core';
 import Cherry from 'cherry-markdown';
 
 import 'cherry-markdown/dist/cherry-markdown.min.css';
@@ -22,8 +21,6 @@ const props = defineProps({
 
 const cherryRef = ref<Cherry>();
 
-const height = ref(500);
-
 const setContent = (val: string) => {
   cherryRef.value?.setMarkdown(val);
 };
@@ -36,10 +33,6 @@ const getHtml = () => {
   return cherryRef.value?.getHtml();
 };
 
-const setHeight = (val: number) => {
-  height.value = val;
-};
-
 // 图片加载回调
 // const beforeImageMounted = (e, src) => {
 //   return { [e]: src };
@@ -49,25 +42,13 @@ defineExpose({
   getContent,
   getHtml,
   setContent,
-  setHeight,
 });
 
 const { locale } = useI18n();
-watch([() => locale.value], ([locale]) => {
-  if (locale === 'en-US') {
-    cherryRef.value?.setLocale('en_US');
-  } else {
-    cherryRef.value?.setLocale('zh_CN');
-  }
-});
 
 const { theme } = usePreferences();
 watch([() => theme.value], ([theme]) => {
   cherryRef.value?.setTheme(theme);
-});
-
-useResizeObserver(cherryRef.value as any, (_) => {
-  // todo
 });
 
 // const fileUpload = (file, callback) => {
@@ -116,6 +97,7 @@ const initMd = () => {
       },
     },
     id: props.mdId,
+    locale: locale.value === 'en-US' ? 'en_US' : 'zh_CN',
     toolbars: {
       bubble: [
         'bold',
@@ -150,11 +132,11 @@ const initMd = () => {
         'header',
         '|',
         'list',
-        'image',
+        // 'image',
         {
           insert: [
-            'audio',
-            'video',
+            // 'audio',
+            // 'video',
             'link',
             'hr',
             'br',
@@ -164,8 +146,8 @@ const initMd = () => {
             'table',
             'line-table',
             'bar-table',
-            'pdf',
-            'word',
+            // 'pdf',
+            // 'word',
           ],
         },
         'graph',
