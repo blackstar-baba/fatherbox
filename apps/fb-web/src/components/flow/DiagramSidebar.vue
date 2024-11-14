@@ -181,8 +181,7 @@ export default {
 
 .node-category-title {
   display: block;
-  margin: 0;
-  margin-bottom: 10px;
+  margin: 0 0 10px;
   font-size: 14px;
   line-height: 30px;
   border-bottom: 1px solid #e5e5e5;
