@@ -4,6 +4,7 @@ import { onMounted, ref } from 'vue';
 import { Page } from '@vben/common-ui';
 import { LucideInfo } from '@vben/icons';
 
+import { useResizeObserver } from '@vueuse/core';
 import { Card, Select, type SelectProps } from 'ant-design-vue';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -22,6 +23,7 @@ const templates = ref<SelectProps['options']>([]);
 const template = ref('');
 const chats = ref<SelectProps['options']>([]);
 const chatId = ref('');
+const pageElementRef = ref<any>(null);
 const chatElementRef = ref<any>(null);
 
 const history = ref([]);
@@ -39,9 +41,10 @@ const avatars = ref({
   },
 });
 
-const style = ref({
+const chatStyle = ref({
   'border-radius': '8px',
-  width: '1024px',
+  height: `500px`,
+  width: `1024px`,
 });
 
 function getChatHistory(id: string) {
@@ -63,8 +66,18 @@ function updateChats(id: string) {
   });
 }
 
+function updateChatStyle() {
+  if (pageElementRef.value) {
+    const rect = pageElementRef.value.$el.getBoundingClientRect();
+    chatStyle.value.height = `${rect.height - 220}px`;
+    chatStyle.value.width = `${rect.width - 60}px`;
+  }
+}
+
 onMounted(() => {
-  // get chats
+  useResizeObserver(pageElementRef, (_) => {
+    updateChatStyle();
+  });
   getChats().then((data: any) => {
     chats.value = [];
     chatId.value = '';
@@ -126,6 +139,8 @@ onMounted(() => {
 </script>
 <template>
   <Page
+    ref="pageElementRef"
+    auto-content-height
     description="use local models running on ollama, need install ollama and download llms first."
     title="Local AI"
   >
@@ -156,16 +171,18 @@ onMounted(() => {
           placeholder="template"
         />
       </div>
-      <deep-chat
-        ref="chatElementRef"
-        :avatars="avatars"
-        :demo="true"
-        :history="history"
-        :style="style"
-        :text-input="{ placeholder: { text: 'Welcome to the demo!' } }"
-        images="true"
-        mixed-files="true"
-      />
+      <div class="my-2" style="width: 100%">
+        <deep-chat
+          ref="chatElementRef"
+          :avatars="avatars"
+          :demo="true"
+          :history="history"
+          :style="chatStyle"
+          :text-input="{ placeholder: { text: 'Welcome to the demo!' } }"
+          images="true"
+          mixed-files="true"
+        />
+      </div>
     </Card>
   </Page>
 </template>
