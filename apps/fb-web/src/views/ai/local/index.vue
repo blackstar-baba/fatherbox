@@ -47,12 +47,6 @@ const chatStyle = ref({
   width: `1024px`,
 });
 
-const textInput = ref({
-  placeholder: {
-    text: 'Welcome to the demo!',
-  },
-});
-
 function getChatHistory(id: string) {
   getChatHistoryMessages(id).then((data: any) => {
     history.value = data;
@@ -183,10 +177,7 @@ onMounted(() => {
           :avatars="avatars"
           :history="history"
           :style="chatStyle"
-          :textInput="textInput"
           demo="true"
-          images="true"
-          mixedFiles="true"
         />
       </div>
     </Card>

@@ -36,8 +36,11 @@ export interface ChatInfo {
  */
 export async function chatRequest(body: DeepChatRequestBody) {
   return window.__TAURI__
-    ? invoke('chat_request_cmd', {
-        body,
+    ? invoke('route_cmd', {
+        command: 'model_chat_request',
+        args: {
+          ...body,
+        },
       }).then((message: any) => {
         return message as DeepChatTextResponse;
       })
@@ -51,7 +54,10 @@ export async function chatRequest(body: DeepChatRequestBody) {
 
 export async function getModels() {
   return window.__TAURI__
-    ? invoke('get_models_cmd', {}).then((message: any) => {
+    ? invoke('route_cmd', {
+        command: 'model_get_models',
+        args: {},
+      }).then((message: any) => {
         return message as ModelData;
       })
     : new Promise((resolve) => {
@@ -64,7 +70,10 @@ export async function getModels() {
 
 export async function getChats() {
   return window.__TAURI__
-    ? invoke('get_chats_cmd', {}).then((message: any) => {
+    ? invoke('route_cmd', {
+        command: 'model_get_chats',
+        args: {},
+      }).then((message: any) => {
         return message as ChatInfo[];
       })
     : new Promise((resolve) => {
@@ -75,8 +84,9 @@ export async function getChats() {
 
 export async function getChatHistoryMessages(id: string) {
   return window.__TAURI__
-    ? invoke('get_chat_history_messages_cmd', {
-        id,
+    ? invoke('route_cmd', {
+        command: 'model_get_chat_history_messages',
+        args: { id },
       }).then((message: any) => {
         return message as DeepChatRequestMessage[];
       })

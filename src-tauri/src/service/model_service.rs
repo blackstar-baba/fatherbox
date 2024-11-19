@@ -14,8 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Error};
 use tauri::api::http::{Body, ClientBuilder, HttpRequestBuilder, ResponseType};
 use tauri::Window;
-
-use app::{AppResponse, RESPONSE_CODE_SUCCESS};
+use crate::AppResponse;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelData {
@@ -40,6 +39,12 @@ pub struct DeepChatRequestMessage {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
 #[serde(rename_all = "camelCase")]
+pub struct ChatRequestBody {
+    pub id: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct DeepChatRequestBody {
     id: String,
     messages: Vec<DeepChatRequestMessage>,
@@ -50,7 +55,7 @@ pub struct DeepChatRequestBody {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct DeepChatTextResponse {
-    text: String,
+    pub text: String,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, Eq)]
@@ -93,26 +98,23 @@ static GLOBAL_CHAT_MESSAGES: Lazy<RwLock<HashMap<String, Box<Vec<DeepChatRequest
         RwLock::new(m)
     });
 
-#[tauri::command]
-pub async fn get_chats_cmd() -> Result<Vec<ChatInfo>, ()> {
+pub async fn get_chats() -> Vec<ChatInfo> {
     // todo write chat info to database
     let vec = GLOBAL_CHATS.read().unwrap();
-    Ok(*vec.clone())
+    *vec.clone()
 }
 
-#[tauri::command]
-pub async fn get_chat_history_messages_cmd(id: String) -> Result<Vec<DeepChatRequestMessage>, ()> {
+pub async fn get_chat_history_messages(id: String) -> Vec<DeepChatRequestMessage> {
     // todo write chat messages to database
     let mut map = GLOBAL_CHAT_MESSAGES.read().unwrap();
     return match map.get(&id) {
-        None => Ok(vec![]),
-        Some(messages) => Ok((**messages).clone()),
+        None => vec![],
+        Some(messages) => (**messages).clone(),
     };
 }
 
-#[tauri::command]
-pub async fn chat_request_cmd(body: DeepChatRequestBody) -> Result<DeepChatTextResponse, ()> {
-    let history_messages = get_history_message(&body.id, &body.messages[0].text).unwrap();
+pub async fn chat_request(body: DeepChatRequestBody) -> DeepChatTextResponse {
+    let history_messages = get_history_message(&body.id, &body.messages[0].text);
     // write message
     {
         let mut write_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
@@ -165,9 +167,9 @@ pub async fn chat_request_cmd(body: DeepChatRequestBody) -> Result<DeepChatTextR
                                     text: ollama_message.content.to_string(),
                                 })
                             }
-                            return Ok(DeepChatTextResponse {
+                            return DeepChatTextResponse {
                                 text: ollama_message.content,
-                            });
+                            };
                         }
                         Err(err) => {
                             error!("send chat request error 1 {}", err)
@@ -183,12 +185,12 @@ pub async fn chat_request_cmd(body: DeepChatRequestBody) -> Result<DeepChatTextR
             error!("send chat request error 3 {}", err)
         }
     }
-    return Ok(DeepChatTextResponse {
+    return DeepChatTextResponse {
         text: "Sorry, System Error".to_string(),
-    });
+    };
 }
 
-fn get_history_message(id: &str, name: &str) -> Result<Vec<DeepChatRequestMessage>, ()> {
+fn get_history_message(id: &str, name: &str) -> Vec<DeepChatRequestMessage> {
     let exist = {
         let read_guard = GLOBAL_CHATS.read().unwrap();
         let mut exist = false;
@@ -212,50 +214,22 @@ fn get_history_message(id: &str, name: &str) -> Result<Vec<DeepChatRequestMessag
     }
     let mut map = GLOBAL_CHAT_MESSAGES.read().unwrap();
     return match map.get(id) {
-        None => Ok(vec![]),
-        Some(vec) => Ok((**vec).clone()),
+        None => vec![],
+        Some(vec) => (**vec).clone()
     };
 }
 
-#[tauri::command]
-pub async fn chat_stream_request_cmd(window: Window, request_body: DeepChatRequestBody) {
+pub fn chat_files_request(
+    files: Vec<String>,
+    form_data: HashMap<String, String>,
+) -> DeepChatTextResponse {
     // todo
-    let client = Client::new();
-    let response = client
-        .get("http://example.com/stream")
-        .send()
-        .await
-        .unwrap();
-
-    let mut stream = response.bytes_stream();
-
-    while let Some(item) = stream.next().await {
-        match item {
-            Ok(chunk) => {
-                // 将每个数据块发送到前端
-                window.emit("stream-data", chunk.to_vec()).unwrap();
-            }
-            Err(e) => {
-                println!("Error: {}", e);
-                break;
-            }
-        }
+    DeepChatTextResponse {
+        text: "".to_string(),
     }
 }
 
-#[tauri::command]
-pub fn chat_files_request_cmd(
-    files: Vec<String>,
-    form_data: std::collections::HashMap<String, String>,
-) -> Result<DeepChatTextResponse, ()> {
-    // todo
-    return Ok(DeepChatTextResponse {
-        text: "".to_string(),
-    });
-}
-
-#[tauri::command]
-pub async fn get_models_cmd() -> Result<ModelData, ()> {
+pub async fn get_models() -> ModelData {
     let client = ClientBuilder::new().build().unwrap();
     let request = HttpRequestBuilder::new("GET", "http://localhost:11434/api/tags")
         .unwrap()
@@ -264,22 +238,19 @@ pub async fn get_models_cmd() -> Result<ModelData, ()> {
         let data = response.read().await.unwrap().data;
         // println!("{}",data);
         let model_data: ModelData = serde_json::from_value(data).unwrap();
-        return Ok(model_data);
+        return model_data;
     }
     let model_data = ModelData { models: vec![] };
-    return Ok(model_data);
+    return model_data;
 }
 
 #[cfg(test)]
 mod test {
-    use crate::model_command::{
-        chat_request_cmd, ChatInfo, DeepChatRequestBody, DeepChatRequestMessage, GLOBAL_CHATS,
-        GLOBAL_CHAT_MESSAGES,
-    };
+    use crate::service::model_service::{chat_request, ChatInfo, DeepChatRequestBody, DeepChatRequestMessage, GLOBAL_CHAT_MESSAGES, GLOBAL_CHATS};
 
     #[tokio::test] //由此判断这是一个测试函数
     async fn test_chat_request() {
-        let result = chat_request_cmd(DeepChatRequestBody {
+        let result = chat_request(DeepChatRequestBody {
             id: "1".to_string(),
             messages: vec![DeepChatRequestMessage {
                 role: "user".to_string(),
@@ -288,11 +259,10 @@ mod test {
             model: "llama3:latest".to_string(),
             stream: false,
         })
-        .await;
-        assert_eq!(result.is_err(), false);
-        println!("{:?}", result.unwrap().text);
+            .await;
+        println!("{:?}", result.text);
         // request twice
-        let result = chat_request_cmd(DeepChatRequestBody {
+        let result = chat_request(DeepChatRequestBody {
             id: "1".to_string(),
             messages: vec![DeepChatRequestMessage {
                 role: "user".to_string(),
@@ -301,11 +271,10 @@ mod test {
             model: "llama3:latest".to_string(),
             stream: false,
         })
-        .await;
-        assert_eq!(result.is_err(), false);
-        println!("{:?}", result.unwrap().text);
+            .await;
+        println!("{:?}", result.text);
     }
-    #[tokio::test] //由此判断这是一个测试函数
+    #[tokio::test]
     async fn test_write_global() {
         {
             let mut read_guard = GLOBAL_CHAT_MESSAGES.read().unwrap();
@@ -326,7 +295,7 @@ mod test {
         assert_eq!(result[0].text, "world");
     }
 
-    #[tokio::test] //由此判断这是一个测试函数
+    #[tokio::test]
     async fn test_chats() {
         let mut vec = GLOBAL_CHATS.write().unwrap();
         vec.push(ChatInfo {

@@ -23,10 +23,6 @@ use crate::file_command::{
     delete_workspace_file_cmd, list_workspace_dirs_cmd, list_workspace_files_cmd,
     update_workspace_dir_cmd, update_workspace_file_cmd,
 };
-use crate::model_command::{
-    chat_files_request_cmd, chat_request_cmd, chat_stream_request_cmd,
-    get_chat_history_messages_cmd, get_chats_cmd, get_models_cmd,
-};
 use crate::workspace_command::{
     create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner,
     list_workspaces_cmd,
@@ -42,7 +38,6 @@ use app::service::user_service::{get_access_codes, get_user_info, login, LoginBo
 use crate::route::route_cmd;
 
 mod file_command;
-mod model_command;
 mod workspace_command;
 mod route;
 
@@ -164,12 +159,6 @@ async fn main() {
             update_workspace_dir_cmd,
             update_workspace_file_cmd,
             delete_workspace_file_cmd,
-            get_models_cmd,
-            get_chats_cmd,
-            get_chat_history_messages_cmd,
-            chat_request_cmd,
-            chat_stream_request_cmd,
-            chat_files_request_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
