@@ -94,7 +94,7 @@ function handleFileChange(event: any) {
         Export Image
       </Button>
     </div>
-    <div class="flow-container" style="height: 100%">
+    <div class="flow-container">
       <Diagram ref="flowRef" />
     </div>
   </Page>
@@ -102,6 +102,7 @@ function handleFileChange(event: any) {
 <style scoped>
 .flow-container {
   width: 100%;
+  height: 100%;
   background-color: #f8f9fa;
 }
 </style>
