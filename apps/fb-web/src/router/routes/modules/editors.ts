@@ -12,11 +12,11 @@ const routes: RouteRecordRaw[] = [
       title: $t('page.editors.title'),
     },
     name: 'Editors',
-    path: '/',
+    path: '/editors',
     children: [
       {
         name: 'Markdown',
-        path: '/markdown',
+        path: '/editors/markdown',
         component: () => import('#/views/editors/markdown/index.vue'),
         meta: {
           affixTab: true,
@@ -26,7 +26,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'Flow',
-        path: '/flow',
+        path: '/editors/flow',
         component: () => import('#/views/editors/flow/index.vue'),
         meta: {
           affixTab: true,

@@ -12,11 +12,11 @@ const routes: RouteRecordRaw[] = [
       title: $t('page.ai.title'),
     },
     name: 'AI',
-    path: '/',
+    path: '/ai',
     children: [
       {
         name: 'Remote',
-        path: '/remote',
+        path: '/ai/remote',
         component: () => import('#/views/ai/remote/index.vue'),
         meta: {
           affixTab: true,
@@ -26,7 +26,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'Local',
-        path: '/local',
+        path: '/ai/local',
         component: () => import('#/views/ai/local/index.vue'),
         meta: {
           affixTab: true,
