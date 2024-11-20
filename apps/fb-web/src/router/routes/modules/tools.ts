@@ -12,11 +12,11 @@ const routes: RouteRecordRaw[] = [
       title: $t('page.tools.title'),
     },
     name: 'Tools',
-    path: '/',
+    path: '/tools',
     children: [
       {
         name: 'TimeParser',
-        path: '/time-parser',
+        path: '/tools/time-parser',
         component: () => import('#/views/tools/time-parser/index.vue'),
         meta: {
           affixTab: true,
@@ -26,7 +26,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'JsonFormatter',
-        path: 'json-formatter',
+        path: '/tools/json-formatter',
         component: () => import('#/views/tools/json-formatter/index.vue'),
         meta: {
           // affix: true,
@@ -36,7 +36,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'UuidGenerator',
-        path: 'uuid-generator',
+        path: '/tools/uuid-generator',
         component: () => import('#/views/tools/uuid-generator/index.vue'),
         meta: {
           // affix: true,
@@ -46,7 +46,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'Encryptor',
-        path: 'encryptor',
+        path: '/tools/encryptor',
         component: () => import('#/views/tools/encryptor/index.vue'),
         meta: {
           // affix: true,
@@ -56,7 +56,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'RegularExpression',
-        path: 'reg-exp',
+        path: '/tools/reg-exp',
         component: () => import('#/views/tools/reg-exp/index.vue'),
         meta: {
           // affix: true,
