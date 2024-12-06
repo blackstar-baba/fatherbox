@@ -21,6 +21,8 @@ import {
   Tree,
 } from 'ant-design-vue';
 
+import FileOperate from '#/components/file/file-operate.vue';
+
 interface TreeObject {
   title: string;
   key: string;
@@ -156,6 +158,10 @@ function textToTree() {
     message.error(error.message);
   }
 }
+
+function setContent(content: string) {
+  jsonText.value = content;
+}
 </script>
 <template>
   <Page
@@ -164,6 +170,7 @@ function textToTree() {
   >
     <Row :gutter="16">
       <Col :span="10">
+        <FileOperate :content="jsonText" @send-content="setContent" />
         <Card :bordered="false">
           <div class="py-4">
             <Button type="primary" @click="format">

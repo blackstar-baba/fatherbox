@@ -3,8 +3,8 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DbErr, EntityTrait,
     FromQueryResult, ModelTrait, PaginatorTrait, QueryFilter, Statement,
 };
-use crate::entity::prelude::Workspace;
-use crate::entity::{user, workspace};
+
+use crate::entity::user;
 use crate::entity::user::{ActiveModel as UserActiveModel, DataTransModel as UserDataTransModel, DataTransModel, Entity as User, Model as UserModel, Model};
 
 pub struct UserService;

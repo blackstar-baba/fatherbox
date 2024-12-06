@@ -13,3 +13,5 @@ export const MdiGoogle = createIconifyIcon('mdi:google');
 export const MdiQqchat = createIconifyIcon('mdi:qqchat');
 
 export const LucideInfo = createIconifyIcon('lucide:info');
+
+export const BiPersonWorkspace = createIconifyIcon('bi:person-workspace');

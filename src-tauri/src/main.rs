@@ -1,44 +1,41 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::fs::File;
-use std::path::{Path, PathBuf};
-use std::process::exit;
-use std::time::SystemTime;
-use std::{env, fs};
-use std::sync::{Arc, Mutex, RwLock};
-use base64::Engine;
-use base64::prelude::BASE64_STANDARD;
-use clap::Parser;
-use config::FileFormat;
-use log::{error, info};
-use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, Schema};
-use serde_json::{to_value, Value};
-use tauri::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
-use tauri::api::path::home_dir;
-use tauri::State;
-use app::util::db_util::init_connection;
-use crate::file_command::{
-    create_workspace_dir_cmd, create_workspace_file_cmd, create_workspace_file_inner,
-    delete_workspace_file_cmd, list_workspace_dirs_cmd, list_workspace_files_cmd,
-    update_workspace_dir_cmd, update_workspace_file_cmd,
-};
-use crate::workspace_command::{
-    create_workspace_cmd, create_workspace_inner, delete_workspace_cmd, get_workspace_inner,
-    list_workspaces_cmd,
-};
+use crate::route::route_cmd;
+use anyhow::anyhow;
 use app::api::{file, Api};
 use app::dao::file_dao::FileService;
 use app::dao::workspace_dao::WorkspaceService;
+use app::entity::workspace::Model;
+use app::service::user_service::{
+    create, get_access_codes, get_user_info, get_user_info_by_name, login, logout, refresh_token,
+    register, LoginBody, RegisterBody, UserInfo,
+};
+use app::service::workspace_service::create_workspace;
+use app::service::{file_service, user_service, workspace_service};
+use app::util::db_util::init_connection;
 use app::{
     entity, AppResponse, AppState, Config, FileEntry, FileRequest, CONFIG_PATH, DEFAULT_WORKSPACE,
     DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH, WORKSPACE_PATH,
 };
-use app::service::user_service::{get_access_codes, get_user_info, login, LoginBody, logout, refresh_token, register, RegisterBody};
-use crate::route::route_cmd;
+use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
+use clap::Parser;
+use config::FileFormat;
+use futures::future::err;
+use log::{error, info};
+use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, ExecResult, Schema};
+use serde_json::{to_value, Value};
+use std::fs::File;
+use std::path::{Path, PathBuf};
+use std::process::exit;
+use std::sync::{Arc, Mutex, RwLock};
+use std::time::SystemTime;
+use std::{env, fs};
+use tauri::api::http::{ClientBuilder, HttpRequestBuilder, ResponseType};
+use tauri::api::path::home_dir;
+use tauri::State;
 
-mod file_command;
-mod workspace_command;
 mod route;
 
 static DEFAULT_CONFIG: &str = include_str!("../config.toml");
@@ -115,12 +112,7 @@ async fn main() {
         info!("Create config path: {}", config_path.display());
         fs::create_dir(config_path).unwrap();
     }
-    let workspace_path = &root_path.join(WORKSPACE_PATH);
-    if !workspace_path.exists() {
-        // create workspace
-        info!("Create workspace path: {}", workspace_path.display());
-        fs::create_dir(workspace_path).unwrap();
-    }
+
     // process config
     let mut config_builder = config::Config::builder();
     config_builder = match &args.config {
@@ -135,33 +127,93 @@ async fn main() {
     // init user db
     let db_result = init_user_db().await;
     if db_result.is_err() {
-        error!("Init user db error: {}", db_result.err().unwrap());
         exit(1);
     }
     let db = db_result.unwrap().unwrap();
+    // init default user
+    let user_id_result = init_default_user(&db).await;
+    if user_id_result.is_err() {
+        error!(
+            "Init default user failed, err: {}",
+            user_id_result.err().unwrap()
+        );
+        exit(1);
+    }
+    let user_id = user_id_result.unwrap();
+    // init workspace dir
+    let user_path = &root_path.join(user_id);
+    if !user_path.exists() {
+        // create workspace
+        let create_workspace_result = fs::create_dir(user_path);
+        if create_workspace_result.is_err() {
+            error!(
+                "Create user dir failed, err: {}",
+                create_workspace_result.err().unwrap()
+            );
+            exit(1)
+        }
+        info!("Create user dir success, path: {}", user_path.display());
+    }
+    // init file db
+    let db_result = init_file_db(user_path).await;
+    if db_result.is_err() {
+        error!("Init file db failed, err: {}", db_result.err().unwrap());
+        exit(1);
+    }
+    let file_db = db_result.unwrap().unwrap();
+    // init default workspace
+    let db_result = init_default_workspace(&file_db, user_path).await;
+    if db_result.is_err() {
+        error!("Init file db failed, err: {}", db_result.err().unwrap());
+        exit(1);
+    }
+
     tauri::Builder::default()
         .manage(AppState {
             conn: db,
+            file_conn: file_db,
             root_path: root_path.to_owned(),
-            workspace_path: workspace_path.to_owned(),
+            user_path: user_path.to_owned(),
         })
         // why sync fn must after sync fc
-        .invoke_handler(tauri::generate_handler![
-            route_cmd,
-            my_custom_command,
-            list_workspaces_cmd,
-            create_workspace_cmd,
-            delete_workspace_cmd,
-            list_workspace_dirs_cmd,
-            list_workspace_files_cmd,
-            create_workspace_dir_cmd,
-            create_workspace_file_cmd,
-            update_workspace_dir_cmd,
-            update_workspace_file_cmd,
-            delete_workspace_file_cmd,
-        ])
+        .invoke_handler(tauri::generate_handler![route_cmd, my_custom_command,])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+async fn init_default_user(db: &DatabaseConnection) -> Result<String, anyhow::Error> {
+    let default_username = "default";
+    let default_user_password = "123456";
+    let default_nickname = "default user";
+
+    let get_response = get_user_info_by_name(db, default_username, "local").await;
+    if !get_response.is_success() {
+        error!("get default user error: {}", get_response.message);
+        return Err(anyhow!("get default user error: {}", get_response.message));
+    }
+    let option_user = get_response.result;
+    match option_user {
+        None => {
+            let create_response = create(
+                &db,
+                &RegisterBody {
+                    username: default_username.to_string(),
+                    password: default_user_password.to_string(),
+                    nickname: default_nickname.to_string(),
+                },
+            )
+            .await;
+            if !create_response.is_success() {
+                error!("create default user error: {}", create_response.message);
+                return Err(anyhow!(
+                    "create default user error: {}",
+                    create_response.message
+                ));
+            }
+            Ok(create_response.result.unwrap().id)
+        }
+        Some(user) => return Ok(user.id),
+    }
 }
 
 async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
@@ -172,35 +224,34 @@ async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
         Ok(conn) => conn,
         Err(err) => {
             info!("init connection catch err: {:?}", err);
-            exit(1)
+            return Err(err);
         }
     };
     if !db_exist {
-        info!("begin init tables in db");
+        info!("begin init tables in user db");
         let builder = db.get_database_backend();
         let schema = Schema::new(builder);
-        db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::User)))
+        match db
+            .execute(builder.build(&schema.create_table_from_entity(entity::prelude::User)))
             .await
-            .unwrap();
-    }
-    let default_username = "default";
-    let default_user_password = "123456";
-    let default_nickname = "default user";
-
-    let response = register(&db, &RegisterBody {
-        username: default_username.to_string(),
-        password: default_user_password.to_string(),
-        nickname: default_nickname.to_string(),
-    }).await;
-    if response.code!= RESPONSE_CODE_SUCCESS && response.message != "User already exists" {
-        error!("create default user error: {}", response.message);
-        exit(1);
+        {
+            Ok(_) => {}
+            Err(err) => {
+                info!("init user.db catch err: {:?}", err);
+                return Err(err);
+            }
+        }
     }
     Ok(Some(db))
 }
 
 async fn init_file_db(workspace_path: &PathBuf) -> Result<Option<DatabaseConnection>, DbErr> {
-    let db_file_path = home_dir().unwrap().join(ROOT_PATH).join("user.sqlite");
+    // e.g. ~/.fatherbox/xxx-xxxx/file.sqlite
+    let db_file_path = home_dir()
+        .unwrap()
+        .join(ROOT_PATH)
+        .join(workspace_path)
+        .join("file.sqlite");
     info!("begin init db use file {:?}", db_file_path);
     let db_exist = db_file_path.exists();
     let db = match init_connection(&db_file_path).await {
@@ -211,7 +262,7 @@ async fn init_file_db(workspace_path: &PathBuf) -> Result<Option<DatabaseConnect
         }
     };
     if !db_exist {
-        info!("begin init tables in db");
+        info!("begin init tables in file db");
         let builder = db.get_database_backend();
         let schema = Schema::new(builder);
         db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::Workspace)))
@@ -221,31 +272,41 @@ async fn init_file_db(workspace_path: &PathBuf) -> Result<Option<DatabaseConnect
             .await
             .unwrap();
     }
-    let option_workspace_model = WorkspaceService::get_workspace_by_name(&db, DEFAULT_WORKSPACE)
-        .await
-        .unwrap();
-    if option_workspace_model.is_none() {
-        // create dir
-        let default_workspace_path = workspace_path.join(DEFAULT_WORKSPACE);
-        if !default_workspace_path.exists() {
-            // create workspace
-            info!(
-                "Create default workspace: {}",
-                default_workspace_path.display()
-            );
-            fs::create_dir(default_workspace_path).unwrap();
-        }
-        // create default workspace
-        let workspace = create_workspace_inner(&db, DEFAULT_WORKSPACE.to_string())
-            .await
-            .expect("create default workspace failed")
-            .result;
-        // create default workspace dir
-        let _ = create_workspace_file_inner(&db, &workspace.id, "", DIR_TYPE, DEFAULT_WORKSPACE)
-            .await
-            .expect("create default workspace dir failed");
-    }
     Ok(Some(db))
+}
+
+async fn init_default_workspace(
+    db: &DatabaseConnection,
+    workspace_path: &PathBuf,
+) -> Result<Option<Model>, anyhow::Error> {
+    let get_response = workspace_service::get_workspace_by_name(db, DEFAULT_WORKSPACE).await;
+    if !get_response.is_success() {
+        return Err(anyhow!("{}", get_response.message));
+    }
+    let option_model = get_response.result;
+    let mut id = "".to_string();
+    if option_model.is_none() {
+        // create default workspace
+        let create_response = create_workspace(db, DEFAULT_WORKSPACE).await;
+        if !create_response.is_success() {
+            error!("{}", create_response.message);
+            return Err(anyhow!("{}", create_response.message));
+        }
+        id = create_response.result.id.clone()
+    } else {
+        id = option_model.unwrap().id
+    }
+    // create default workspace root dir
+    let default_workspace_path = &workspace_path.join(&id);
+    if !default_workspace_path.exists() {
+        // create workspace
+        info!(
+            "Create default workspace dir: {}",
+            default_workspace_path.display()
+        );
+        fs::create_dir(default_workspace_path).unwrap();
+    }
+    Ok(None)
 }
 
 #[cfg(test)]
