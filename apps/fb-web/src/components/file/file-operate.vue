@@ -11,7 +11,17 @@ import {
 } from '@ant-design/icons-vue';
 import { save } from '@tauri-apps/api/dialog';
 import { writeTextFile } from '@tauri-apps/api/fs';
-import { Button, Card, message, Row, Tag, Tree } from 'ant-design-vue';
+import {
+  Badge,
+  Button,
+  Card,
+  Flex,
+  message,
+  Row,
+  Tag,
+  Tooltip,
+  Tree,
+} from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import {
@@ -253,8 +263,6 @@ const exportFile = async () => {
 
 function handleFileChange(event: any) {
   const file = event.target.files[0];
-  fileNameRef.value = file.name;
-  fileIdRef.value = '';
   if (file) {
     const fileReader = new FileReader();
     fileReader.addEventListener('load', () => {
@@ -262,24 +270,43 @@ function handleFileChange(event: any) {
     });
     // eslint-disable-next-line unicorn/prefer-blob-reading-methods
     fileReader.readAsText(file);
+    fileNameRef.value = file.name;
+    fileIdRef.value = '';
   }
 }
 </script>
 <template>
-  <!-- todo wrap with page or other info -->
-  <Card :bordered="false">
+  <Card :bordered="false" class="mb-2 w-20">
     <Row>
-      <Button type="primary" @click="openFileModal">
-        <template #icon>
-          <FolderOpenOutlined />
+      <Tooltip :overlay-inner-style="{ width: '370px' }" placement="right">
+        <template v-if="fileIdRef !== ''" #title>
+          <Flex vertical>
+            <Tag class="mb-2 ml-2" color="#87d068">
+              File Id:{{ fileIdRef }}
+            </Tag>
+            <Tag v-if="fileNameRef !== ''" class="ml-2" color="#87d068">
+              File Name:{{ fileNameRef }}
+            </Tag>
+          </Flex>
         </template>
-      </Button>
-      <Button class="ml-2" type="primary" @click="saveFile">
+        <Badge :dot="fileIdRef !== ''" color="#87d068">
+          <Button class="mb-2" type="primary" @click="openFileModal">
+            <template #icon>
+              <FolderOpenOutlined />
+            </template>
+          </Button>
+        </Badge>
+      </Tooltip>
+    </Row>
+    <Row>
+      <Button class="mb-2" type="primary" @click="saveFile">
         <template #icon>
           <SaveOutlined />
         </template>
       </Button>
-      <Button class="ml-2" type="primary" @click="importFile">
+    </Row>
+    <Row>
+      <Button class="mb-2" type="primary" @click="importFile">
         <template #icon>
           <ImportOutlined />
         </template>
@@ -290,19 +317,13 @@ function handleFileChange(event: any) {
         type="file"
         @change="handleFileChange"
       />
-      <Button class="ml-2" type="primary" @click="exportFile">
+    </Row>
+    <Row>
+      <Button class="mb-2" type="primary" @click="exportFile">
         <template #icon>
           <ExportOutlined />
         </template>
       </Button>
-    </Row>
-    <Row class="mt-2">
-      <Tag v-if="fileIdRef !== ''" color="#87d068">File Id:{{ fileIdRef }}</Tag>
-    </Row>
-    <Row class="mt-2">
-      <Tag v-if="fileNameRef !== ''" color="#87d068">
-        File Name:{{ fileNameRef }}
-      </Tag>
     </Row>
   </Card>
   <Modal title="Choose File">
