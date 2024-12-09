@@ -65,6 +65,14 @@ impl<T> AppResponse<T> {
             result,
         }
     }
+
+    pub fn is_success(&self) -> bool {
+        return self.code == RESPONSE_CODE_SUCCESS
+    }
+
+    pub fn is_error(&self) -> bool {
+        return self.code == RESPONSE_CODE_ERROR
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -94,7 +102,8 @@ pub struct FileRequest {
 pub struct AppState {
     pub conn: DatabaseConnection,
     pub root_path: PathBuf,
-    pub workspace_path: PathBuf,
+    pub user_path: PathBuf,
+    pub file_conn: DatabaseConnection,
 }
 
 #[derive(Error, Debug)]

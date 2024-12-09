@@ -18,8 +18,11 @@ import {
   message,
   Row,
   Textarea,
+  Tooltip,
   Tree,
 } from 'ant-design-vue';
+
+import FileOperate from '#/components/file/file-operate.vue';
 
 interface TreeObject {
   title: string;
@@ -156,6 +159,10 @@ function textToTree() {
     message.error(error.message);
   }
 }
+
+function setContent(content: string) {
+  jsonText.value = content;
+}
 </script>
 <template>
   <Page
@@ -163,27 +170,36 @@ function textToTree() {
     title="Json Formatter"
   >
     <Row :gutter="16">
-      <Col :span="10">
-        <Card :bordered="false">
+      <Col :span="2">
+        <FileOperate :content="jsonText" @send-content="setContent" />
+      </Col>
+      <Col :span="9">
+        <Card :body-style="{ height: '500px' }" :bordered="false">
           <div class="py-4">
-            <Button type="primary" @click="format">
-              <template #icon>
-                <ExpandOutlined />
-              </template>
-              Format
-            </Button>
-            <Button class="ml-2" danger type="primary" @click="compress">
-              <template #icon>
-                <CompressOutlined />
-              </template>
-              Compress
-            </Button>
-            <Button class="ml-2" @click="copy">
-              <template #icon>
-                <CopyOutlined />
-              </template>
-              Copy
-            </Button>
+            <Tooltip placement="top">
+              <template #title> Format </template>
+              <Button type="primary" @click="format">
+                <template #icon>
+                  <ExpandOutlined />
+                </template>
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top">
+              <template #title> Compress </template>
+              <Button class="ml-2" danger type="primary" @click="compress">
+                <template #icon>
+                  <CompressOutlined />
+                </template>
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top">
+              <template #title> Copy </template>
+              <Button class="ml-2" @click="copy">
+                <template #icon>
+                  <CopyOutlined />
+                </template>
+              </Button>
+            </Tooltip>
           </div>
           <Textarea
             v-model:value="jsonText"
@@ -202,8 +218,8 @@ function textToTree() {
           </Button>
         </div>
       </Col>
-      <Col :span="13">
-        <Card :bordered="false">
+      <Col :span="12">
+        <Card :body-style="{ height: '500px' }" :bordered="false">
           <div class="w-80 py-4">
             <InputSearch
               v-model:value="searchValue"

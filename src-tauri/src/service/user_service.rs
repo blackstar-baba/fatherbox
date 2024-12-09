@@ -61,23 +61,20 @@ pub struct RefreshTokenResult {
 
 pub async fn register(db: &DatabaseConnection, body: &RegisterBody) -> AppResponse<Option<Model>> {
     let result = UserService::get_user_by_name(db, &body.username, "local").await;
-     if result.is_err() {
-         return AppResponse {
-             code: RESPONSE_CODE_ERROR,
-             r#type: "".to_string(),
-             message: result.err().unwrap().to_string(),
-             result: None,
-         };
-     }
-    if result.unwrap().is_some() {
-        return AppResponse {
-            code: RESPONSE_CODE_ERROR,
-            r#type: "".to_string(),
-            message: "User already exists".to_string(),
-            result: None,
-        };
+    match result {
+        Ok(option_model) => {
+            if let Some(_) = option_model {
+                return AppResponse::error(None, "User already exists");
+            }
+            create(db, body).await
+        }
+        Err(err) => {
+            AppResponse::error(None, &err.to_string())
+        }
     }
+}
 
+pub async fn create(db: &DatabaseConnection, body: &RegisterBody) -> AppResponse<Option<Model>> {
     let active_model = user::ActiveModel {
         id: Set(Uuid::new_v4().to_string()),
         username: Set(body.username.clone()),
@@ -93,20 +90,10 @@ pub async fn register(db: &DatabaseConnection, body: &RegisterBody) -> AppRespon
     };
     let result = UserService::create_user(db, active_model).await;
     match result {
-        Ok(model) => AppResponse {
-            code: RESPONSE_CODE_SUCCESS,
-            r#type: "".to_string(),
-            message: "".to_string(),
-            result: Option::from(model),
-        },
+        Ok(model) => AppResponse::success(Option::from(model)),
         Err(err) => {
             error!("create user failed, err: {}", err);
-            AppResponse {
-                code: RESPONSE_CODE_ERROR,
-                r#type: "".to_string(),
-                message: err.to_string(),
-                result: None,
-            }
+            AppResponse::error(None, &err.to_string())
         }
     }
 }
@@ -199,6 +186,33 @@ pub async fn get_user_info(db: &DatabaseConnection, id: &str) -> AppResponse<Opt
             message: err.to_string(),
             result: None,
         },
+    }
+}
+
+pub async fn get_user_info_by_name(db: &DatabaseConnection, name: &str, r#type: &str) -> AppResponse<Option<UserInfo>> {
+    let result = UserService::get_user_by_name(db, name, r#type).await;
+    match result {
+        Ok(option_model) => {
+            if option_model.is_none() {
+                AppResponse::success(None)
+            } else {
+                let model  = option_model.unwrap();
+                let avatar = match &model.avatar {
+                    None => "".to_string(),
+                    Some(byte_array) => String::from_utf8(byte_array.to_owned()).unwrap(),
+                };
+                let user_info = UserInfo {
+                    id: model.id.to_owned(),
+                    real_name: model.nickname.to_owned(),
+                    username: model.username.to_owned(),
+                    roles: vec![],
+                    avatar: Some(avatar),
+                    mail: model.mail.clone(),
+                };
+                AppResponse::success(Some(user_info))
+            }
+        }
+        Err(err) => AppResponse::error(None::<UserInfo>, &err.to_string())
     }
 }
 

@@ -1,7 +1,4 @@
-use crate::entity::file::{
-    ActiveModel as FileActiveModel, Column, DataTransModel as FileDataTransModel, Entity as File,
-    Model as FileModel,
-};
+use crate::entity::file::{ActiveModel as FileActiveModel, Column, DataTransModel as FileDataTransModel, Entity as File, Model as FileModel, Model};
 use chrono::Utc;
 use sea_orm::prelude::Expr;
 use sea_orm::{
@@ -20,6 +17,16 @@ impl FileService {
     }
 
     pub async fn get_file(
+        db: &DatabaseConnection,
+        id: &str,
+    ) -> Result<Option<Model>, DbErr> {
+         File::find()
+            .filter(Column::Id.eq(id))
+            .one(db)
+            .await
+    }
+
+    pub async fn get_file_include_name(
         db: &DatabaseConnection,
         id: &str,
     ) -> Result<Option<FileDataTransModel>, DbErr> {
@@ -82,11 +89,14 @@ impl FileService {
         Ok(())
     }
 
-    pub async fn list_files(db: &DatabaseConnection) -> Result<Vec<FileModel>, DbErr> {
-        File::find().all(db).await
+    pub async fn list_files_by_wid(db: &DatabaseConnection, wid: &str) -> Result<Vec<FileModel>, DbErr> {
+        File::find()
+            .filter(Column::Wid.eq(wid))
+            .all(db)
+            .await
     }
 
-    pub async fn list_files_by_workspace_and_type(
+    pub async fn list_files_by_wid_and_type(
         db: &DatabaseConnection,
         wid: &str,
         r#type: &str,
@@ -94,6 +104,31 @@ impl FileService {
         File::find()
             .filter(Column::Type.eq(r#type))
             .filter(Column::Wid.eq(wid))
+            .all(db)
+            .await
+    }
+
+    pub async fn list_files_by_wid_and_pid(
+        db: &DatabaseConnection,
+        wid: &str,
+        pid: &str,
+    ) -> Result<Vec<FileModel>, DbErr> {
+        File::find()
+            .filter(Column::Wid.eq(wid))
+            .filter(Column::Pid.eq(pid))
+            .all(db)
+            .await
+    }
+
+    pub async fn list_files_by_wid_and_pid_and_type(
+        db: &DatabaseConnection,
+        wid: &str,
+        r#type: &str,
+    ) -> Result<Vec<FileModel>, DbErr> {
+        File::find()
+            .filter(Column::Wid.eq(wid))
+            .filter(Column::Pid.eq(wid))
+            .filter(Column::Type.eq(r#type))
             .all(db)
             .await
     }

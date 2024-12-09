@@ -14,6 +14,7 @@ import {
 import { preferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
 
+import Workspace from '#/components/workspace/workspace.vue';
 import { useAuthStore } from '#/store';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
@@ -127,6 +128,9 @@ watch(
     </template>
     <template #lock-screen>
       <LockScreen :avatar @to-login="handleLogout" />
+    </template>
+    <template #header-right-99>
+      <Workspace />
     </template>
   </BasicLayout>
 </template>

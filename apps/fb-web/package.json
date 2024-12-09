@@ -32,6 +32,7 @@
     "@logicflow/extension": "catalog:",
     "@logicflow/vue-node-registry": "catalog:",
     "@vben-core/preferences": "workspace:*",
+    "@vben-core/shadcn-ui": "workspace:*",
     "@vben/access": "workspace:*",
     "@vben/common-ui": "workspace:*",
     "@vben/constants": "workspace:*",
