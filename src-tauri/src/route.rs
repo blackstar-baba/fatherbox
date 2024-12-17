@@ -5,7 +5,12 @@ use serde_json::{to_value, Value};
 use std::path::PathBuf;
 use tauri::State;
 
-use app::service::file_service::{create_file, delete_file, get_file, get_workspace_files, CreateBody as FileCreateBody, UpdateBody as FileUpdateBody, GeneralBody as FileGeneralBody, ListGeneralBody as FileListGeneralBody, update_file, get_path};
+use app::service::file_service::{
+    create_file, delete_file, get_file, get_path, get_workspace_files, get_workspace_files_by_pid,
+    update_file_content, update_file_name, CreateBody as FileCreateBody, GeneralBody as FileGeneralBody,
+    ListByPidBody as FileListByPidBody, ListGeneralBody as FileListGeneralBody,
+    UpdateContentBody as FileUpdateContentBody, UpdateNameBody as FileUpdateNameBody,
+};
 use app::service::model_service::{
     chat_request, get_chat_history_messages, get_chats, get_models, ChatRequestBody,
     DeepChatRequestBody,
@@ -206,6 +211,11 @@ pub async fn invoke_file_cmd(
             let response = get_workspace_files(db, &body).await;
             to_value(&response).unwrap()
         }
+        "file_get_workspace_files_by_id" => {
+            let body: FileListByPidBody = serde_json::from_value(args).unwrap();
+            let response = get_workspace_files_by_pid(db, &body).await;
+            to_value(&response).unwrap()
+        }
         "file_get" => {
             let body: FileGeneralBody = serde_json::from_value(args).unwrap();
             let response = get_file(db, &body).await;
@@ -221,9 +231,14 @@ pub async fn invoke_file_cmd(
             let response = create_file(db, user_path, &body).await;
             to_value(&response).unwrap()
         }
-        "file_update" => {
-            let body: FileUpdateBody = serde_json::from_value(args).unwrap();
-            let response = update_file(db, user_path, &body).await;
+        "file_update_content" => {
+            let body: FileUpdateContentBody = serde_json::from_value(args).unwrap();
+            let response = update_file_content(db, user_path, &body).await;
+            to_value(&response).unwrap()
+        }
+        "file_update_name" => {
+            let body: FileUpdateNameBody = serde_json::from_value(args).unwrap();
+            let response = update_file_name(db, user_path, &body).await;
             to_value(&response).unwrap()
         }
         "file_delete" => {

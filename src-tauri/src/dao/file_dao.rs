@@ -123,11 +123,13 @@ impl FileService {
     pub async fn list_files_by_wid_and_pid_and_type(
         db: &DatabaseConnection,
         wid: &str,
+        pid: &str,
         r#type: &str,
     ) -> Result<Vec<FileModel>, DbErr> {
+        // todo 迭代获取所有子
         File::find()
             .filter(Column::Wid.eq(wid))
-            .filter(Column::Pid.eq(wid))
+            .filter(Column::Pid.eq(pid))
             .filter(Column::Type.eq(r#type))
             .all(db)
             .await
@@ -154,7 +156,7 @@ impl FileService {
         id: &str,
         size: i64,
     ) -> Result<u64, DbErr> {
-        return match File::update_many()
+        match File::update_many()
             .col_expr(Column::Size, Expr::value(Value::BigInt(Some(size))))
             .col_expr(
                 Column::UpdateTime,
@@ -166,6 +168,25 @@ impl FileService {
         {
             Ok(result) => Ok(result.rows_affected),
             Err(err) => Err(err),
-        };
+        }
+    }
+
+    pub async fn update_file_name(
+        db: &DatabaseConnection,
+        id: &str,
+        name: &str,
+    ) -> Result<u64, DbErr> {
+        match File::update_many()
+            .col_expr(Column::Name, Expr::value(Value::String(Some(Box::from(name.to_string())))))
+            .col_expr(
+                Column::UpdateTime,
+                Expr::value(Value::BigInt(Some(Utc::now().timestamp()))),
+            )
+            .filter(Column::Id.eq(id))
+            .exec(db)
+            .await {
+            Ok(result) => Ok(result.rows_affected),
+            Err(err) => Err(err),
+        }
     }
 }

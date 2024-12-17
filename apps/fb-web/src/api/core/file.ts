@@ -11,6 +11,9 @@ export interface File {
   name: string;
   pid: string;
   type: string;
+  size: number;
+  create_time: number;
+  update_time: number;
 }
 
 export interface FileCreateBody {
@@ -21,12 +24,101 @@ export interface FileCreateBody {
   type: string;
 }
 
-export interface FileUpdateBody {
+export interface FileUpdateContentBody {
   id: string;
   content: string;
 }
 
-export async function getAllWorkspaceFiles() {
+export interface FileUpdateNameBody {
+  id: string;
+  name: string;
+}
+
+export async function getAllWorkspaceFiles(type?: string): Promise<File[]> {
+  const accessStore = useAccessStore();
+  const workspaceStore = useWorkspaceStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'file_get_all_workspace_files',
+        accessToken: accessStore.accessToken,
+        args: {
+          wid: workspaceStore.getId(),
+          type,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return [];
+        }
+        return msg.result as File[];
+      })
+    : Promise.all([
+        {
+          id: '1-1',
+          name: 'test-dir',
+          pid: workspaceStore.getId(),
+          type: 'dir',
+        },
+        {
+          id: '1-2',
+          name: 'test-file',
+          pid: workspaceStore.getId(),
+          type: 'file',
+        },
+        {
+          id: '1-3',
+          name: 'test-file-2',
+          pid: '1-1',
+          type: 'file',
+        },
+      ] as File[]);
+}
+
+export async function getWorkspaceFilesByPid(pid: string, type?: string) {
+  const accessStore = useAccessStore();
+  const workspaceStore = useWorkspaceStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'file_get_workspace_files_by_id',
+        accessToken: accessStore.accessToken,
+        args: {
+          wid: workspaceStore.getId(),
+          pid,
+          type,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return [];
+        }
+        return msg.result as File[];
+      })
+    : Promise.all([
+        {
+          id: '1-1',
+          name: 'test-dir',
+          pid: workspaceStore.getId(),
+          type: 'dir',
+          size: 0,
+        },
+        {
+          id: '1-2',
+          name: 'test-file',
+          pid: workspaceStore.getId(),
+          type: 'file',
+          size: 123_131,
+        },
+        {
+          id: '1-3',
+          name: 'test-file-2',
+          pid: '1-1',
+          type: 'file',
+          size: 11_232,
+        },
+      ] as File[]);
+}
+
+export async function getFiles() {
   const accessStore = useAccessStore();
   const workspaceStore = useWorkspaceStore();
   return window.__TAURI__
@@ -43,7 +135,26 @@ export async function getAllWorkspaceFiles() {
         }
         return msg.result as File[];
       })
-    : Promise.all([]);
+    : Promise.all([
+        {
+          id: '1-1',
+          name: 'test-dir',
+          pid: workspaceStore.getId(),
+          type: 'dir',
+        },
+        {
+          id: '1-2',
+          name: 'test-file',
+          pid: workspaceStore.getId(),
+          type: 'file',
+        },
+        {
+          id: '1-3',
+          name: 'test-file-2',
+          pid: '1-1',
+          type: 'file',
+        },
+      ] as File[]);
 }
 
 export async function getFile(pid: string) {
@@ -91,12 +202,12 @@ export async function createFile(body: FileCreateBody) {
       });
 }
 
-export async function updateFile(body: FileUpdateBody) {
+export async function updateFileContent(body: FileUpdateContentBody) {
   const accessStore = useAccessStore();
   const workspaceStore = useWorkspaceStore();
   return window.__TAURI__
     ? invoke('route_cmd', {
-        command: 'file_update',
+        command: 'file_update_content',
         accessToken: accessStore.accessToken,
         args: {
           wid: workspaceStore.getId(),
@@ -113,6 +224,30 @@ export async function updateFile(body: FileUpdateBody) {
         resolve({});
       });
 }
+
+export async function updateFileName(body: FileUpdateNameBody) {
+  const accessStore = useAccessStore();
+  const workspaceStore = useWorkspaceStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'file_update_name',
+        accessToken: accessStore.accessToken,
+        args: {
+          wid: workspaceStore.getId(),
+          ...body,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return [];
+        }
+        return msg.result as File;
+      })
+    : new Promise((resolve) => {
+        resolve({});
+      });
+}
+
 export async function deleteFile(id: string) {
   const accessStore = useAccessStore();
   const workspaceStore = useWorkspaceStore();
