@@ -29,7 +29,7 @@ export const MOCK_USERS: UserInfo[] = [
     realName: 'default',
     roles: ['user'],
     username: 'default',
-    homePath: '/analytics',
+    homePath: '/workspace',
   },
 ];
 
