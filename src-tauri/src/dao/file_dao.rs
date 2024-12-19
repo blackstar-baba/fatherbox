@@ -1,12 +1,17 @@
 use crate::entity::file::{ActiveModel as FileActiveModel, Column, DataTransModel as FileDataTransModel, Entity as File, Model as FileModel, Model};
 use chrono::Utc;
 use sea_orm::prelude::Expr;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DbErr, EntityTrait,
-    IntoActiveModel, ModelTrait, QueryFilter, Set, Statement, UpdateResult, Value,
-};
+use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DbErr, EntityTrait, IntoActiveModel, ModelTrait, PaginatorTrait, QueryFilter, Set, Statement, UpdateResult, Value};
+use serde::{Deserialize, Serialize};
 
 pub struct FileService;
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct PageResult {
+    pub total: u64,
+    pub items: Vec<FileModel>,
+}
 
 impl FileService {
     pub async fn create_file(
@@ -126,7 +131,6 @@ impl FileService {
         pid: &str,
         r#type: &str,
     ) -> Result<Vec<FileModel>, DbErr> {
-        // todo 迭代获取所有子
         File::find()
             .filter(Column::Wid.eq(wid))
             .filter(Column::Pid.eq(pid))
@@ -135,20 +139,34 @@ impl FileService {
             .await
     }
 
-    pub async fn list_files_by_name(
+    pub async fn list_files_by_page(
         db: &DatabaseConnection,
+        page_size: u64,
+        page_num: u64,
         wid: &str,
-        r#type: &str,
         pid: &str,
+        r#type: &str,
         name: &str
-    ) -> Result<Vec<FileModel>, DbErr> {
-        File::find()
-            .filter(Column::Type.eq(r#type))
+    ) -> Result<PageResult, DbErr> {
+       let paginator=  File::find()
             .filter(Column::Wid.eq(wid))
             .filter(Column::Pid.eq(pid))
+            .filter(Column::Type.eq(r#type))
             .filter(Column::Name.like(name.to_owned() + "%"))
-            .all(db)
-            .await
+            .paginate(db, page_size);
+        let total_result = paginator.num_items().await;
+        if total_result.is_err() {
+            return Err(total_result.err().unwrap())
+        }
+        let total = total_result.unwrap();
+        let page_result = paginator.fetch_page(page_num).await;
+        if page_result.is_err() {
+            return Err(page_result.err().unwrap())
+        }
+        Ok(PageResult{
+            total,
+            items: page_result.unwrap()
+        })
     }
 
     pub async fn update_file_size(

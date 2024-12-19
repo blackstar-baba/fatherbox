@@ -34,6 +34,14 @@ export interface FileUpdateNameBody {
   name: string;
 }
 
+export interface FileSearchBody {
+  pageSize: number;
+  pageNum: number;
+  pid: string;
+  type: string;
+  name: string;
+}
+
 export async function getAllWorkspaceFiles(type?: string): Promise<File[]> {
   const accessStore = useAccessStore();
   const workspaceStore = useWorkspaceStore();
@@ -116,6 +124,51 @@ export async function getWorkspaceFilesByPid(pid: string, type?: string) {
           size: 11_232,
         },
       ] as File[]);
+}
+
+export async function getWorkspaceFilesByPage(body: FileSearchBody) {
+  const accessStore = useAccessStore();
+  const workspaceStore = useWorkspaceStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'file_get_workspace_files_by_page',
+        accessToken: accessStore.accessToken,
+        args: {
+          wid: workspaceStore.getId(),
+          ...body,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return [];
+        }
+        return msg.result;
+      })
+    : new Promise((resolve) => {
+        resolve({
+          total: 3,
+          items: [
+            {
+              id: '1-1',
+              name: 'test-dir',
+              pid: workspaceStore.getId(),
+              createTime: 1_734_533_523,
+              updateTime: 1_734_533_523,
+              type: 'dir',
+              size: 0,
+            },
+            {
+              id: '1-2',
+              name: 'test-file',
+              pid: workspaceStore.getId(),
+              createTime: 1_734_533_524,
+              updateTime: 1_734_533_525,
+              type: 'file',
+              size: 123_131,
+            },
+          ],
+        });
+      });
 }
 
 export async function getFiles() {

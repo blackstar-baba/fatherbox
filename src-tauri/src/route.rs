@@ -5,12 +5,7 @@ use serde_json::{to_value, Value};
 use std::path::PathBuf;
 use tauri::State;
 
-use app::service::file_service::{
-    create_file, delete_file, get_file, get_path, get_workspace_files, get_workspace_files_by_pid,
-    update_file_content, update_file_name, CreateBody as FileCreateBody, GeneralBody as FileGeneralBody,
-    ListByPidBody as FileListByPidBody, ListGeneralBody as FileListGeneralBody,
-    UpdateContentBody as FileUpdateContentBody, UpdateNameBody as FileUpdateNameBody,
-};
+use app::service::file_service::{create_file, delete_file, get_file, get_path, get_workspace_files, get_workspace_files_by_pid, update_file_content, update_file_name, CreateBody as FileCreateBody, GeneralBody as FileGeneralBody, ListByPageBody as FileListByPageBody, ListByPidBody as FileListByPidBody, ListGeneralBody as FileListGeneralBody, UpdateContentBody as FileUpdateContentBody, UpdateNameBody as FileUpdateNameBody, get_workspace_files_by_page};
 use app::service::model_service::{
     chat_request, get_chat_history_messages, get_chats, get_models, ChatRequestBody,
     DeepChatRequestBody,
@@ -214,6 +209,11 @@ pub async fn invoke_file_cmd(
         "file_get_workspace_files_by_id" => {
             let body: FileListByPidBody = serde_json::from_value(args).unwrap();
             let response = get_workspace_files_by_pid(db, &body).await;
+            to_value(&response).unwrap()
+        }
+        "file_get_workspace_files_by_page" => {
+            let body: FileListByPageBody = serde_json::from_value(args).unwrap();
+            let response = get_workspace_files_by_page(db, &body).await;
             to_value(&response).unwrap()
         }
         "file_get" => {

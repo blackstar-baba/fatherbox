@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use tauri::api::dir::is_dir;
 use uuid::Uuid;
 
-use crate::dao::file_dao::FileService;
+use crate::dao::file_dao::{FileService, PageResult};
 use crate::entity::file::{ActiveModel, Model};
 use crate::{AppResponse, DIR_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS};
 
@@ -55,6 +55,17 @@ pub struct ListByPidBody {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
 #[serde(rename_all = "camelCase")]
+pub struct ListByPageBody {
+    pub page_size: u64,
+    pub page_num: u64,
+    pub wid: String,
+    pub pid: String,
+    pub r#type: String,
+    pub name: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct GeneralBody {
     pub wid: String,
     pub id: String,
@@ -92,7 +103,18 @@ pub async fn get_workspace_files_by_pid(
     }
 }
 
-
+pub async fn get_workspace_files_by_page(
+    db: &DatabaseConnection,
+    body: &ListByPageBody,
+) -> AppResponse<PageResult> {
+    match FileService::list_files_by_page(db, body.page_size, body.page_num, &body.wid, &body.pid, &body.r#type, &body.name).await {
+        Ok(result) => AppResponse::success(result),
+        Err(err) => AppResponse::error(PageResult{
+            total: 0,
+            items: vec![],
+        }, &err.to_string()),
+    }
+}
 
 pub async fn get_file(
     db: &DatabaseConnection,

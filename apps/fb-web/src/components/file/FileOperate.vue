@@ -29,7 +29,7 @@ import {
   type File,
   getAllWorkspaceFiles,
   getFileContent,
-  updateFile,
+  updateFileContent,
 } from '#/api/core/file';
 import { useWorkspaceStore } from '#/store';
 import { downloadByData } from '#/utils/file/downloadUtil';
@@ -200,7 +200,7 @@ const openFileModal = () => {
 
 const saveFile = async (_: any) => {
   if (fileIdRef.value) {
-    updateFile({
+    updateFileContent({
       id: fileIdRef.value.toString(),
       content: props.content,
     }).then(() => {
@@ -216,22 +216,12 @@ watch(
   (treeData) => {
     createFormApi.updateSchema([
       {
-        // todo remove file in tree data
         componentProps: {
           treeData,
         },
         fieldName: 'pid',
       },
     ]);
-  },
-);
-
-watch(
-  () => fileNameRef.value,
-  (value) => {
-    createFormApi.setValues({
-      name: value,
-    });
   },
 );
 
