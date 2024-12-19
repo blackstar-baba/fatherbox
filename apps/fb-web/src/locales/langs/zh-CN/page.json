@@ -13,7 +13,7 @@
   },
   "dashboard": {
     "title": "概览",
-    "dashboard": "仪表盘",
+    "workspace": "工作空间",
     "day": "开启美好的一天!",
     "quicknav": "快速导航",
     "todo": "待办事项",
