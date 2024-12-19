@@ -13,7 +13,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "dashboard": "Dashboard",
+    "workspace": "Workspace",
     "day": "have a nice day!",
     "quicknav": "Quick Nav",
     "todo": "Todo",
