@@ -23,6 +23,8 @@ import {
 } from '#/api';
 import LocalUpload from '#/components/file/LocalUpload.vue';
 
+import { FILE_TYPE_FILE } from './file';
+
 interface RowType {
   category: string;
   color: string;
@@ -97,7 +99,7 @@ const gridOptions: VxeGridProps<RowType> = {
             pageSize: page.pageSize,
             pageNum: page.currentPage - 1,
             pid: fileId,
-            type: 'file',
+            type: FILE_TYPE_FILE,
             ...formValues,
           });
         }
@@ -120,22 +122,25 @@ const updateTable = (pid: string) => {
 };
 
 function onSubmit(values: Record<string, any>) {
+  message.success(JSON.stringify(values));
   if (values.id) {
     updateFileName({
       id: values.id,
       name: values.name,
     }).then((_: any) => {
-      message.success('update dir success');
+      message.success('update file success');
       updateTable(pidRef.value.toString());
     });
   } else {
     createFileApi({
       name: values.name,
-      pid: values.pid,
-      type: 'dir',
+      pid: pidRef.value.toString(),
+      content: values.content ?? undefined,
+      path: values.file ?? undefined,
+      type: FILE_TYPE_FILE,
     }).then((file: any) => {
       if (file.id) {
-        message.success('create dir success');
+        message.success('create file success');
         updateTable(pidRef.value.toString());
       }
     });
@@ -177,17 +182,22 @@ const [createForm, createFormApi] = useVbenForm({
       fieldName: 'content',
       label: 'Content',
       dependencies: {
-        show: false,
-        triggerFields: [],
+        if(values) {
+          return values.inputOrUpload === 'input';
+        },
+        triggerFields: ['inputOrUpload'],
       },
     },
     {
       fieldName: 'file',
       label: 'file',
       component: h(LocalUpload),
-      componentProps: {},
-      // colProps: { lg: 24, md: 24 },
-      // ifShow: ({ values }) => values.inputOrUpload === 'upload' && !!values.id,
+      dependencies: {
+        if(values) {
+          return values.inputOrUpload === 'upload';
+        },
+        triggerFields: ['inputOrUpload'],
+      },
     },
   ],
   showDefaultActions: false,

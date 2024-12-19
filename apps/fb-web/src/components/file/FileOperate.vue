@@ -34,6 +34,8 @@ import {
 import { useWorkspaceStore } from '#/store';
 import { downloadByData } from '#/utils/file/downloadUtil';
 
+import { FILE_TYPE_FILE } from './file';
+
 interface TreeItem {
   key: string;
   value: string;
@@ -118,7 +120,7 @@ function onSubmit(values: Record<string, any>) {
     name: values.name,
     pid: values.pid,
     content: props.content,
-    type: 'file',
+    type: FILE_TYPE_FILE,
   }).then((file: any) => {
     if (file.id) {
       fileIdRef.value = file.id;

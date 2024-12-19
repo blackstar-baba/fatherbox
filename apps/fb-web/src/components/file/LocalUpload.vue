@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { type PropType, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 import { FolderOpenOutlined } from '@ant-design/icons-vue';
 import { open } from '@tauri-apps/api/dialog';
@@ -7,26 +7,20 @@ import { Button, List, ListItem, message } from 'ant-design-vue';
 
 defineOptions({ name: 'LocalUpload' });
 
-const props = defineProps({
-  value: {
-    type: String as PropType<string>,
-    default: () => '',
-  },
-});
-
 const emit = defineEmits(['change', 'delete']);
+
+const modelValue = defineModel<string>();
 
 const files = ref<string[]>([]);
 
 watch(
-  () => props.value,
+  () => modelValue.value,
   (value) => {
+    files.value = [];
     if (value) {
-      files.value = [];
       files.value.push(value);
     }
   },
-  { immediate: true },
 );
 
 async function handleChooseFile() {
@@ -46,17 +40,19 @@ async function handleChooseFile() {
       return;
     }
     files.value.push(selected);
-    // emit('change', files.value[0]);
+    modelValue.value = files.value[0];
+    emit('change', files.value[0]);
   }
 }
 
 function deleteItem(item: string) {
   files.value = [];
+  modelValue.value = '';
   emit('delete', item);
 }
 </script>
 <template>
-  <div>
+  <div class="w-full">
     <Button class="mb-2" size="small" type="primary" @click="handleChooseFile">
       <template #icon>
         <FolderOpenOutlined />
@@ -64,9 +60,10 @@ function deleteItem(item: string) {
       Choose File
     </Button>
     <List
+      v-if="files.length > 0"
       :data-source="files"
       bordered
-      class="w-3/4"
+      class="w-full"
       item-layout="horizontal"
       size="small"
     >

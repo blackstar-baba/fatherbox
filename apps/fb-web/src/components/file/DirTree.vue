@@ -32,6 +32,8 @@ import {
 } from '#/api';
 import { useWorkspaceStore } from '#/store';
 
+import { FILE_TYPE_DIR } from './file';
+
 interface TreeItem {
   key: string;
   value: string;
@@ -106,7 +108,7 @@ const updateFileTree = () => {
   if (!curWorkspace) {
     return;
   }
-  getAllWorkspaceFiles('dir').then((files: File[]) => {
+  getAllWorkspaceFiles(FILE_TYPE_DIR).then((files: File[]) => {
     filesRef.value = files;
     fileTree.value = [];
     const map: Map<String, File[]> = new Map();
@@ -146,7 +148,7 @@ function onSubmit(values: Record<string, any>) {
     createFile({
       name: values.name,
       pid: values.pid,
-      type: 'dir',
+      type: FILE_TYPE_DIR,
     }).then((file: any) => {
       if (file.id) {
         fileIdRef.value = file.id;
