@@ -15,7 +15,11 @@ const updateTable = (pid: string) => {
 };
 </script>
 <template>
-  <Page auto-content-height description="File Manage" title="File Manage">
+  <Page
+    auto-content-height
+    description="Manage current workspace files, can operate directory & files"
+    title="File Manage"
+  >
     <Row :gutter="16">
       <Col :span="6">
         <!-- todo user cal style better -->

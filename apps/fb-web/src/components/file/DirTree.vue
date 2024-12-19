@@ -233,12 +233,6 @@ const getFileByKey = (key: string) => {
 };
 
 const onContextMenuClick = (key: string, menuKey: number | string) => {
-  message.success(
-    JSON.stringify({
-      key,
-      menuKey,
-    }),
-  );
   const menu = menuKey.toString();
   switch (menu) {
     case 'create': {

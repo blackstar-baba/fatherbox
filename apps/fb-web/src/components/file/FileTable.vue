@@ -92,7 +92,6 @@ const gridOptions: VxeGridProps<RowType> = {
     autoLoad: false,
     ajax: {
       query: async ({ page }, formValues) => {
-        message.success(`Query params: ${JSON.stringify(formValues)}`);
         const fileId = pidRef.value;
         if (fileId) {
           return await getWorkspaceFilesByPage({
@@ -122,7 +121,6 @@ const updateTable = (pid: string) => {
 };
 
 function onSubmit(values: Record<string, any>) {
-  message.success(JSON.stringify(values));
   if (values.id) {
     updateFileName({
       id: values.id,
@@ -166,9 +164,6 @@ const [createForm, createFormApi] = useVbenForm({
           { label: 'input', value: 'input' },
           { label: 'upload', value: 'upload' },
         ],
-        onChange: (e: any) => {
-          message.success(JSON.stringify(e));
-        },
       },
       fieldName: 'inputOrUpload',
       label: '',
@@ -263,25 +258,19 @@ const [DeleteModal, deleteModalApi] = useVbenModal({
   },
 });
 
-const createFile = (row: any) => {
-  message.success(JSON.stringify(row));
+const createFile = (_: any) => {
   createModalApi.open();
 };
 
-// todo update form
-// todo add create file method
 const editFile = (row: any) => {
-  message.success(JSON.stringify(row));
   updateFormApi.setValues({
     id: row.id,
     name: row.name,
   });
-  // todo can dynamic connect to component
   updateModalApi.open();
 };
 
 const deleteFile = (row: any) => {
-  message.success(JSON.stringify(row));
   deleteFileRef.value = row as File;
   deleteModalApi.open();
 };

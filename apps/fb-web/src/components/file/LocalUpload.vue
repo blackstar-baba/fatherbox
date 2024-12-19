@@ -28,7 +28,6 @@ async function handleChooseFile() {
     directory: false,
     multiple: false,
   });
-  message.info(selected);
   if (Array.isArray(selected)) {
     message.warn('can choose one file only');
     // user selected multiple files
