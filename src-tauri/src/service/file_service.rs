@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use tauri::api::dir::is_dir;
 use uuid::Uuid;
 
-use crate::dao::file_dao::FileService;
+use crate::dao::file_dao::{FileService, PageResult};
 use crate::entity::file::{ActiveModel, Model};
 use crate::{AppResponse, DIR_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS};
 
@@ -26,9 +26,16 @@ pub struct CreateBody {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct UpdateBody {
+pub struct UpdateContentBody {
     pub id: String,
     pub content: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateNameBody {
+    pub id: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
@@ -36,6 +43,25 @@ pub struct UpdateBody {
 pub struct ListGeneralBody {
     pub wid: String,
     pub r#type: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ListByPidBody {
+    pub wid: String,
+    pub pid: String,
+    pub r#type: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ListByPageBody {
+    pub page_size: u64,
+    pub page_num: u64,
+    pub wid: String,
+    pub pid: String,
+    pub r#type: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
@@ -58,6 +84,35 @@ pub async fn get_workspace_files(
             Ok(result) => AppResponse::success(result),
             Err(err) => AppResponse::error(vec![], &err.to_string()),
         },
+    }
+}
+
+pub async fn get_workspace_files_by_pid(
+    db: &DatabaseConnection,
+    body: &ListByPidBody,
+) -> AppResponse<Vec<Model>> {
+    match &body.r#type {
+        None => match FileService::list_files_by_wid_and_pid(db, &body.wid, &body.pid).await {
+            Ok(result) => AppResponse::success(result),
+            Err(err) => AppResponse::error(vec![], &err.to_string()),
+        },
+        Some(t) => match FileService::list_files_by_wid_and_pid_and_type(db, &body.wid, &body.pid, t).await {
+            Ok(result) => AppResponse::success(result),
+            Err(err) => AppResponse::error(vec![], &err.to_string()),
+        },
+    }
+}
+
+pub async fn get_workspace_files_by_page(
+    db: &DatabaseConnection,
+    body: &ListByPageBody,
+) -> AppResponse<PageResult> {
+    match FileService::list_files_by_page(db, body.page_size, body.page_num, &body.wid, &body.pid, &body.r#type, &body.name).await {
+        Ok(result) => AppResponse::success(result),
+        Err(err) => AppResponse::error(PageResult{
+            total: 0,
+            items: vec![],
+        }, &err.to_string()),
     }
 }
 
@@ -162,10 +217,10 @@ pub async fn create_file(
     }
 }
 
-pub async fn update_file(
+pub async fn update_file_content(
     db: &DatabaseConnection,
     user_path: &PathBuf,
-    body: &UpdateBody,
+    body: &UpdateContentBody,
 ) -> AppResponse<Option<Model>> {
     let get_result = FileService::get_file(db, &body.id).await;
     if get_result.is_err() {
@@ -202,6 +257,26 @@ pub async fn update_file(
     let size = file.metadata().unwrap().len() as i64;
     model.size = size;
     match FileService::update_file_size(db, &body.id, size).await {
+        Ok(_) => AppResponse::success(Some(model)),
+        Err(err) => AppResponse::error(None, &err.to_string()),
+    }
+}
+
+pub async fn update_file_name(
+    db: &DatabaseConnection,
+    user_path: &PathBuf,
+    body: &UpdateNameBody,
+) -> AppResponse<Option<Model>> {
+    let get_result = FileService::get_file(db, &body.id).await;
+    if get_result.is_err() {
+        return AppResponse::error(None, &get_result.err().unwrap().to_string());
+    }
+    let option_model = get_result.unwrap();
+    if option_model.is_none() {
+        return AppResponse::error(None, "file not found");
+    }
+    let model = option_model.unwrap();
+    match FileService::update_file_name(db, &body.id, &body.name).await {
         Ok(_) => AppResponse::success(Some(model)),
         Err(err) => AppResponse::error(None, &err.to_string()),
     }

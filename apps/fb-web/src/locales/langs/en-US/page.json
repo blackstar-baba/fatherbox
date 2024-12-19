@@ -34,5 +34,9 @@
     "encryptor": "Encryptor",
     "image-editor": "ImageEditor",
     "reg-exp": "RegExp"
+  },
+  "system": {
+    "title": "System",
+    "file-manage": "File Manage"
   }
 }
