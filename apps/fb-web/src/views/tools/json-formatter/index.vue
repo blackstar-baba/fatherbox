@@ -22,7 +22,7 @@ import {
   Tree,
 } from 'ant-design-vue';
 
-import FileOperate from '#/components/file/file-operate.vue';
+import FileOperate from '#/components/file/FileOperate.vue';
 
 interface TreeObject {
   title: string;

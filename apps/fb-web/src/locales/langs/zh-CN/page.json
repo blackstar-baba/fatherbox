@@ -38,5 +38,9 @@
     "encryptor": "加密器",
     "image-editor": "图片编辑器",
     "reg-exp": "正则表达式"
+  },
+  "system": {
+    "title": "系统",
+    "file-manage": "文件管理"
   }
 }

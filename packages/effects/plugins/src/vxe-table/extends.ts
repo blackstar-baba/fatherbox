@@ -3,7 +3,12 @@ import type { VxeGridProps, VxeUIExport } from 'vxe-table';
 
 import type { VxeGridApi } from './api';
 
-import { formatDate, formatDateTime, isFunction } from '@vben/utils';
+import {
+  formatDate,
+  formatDateTime,
+  formatUnixTimeToDateTime,
+  isFunction,
+} from '@vben/utils';
 
 export function extendProxyOptions(
   api: VxeGridApi,
@@ -75,6 +80,12 @@ export function extendsDefaultFormatter(vxeUI: VxeUIExport) {
   vxeUI.formats.add('formatDateTime', {
     tableCellFormatMethod({ cellValue }) {
       return formatDateTime(cellValue);
+    },
+  });
+
+  vxeUI.formats.add('formatUnixTimeToDateTime', {
+    tableCellFormatMethod({ cellValue }) {
+      return formatUnixTimeToDateTime(cellValue);
     },
   });
 }
