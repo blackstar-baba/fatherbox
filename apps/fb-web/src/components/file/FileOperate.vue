@@ -3,8 +3,10 @@ import { ref, watch } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
+// todo add new method
 import {
   ExportOutlined,
+  FileAddOutlined,
   FolderOpenOutlined,
   ImportOutlined,
   SaveOutlined,
@@ -34,7 +36,7 @@ import {
 import { useWorkspaceStore } from '#/store';
 import { downloadByData } from '#/utils/file/downloadUtil';
 
-import { FILE_TYPE_FILE } from './file';
+import { FILE_TYPE_DIR, FILE_TYPE_FILE } from './file';
 
 interface TreeItem {
   key: string;
@@ -43,6 +45,7 @@ interface TreeItem {
   pkey?: string;
   children?: TreeItem[];
   disabled?: boolean;
+  type: string;
 }
 
 interface Props {
@@ -58,23 +61,59 @@ const emits = defineEmits<{
   sendContent: [content: string];
 }>();
 const workspaceStore = useWorkspaceStore();
+const filesRef = ref<File[]>([]);
 const fileTree = ref<TreeItem[]>([]);
 const fileIdRef = ref<String>('');
 const fileNameRef = ref<String>('');
 const fileInput = ref<HTMLInputElement>();
 
-const getChildren = (key: String, map: Map<String, File[]>) => {
+const getFileChildren = (key: String, map: Map<String, File[]>) => {
   const children: TreeItem[] = [];
   const value = map.get(key);
   if (value) {
     value.forEach((element: any) => {
-      children.push({
-        key: element.id,
-        value: element.id,
-        title: element.name,
-        pkey: element.pid,
-        children: getChildren(element.id, map),
-      });
+      if (element.type === FILE_TYPE_DIR) {
+        const items = map.get(element.id);
+        if (items && items.length > 0) {
+          children.push({
+            key: element.id,
+            value: element.id,
+            title: element.name,
+            pkey: element.pid,
+            children: getFileChildren(element.id, map),
+            disabled: true,
+            type: element.type,
+          });
+        }
+      } else if (element.type === FILE_TYPE_FILE) {
+        children.push({
+          key: element.id,
+          value: element.id,
+          title: element.name,
+          pkey: element.pid,
+          type: element.type,
+        });
+      }
+    });
+  }
+  return children;
+};
+
+const getDirChildren = (key: String, map: Map<String, File[]>) => {
+  const children: TreeItem[] = [];
+  const value = map.get(key);
+  if (value) {
+    value.forEach((element: any) => {
+      if (element.type === FILE_TYPE_DIR) {
+        children.push({
+          key: element.id,
+          value: element.id,
+          title: element.name,
+          pkey: element.pid,
+          children: getDirChildren(element.id, map),
+          type: element.type,
+        });
+      }
     });
   }
   return children;
@@ -82,27 +121,7 @@ const getChildren = (key: String, map: Map<String, File[]>) => {
 
 const updateFileTree = () => {
   getAllWorkspaceFiles().then((files: File[]) => {
-    fileTree.value = [];
-    const curWorkspace = workspaceStore.getWorkspace();
-    if (!curWorkspace) {
-      return;
-    }
-    const map: Map<String, File[]> = new Map();
-    const root: TreeItem = {
-      key: curWorkspace.id,
-      title: curWorkspace.name,
-      value: curWorkspace.id,
-    };
-    files.forEach((file: File) => {
-      let values = map.get(file.pid);
-      if (!values) {
-        values = [];
-      }
-      values.push(file);
-      map.set(file.pid, values);
-    });
-    root.children = getChildren(root.key, map);
-    fileTree.value.push(root);
+    filesRef.value = files;
   });
 };
 
@@ -145,6 +164,7 @@ const [CreateForm, createFormApi] = useVbenForm({
       component: 'TreeSelect',
       componentProps: {
         allowClear: false,
+        class: 'w-full',
         placeholder: '请选择',
         showSearch: false,
         treeData: [],
@@ -184,15 +204,19 @@ const openFile = (fileId: string) => {
 };
 
 const selectTreeItem = async (_: any, node: any) => {
-  if (node.children.length > 0) {
-    message.warn('dir can not open');
-    return;
+  if (!node.children) {
+    fileIdRef.value = node.dataRef.key;
+    fileNameRef.value = node.dataRef.title;
+    const content = (await getFileContent(node.dataRef.key)) as string;
+    emits('sendContent', content);
+    modalApi.close();
   }
-  fileIdRef.value = node.dataRef.key;
-  fileNameRef.value = node.dataRef.title;
-  const content = (await getFileContent(node.dataRef.key)) as string;
-  emits('sendContent', content);
-  modalApi.close();
+};
+
+const addFile = () => {
+  fileIdRef.value = '';
+  fileNameRef.value = '';
+  emits('sendContent', '');
 };
 
 const openFileModal = () => {
@@ -214,12 +238,46 @@ const saveFile = async (_: any) => {
 };
 
 watch(
-  () => fileTree.value,
-  (treeData) => {
+  () => filesRef.value,
+  (files) => {
+    const map: Map<String, File[]> = new Map();
+    files.forEach((file: File) => {
+      let values = map.get(file.pid);
+      if (!values) {
+        values = [];
+      }
+      values.push(file);
+      map.set(file.pid, values);
+    });
+    const curWorkspace = workspaceStore.getWorkspace();
+    if (!curWorkspace) {
+      message.error('update file tree failed, current workspace not found');
+      return;
+    }
+    // update file tree
+    fileTree.value = [];
+    const root: TreeItem = {
+      key: curWorkspace.id,
+      title: curWorkspace.name,
+      value: curWorkspace.id,
+      type: FILE_TYPE_DIR,
+    };
+    root.children = getFileChildren(root.key, map);
+    fileTree.value.push(root);
+    // update dir tree
+    const dirTreeData = [];
+    const dirRoot: TreeItem = {
+      key: curWorkspace.id,
+      title: curWorkspace.name,
+      value: curWorkspace.id,
+      type: FILE_TYPE_DIR,
+    };
+    dirRoot.children = getDirChildren(dirRoot.key, map);
+    dirTreeData.push(dirRoot);
     createFormApi.updateSchema([
       {
         componentProps: {
-          treeData,
+          treeData: dirTreeData,
         },
         fieldName: 'pid',
       },
@@ -269,6 +327,13 @@ function handleFileChange(event: any) {
 </script>
 <template>
   <Card :bordered="false" class="mb-2 w-20">
+    <Row>
+      <Button class="mb-2" type="primary" @click="addFile">
+        <template #icon>
+          <FileAddOutlined />
+        </template>
+      </Button>
+    </Row>
     <Row>
       <Tooltip :overlay-inner-style="{ width: '370px' }" placement="right">
         <template v-if="fileIdRef !== ''" #title>
