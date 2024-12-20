@@ -5,7 +5,10 @@ use sea_orm::{
 };
 
 use crate::entity::user;
-use crate::entity::user::{ActiveModel as UserActiveModel, DataTransModel as UserDataTransModel, DataTransModel, Entity as User, Model as UserModel, Model};
+use crate::entity::user::{
+    ActiveModel as UserActiveModel, DataTransModel as UserDataTransModel, DataTransModel,
+    Entity as User, Model as UserModel, Model,
+};
 
 pub struct UserService;
 

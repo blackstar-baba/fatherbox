@@ -4,6 +4,7 @@ use std::future::Future;
 use std::sync::{Mutex, RwLock};
 use std::vec;
 
+use crate::AppResponse;
 use anyhow::Context;
 use futures::future::ok;
 use futures::StreamExt;
@@ -14,7 +15,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Error};
 use tauri::api::http::{Body, ClientBuilder, HttpRequestBuilder, ResponseType};
 use tauri::Window;
-use crate::AppResponse;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelData {
@@ -215,7 +215,7 @@ fn get_history_message(id: &str, name: &str) -> Vec<DeepChatRequestMessage> {
     let mut map = GLOBAL_CHAT_MESSAGES.read().unwrap();
     return match map.get(id) {
         None => vec![],
-        Some(vec) => (**vec).clone()
+        Some(vec) => (**vec).clone(),
     };
 }
 
@@ -246,7 +246,10 @@ pub async fn get_models() -> ModelData {
 
 #[cfg(test)]
 mod test {
-    use crate::service::model_service::{chat_request, ChatInfo, DeepChatRequestBody, DeepChatRequestMessage, GLOBAL_CHAT_MESSAGES, GLOBAL_CHATS};
+    use crate::service::model_service::{
+        chat_request, ChatInfo, DeepChatRequestBody, DeepChatRequestMessage, GLOBAL_CHATS,
+        GLOBAL_CHAT_MESSAGES,
+    };
 
     #[tokio::test] //由此判断这是一个测试函数
     async fn test_chat_request() {
@@ -259,7 +262,7 @@ mod test {
             model: "llama3:latest".to_string(),
             stream: false,
         })
-            .await;
+        .await;
         println!("{:?}", result.text);
         // request twice
         let result = chat_request(DeepChatRequestBody {
@@ -271,7 +274,7 @@ mod test {
             model: "llama3:latest".to_string(),
             stream: false,
         })
-            .await;
+        .await;
         println!("{:?}", result.text);
     }
     #[tokio::test]

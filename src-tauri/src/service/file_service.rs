@@ -96,10 +96,13 @@ pub async fn get_workspace_files_by_pid(
             Ok(result) => AppResponse::success(result),
             Err(err) => AppResponse::error(vec![], &err.to_string()),
         },
-        Some(t) => match FileService::list_files_by_wid_and_pid_and_type(db, &body.wid, &body.pid, t).await {
-            Ok(result) => AppResponse::success(result),
-            Err(err) => AppResponse::error(vec![], &err.to_string()),
-        },
+        Some(t) => {
+            match FileService::list_files_by_wid_and_pid_and_type(db, &body.wid, &body.pid, t).await
+            {
+                Ok(result) => AppResponse::success(result),
+                Err(err) => AppResponse::error(vec![], &err.to_string()),
+            }
+        }
     }
 }
 
@@ -107,12 +110,25 @@ pub async fn get_workspace_files_by_page(
     db: &DatabaseConnection,
     body: &ListByPageBody,
 ) -> AppResponse<PageResult> {
-    match FileService::list_files_by_page(db, body.page_size, body.page_num, &body.wid, &body.pid, &body.r#type, &body.name).await {
+    match FileService::list_files_by_page(
+        db,
+        body.page_size,
+        body.page_num,
+        &body.wid,
+        &body.pid,
+        &body.r#type,
+        &body.name,
+    )
+    .await
+    {
         Ok(result) => AppResponse::success(result),
-        Err(err) => AppResponse::error(PageResult{
-            total: 0,
-            items: vec![],
-        }, &err.to_string()),
+        Err(err) => AppResponse::error(
+            PageResult {
+                total: 0,
+                items: vec![],
+            },
+            &err.to_string(),
+        ),
     }
 }
 
@@ -126,10 +142,7 @@ pub async fn get_file(
     }
 }
 
-pub async fn get_path(
-    user_path: &PathBuf,
-    general_body: &GeneralBody,
-) -> AppResponse<String> {
+pub async fn get_path(user_path: &PathBuf, general_body: &GeneralBody) -> AppResponse<String> {
     let file_path = &user_path.join(&general_body.wid).join(&general_body.id);
     AppResponse::success(file_path.to_str().unwrap().to_string())
 }
@@ -235,15 +248,12 @@ pub async fn update_file_content(
         return AppResponse::error(None, "dir can not update");
     }
     let file_path = &user_path.join(&model.wid).join(&model.id);
-    let open_result = File::options()
-        .write(true)
-        .truncate(true)
-        .open(file_path);
+    let open_result = File::options().write(true).truncate(true).open(file_path);
     if open_result.is_err() {
         error!(
-                "open file on disk failed, err: {}",
-                open_result.err().unwrap()
-            );
+            "open file on disk failed, err: {}",
+            open_result.err().unwrap()
+        );
         return AppResponse::error(
             None,
             "open file on disk failed, please check your disk space and permissions",
