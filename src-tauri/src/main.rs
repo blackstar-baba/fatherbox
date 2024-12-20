@@ -40,6 +40,9 @@ mod route;
 
 static DEFAULT_CONFIG: &str = include_str!("../config.toml");
 
+static USER_DB_NAME: &str = "user.db";
+static FILE_DB_NAME: &str = "file.db";
+
 #[derive(Parser)]
 #[command(version)]
 #[command(name = "fb")]
@@ -217,7 +220,7 @@ async fn init_default_user(db: &DatabaseConnection) -> Result<String, anyhow::Er
 }
 
 async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
-    let db_file_path = home_dir().unwrap().join(ROOT_PATH).join("user.sqlite");
+    let db_file_path = home_dir().unwrap().join(ROOT_PATH).join(USER_DB_NAME);
     info!("begin init db use file {:?}", db_file_path);
     let db_exist = db_file_path.exists();
     let db = match init_connection(&db_file_path).await {
@@ -246,12 +249,12 @@ async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
 }
 
 async fn init_file_db(workspace_path: &PathBuf) -> Result<Option<DatabaseConnection>, DbErr> {
-    // e.g. ~/.fatherbox/xxx-xxxx/file.sqlite
+    // e.g. ~/.fatherbox/xxx-xxxx/file.db
     let db_file_path = home_dir()
         .unwrap()
         .join(ROOT_PATH)
         .join(workspace_path)
-        .join("file.sqlite");
+        .join(FILE_DB_NAME);
     info!("begin init db use file {:?}", db_file_path);
     let db_exist = db_file_path.exists();
     let db = match init_connection(&db_file_path).await {
