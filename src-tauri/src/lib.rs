@@ -7,11 +7,10 @@ use tauri::api::path::home_dir;
 use thiserror::Error;
 
 pub mod api;
-pub mod entity;
 pub mod dao;
+pub mod entity;
 pub mod service;
 pub mod util;
-
 
 pub const DATA_DB_NAME: &str = "data.db";
 
@@ -79,11 +78,11 @@ impl<T> AppResponse<T> {
     }
 
     pub fn is_success(&self) -> bool {
-        return self.code == RESPONSE_CODE_SUCCESS
+        self.code == RESPONSE_CODE_SUCCESS
     }
 
     pub fn is_error(&self) -> bool {
-        return self.code == RESPONSE_CODE_ERROR
+        self.code == RESPONSE_CODE_ERROR
     }
 }
 

@@ -1,25 +1,32 @@
 use std::path::PathBuf;
 
-use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 use sea_orm::DatabaseConnection;
 use serde_json::{to_value, Value};
 use tauri::State;
 
-use app::{AppResponse, AppState, LoginInfo};
-use app::service::file_service::{create_file, CreateBody as FileCreateBody, delete_file, GeneralBody as FileGeneralBody, get_file, get_path, get_workspace_files, get_workspace_files_by_page, get_workspace_files_by_pid, ListByPageBody as FileListByPageBody, ListByPidBody as FileListByPidBody, ListGeneralBody as FileListGeneralBody, update_file_content, update_file_name, UpdateContentBody as FileUpdateContentBody, UpdateNameBody as FileUpdateNameBody};
+use app::service::file_service::{
+    create_file, delete_file, get_file, get_path, get_workspace_files, get_workspace_files_by_page,
+    get_workspace_files_by_pid, update_file_content, update_file_name,
+    CreateBody as FileCreateBody, GeneralBody as FileGeneralBody,
+    ListByPageBody as FileListByPageBody, ListByPidBody as FileListByPidBody,
+    ListGeneralBody as FileListGeneralBody, UpdateContentBody as FileUpdateContentBody,
+    UpdateNameBody as FileUpdateNameBody,
+};
 use app::service::model_service::{
-    chat_request, ChatRequestBody, DeepChatRequestBody, get_chat_history_messages, get_chats,
-    get_models,
+    chat_request, get_chat_history_messages, get_chats, get_models, ChatRequestBody,
+    DeepChatRequestBody,
 };
 use app::service::user_service::{
-    get_access_codes, get_user_info, login, LoginBody, logout, refresh_token, register,
+    get_access_codes, get_user_info, login, logout, refresh_token, register, LoginBody,
     RegisterBody,
 };
 use app::service::workspace_service::{
-    create_workspace, CreateBody as WorkspaceCreateBody, delete_workspace, GeneralBody as WorkspaceGeneralBody,
-    get_workspace, list_workspaces,
+    create_workspace, delete_workspace, get_workspace, list_workspaces,
+    CreateBody as WorkspaceCreateBody, GeneralBody as WorkspaceGeneralBody,
 };
+use app::{AppResponse, AppState, LoginInfo};
 
 #[tauri::command]
 pub async fn route_cmd(
@@ -56,7 +63,7 @@ fn get_user_info_from_access_token(access_token: Option<String>) -> Option<Login
     let access_token = access_token.unwrap();
     let result = BASE64_STANDARD.decode(&access_token).unwrap();
     let user_id = String::from_utf8(result).unwrap();
-    Some(LoginInfo{
+    Some(LoginInfo {
         access_token: access_token.clone(),
         desc: "".to_string(),
         real_name: "".to_string(),
@@ -84,7 +91,7 @@ pub async fn invoke_user_cmd(
     if access_token.is_none() {
         return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap();
     }
-    let login_info= get_user_info_from_access_token(access_token).unwrap();
+    let login_info = get_user_info_from_access_token(access_token).unwrap();
     let user_id = &login_info.user_id;
     let access_token_str = &login_info.access_token;
     return match command.as_str() {
@@ -170,7 +177,7 @@ pub async fn invoke_workspace_cmd(
     access_token: Option<String>,
     args: Value,
 ) -> Value {
-    let login_info= get_user_info_from_access_token(access_token).unwrap();
+    let login_info = get_user_info_from_access_token(access_token).unwrap();
     let user_id = &login_info.user_id;
     return match command.as_str() {
         "workspace_list" => {
@@ -179,7 +186,7 @@ pub async fn invoke_workspace_cmd(
         }
         "workspace_create" => {
             let body: WorkspaceCreateBody = serde_json::from_value(args).unwrap();
-            let response = create_workspace(db, user_id,&body.name).await;
+            let response = create_workspace(db, user_id, &body.name).await;
             to_value(&response).unwrap()
         }
         "workspace_delete" => {

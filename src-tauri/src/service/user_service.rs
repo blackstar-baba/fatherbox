@@ -10,9 +10,9 @@ use serde::{Deserialize, Serialize};
 use tauri::State;
 use uuid::Uuid;
 
+use crate::dao::user_dao::UserService;
 use crate::entity::user;
 use crate::entity::user::Model;
-use crate::dao::user_dao::UserService;
 use crate::{AppResponse, LoginInfo, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
@@ -57,9 +57,7 @@ pub async fn register(db: &DatabaseConnection, body: &RegisterBody) -> AppRespon
             }
             create(db, body).await
         }
-        Err(err) => {
-            AppResponse::error(None, &err.to_string())
-        }
+        Err(err) => AppResponse::error(None, &err.to_string()),
     }
 }
 
@@ -105,7 +103,7 @@ pub async fn login(db: &DatabaseConnection, body: &LoginBody) -> AppResponse<Opt
                         r#type: "".to_string(),
                         message: "User name, mail or password incorrect".to_string(),
                         result: None,
-                    }
+                    };
                 }
                 // todo generate access token
                 let access_token = BASE64_STANDARD.encode(model.id.to_owned());
@@ -178,14 +176,18 @@ pub async fn get_user_info(db: &DatabaseConnection, id: &str) -> AppResponse<Opt
     }
 }
 
-pub async fn get_user_info_by_name(db: &DatabaseConnection, name: &str, r#type: &str) -> AppResponse<Option<UserInfo>> {
+pub async fn get_user_info_by_name(
+    db: &DatabaseConnection,
+    name: &str,
+    r#type: &str,
+) -> AppResponse<Option<UserInfo>> {
     let result = UserService::get_user_by_name(db, name, r#type).await;
     match result {
         Ok(option_model) => {
             if option_model.is_none() {
                 AppResponse::success(None)
             } else {
-                let model  = option_model.unwrap();
+                let model = option_model.unwrap();
                 let avatar = match &model.avatar {
                     None => "".to_string(),
                     Some(byte_array) => String::from_utf8(byte_array.to_owned()).unwrap(),
@@ -201,7 +203,7 @@ pub async fn get_user_info_by_name(db: &DatabaseConnection, name: &str, r#type: 
                 AppResponse::success(Some(user_info))
             }
         }
-        Err(err) => AppResponse::error(None::<UserInfo>, &err.to_string())
+        Err(err) => AppResponse::error(None::<UserInfo>, &err.to_string()),
     }
 }
 
@@ -225,9 +227,8 @@ pub async fn get_access_codes(db: &DatabaseConnection) -> AppResponse<Vec<String
     AppResponse::success(codes)
 }
 
-pub async fn logout(
-) -> Result<AppResponse<Option<String>>, ()> {
-    return Ok(AppResponse::success(Some(String::new())))
+pub async fn logout() -> Result<AppResponse<Option<String>>, ()> {
+    return Ok(AppResponse::success(Some(String::new())));
 }
 
 #[cfg(test)]

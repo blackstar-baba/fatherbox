@@ -14,7 +14,11 @@ use app::service::user_service::{
 use app::service::workspace_service::create_workspace;
 use app::service::{file_service, user_service, workspace_service};
 use app::util::db_util::init_connection;
-use app::{entity, AppResponse, AppState, Config, FileEntry, FileRequest, CONFIG_PATH, DEFAULT_WORKSPACE, DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH, WORKSPACE_PATH, DATA_PATH, FILE_PATH, DATA_DB_NAME};
+use app::{
+    entity, AppResponse, AppState, Config, FileEntry, FileRequest, CONFIG_PATH, DATA_DB_NAME,
+    DATA_PATH, DEFAULT_WORKSPACE, DIR_TYPE, FILE_PATH, FILE_TYPE, RESPONSE_CODE_ERROR,
+    RESPONSE_CODE_SUCCESS, ROOT_PATH, WORKSPACE_PATH,
+};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use clap::Parser;
@@ -157,7 +161,10 @@ async fn main() {
             );
             exit(1)
         }
-        info!("Create user file dir success, path: {}", user_file_path.display());
+        info!(
+            "Create user file dir success, path: {}",
+            user_file_path.display()
+        );
     }
     // init default workspace
     let db_result = init_default_workspace(&db, &user_id, user_file_path).await;
@@ -239,7 +246,8 @@ async fn init_data_db(data_path: &PathBuf) -> Result<Option<DatabaseConnection>,
                 return Err(err);
             }
         }
-        match db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::Workspace)))
+        match db
+            .execute(builder.build(&schema.create_table_from_entity(entity::prelude::Workspace)))
             .await
         {
             Ok(_) => {}
@@ -248,7 +256,8 @@ async fn init_data_db(data_path: &PathBuf) -> Result<Option<DatabaseConnection>,
                 return Err(err);
             }
         }
-        match db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::File)))
+        match db
+            .execute(builder.build(&schema.create_table_from_entity(entity::prelude::File)))
             .await
         {
             Ok(_) => {}
