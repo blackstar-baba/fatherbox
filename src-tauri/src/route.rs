@@ -1,24 +1,25 @@
-use base64::prelude::BASE64_STANDARD;
+use std::path::PathBuf;
+
 use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use sea_orm::DatabaseConnection;
 use serde_json::{to_value, Value};
-use std::path::PathBuf;
 use tauri::State;
 
-use app::service::file_service::{create_file, delete_file, get_file, get_path, get_workspace_files, get_workspace_files_by_pid, update_file_content, update_file_name, CreateBody as FileCreateBody, GeneralBody as FileGeneralBody, ListByPageBody as FileListByPageBody, ListByPidBody as FileListByPidBody, ListGeneralBody as FileListGeneralBody, UpdateContentBody as FileUpdateContentBody, UpdateNameBody as FileUpdateNameBody, get_workspace_files_by_page};
+use app::{AppResponse, AppState, LoginInfo};
+use app::service::file_service::{create_file, CreateBody as FileCreateBody, delete_file, GeneralBody as FileGeneralBody, get_file, get_path, get_workspace_files, get_workspace_files_by_page, get_workspace_files_by_pid, ListByPageBody as FileListByPageBody, ListByPidBody as FileListByPidBody, ListGeneralBody as FileListGeneralBody, update_file_content, update_file_name, UpdateContentBody as FileUpdateContentBody, UpdateNameBody as FileUpdateNameBody};
 use app::service::model_service::{
-    chat_request, get_chat_history_messages, get_chats, get_models, ChatRequestBody,
-    DeepChatRequestBody,
+    chat_request, ChatRequestBody, DeepChatRequestBody, get_chat_history_messages, get_chats,
+    get_models,
 };
 use app::service::user_service::{
-    get_access_codes, get_user_info, login, logout, refresh_token, register, LoginBody,
+    get_access_codes, get_user_info, login, LoginBody, logout, refresh_token, register,
     RegisterBody,
 };
 use app::service::workspace_service::{
-    create_workspace, delete_workspace, get_workspace, list_workspaces,
-    CreateBody as WorkspaceCreateBody, GeneralBody as WorkspaceGeneralBody,
+    create_workspace, CreateBody as WorkspaceCreateBody, delete_workspace, GeneralBody as WorkspaceGeneralBody,
+    get_workspace, list_workspaces,
 };
-use app::{AppResponse, AppState};
 
 #[tauri::command]
 pub async fn route_cmd(
@@ -32,21 +33,37 @@ pub async fn route_cmd(
     }
     // Pre-processing or logging logic
     let db = &state.conn;
-    let file_db = &state.file_conn;
     let user_path = &state.user_path;
     return if command.starts_with("user") {
         Ok(invoke_user_cmd(db, command, access_token, args).await)
     } else if command.starts_with("model") {
         Ok(invoke_model_cmd(db, command, access_token, args).await)
     } else if command.starts_with("workspace") {
-        Ok(invoke_workspace_cmd(file_db, command, access_token, args).await)
+        Ok(invoke_workspace_cmd(db, command, access_token, args).await)
     } else if command.starts_with("file") {
-        Ok(invoke_file_cmd(file_db, user_path, command, access_token, args).await)
+        Ok(invoke_file_cmd(db, user_path, command, access_token, args).await)
     } else {
         let response =
             AppResponse::error(None::<String>, &format!("Command {:?} not found", command));
         Ok(to_value(&response).unwrap())
     };
+}
+
+fn get_user_info_from_access_token(access_token: Option<String>) -> Option<LoginInfo> {
+    if access_token.is_none() {
+        return None;
+    }
+    let access_token = access_token.unwrap();
+    let result = BASE64_STANDARD.decode(&access_token).unwrap();
+    let user_id = String::from_utf8(result).unwrap();
+    Some(LoginInfo{
+        access_token: access_token.clone(),
+        desc: "".to_string(),
+        real_name: "".to_string(),
+        user_id,
+        username: "".to_string(),
+        mail: None,
+    })
 }
 
 pub async fn invoke_user_cmd(
@@ -67,12 +84,12 @@ pub async fn invoke_user_cmd(
     if access_token.is_none() {
         return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap();
     }
-    let access_token = access_token.unwrap();
-    let result = BASE64_STANDARD.decode(&access_token).unwrap();
-    let user_id = String::from_utf8(result).unwrap();
+    let login_info= get_user_info_from_access_token(access_token).unwrap();
+    let user_id = &login_info.user_id;
+    let access_token_str = &login_info.access_token;
     return match command.as_str() {
         "user_get_info" => {
-            let response = get_user_info(db, &user_id).await;
+            let response = get_user_info(db, user_id).await;
             to_value(&response).unwrap()
         }
         "user_login" => {
@@ -85,7 +102,7 @@ pub async fn invoke_user_cmd(
             to_value(&response).unwrap()
         }
         "user_refresh_token" => {
-            let response = refresh_token(db, &access_token).await;
+            let response = refresh_token(db, access_token_str).await;
             to_value(&response).unwrap()
         }
         "user_get_access_codes" => {
@@ -153,12 +170,8 @@ pub async fn invoke_workspace_cmd(
     access_token: Option<String>,
     args: Value,
 ) -> Value {
-    // if access_token.is_none() {
-    //     return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap()
-    // }
-    // let access_token = access_token.unwrap();
-    // let result = BASE64_STANDARD.decode(&access_token).unwrap();
-    // let user_id = String::from_utf8(result).unwrap();
+    let login_info= get_user_info_from_access_token(access_token).unwrap();
+    let user_id = &login_info.user_id;
     return match command.as_str() {
         "workspace_list" => {
             let response = list_workspaces(db).await;
@@ -166,7 +179,7 @@ pub async fn invoke_workspace_cmd(
         }
         "workspace_create" => {
             let body: WorkspaceCreateBody = serde_json::from_value(args).unwrap();
-            let response = create_workspace(db, &body.name).await;
+            let response = create_workspace(db, user_id,&body.name).await;
             to_value(&response).unwrap()
         }
         "workspace_delete" => {
@@ -200,6 +213,7 @@ pub async fn invoke_file_cmd(
     // let access_token = access_token.unwrap();
     // let result = BASE64_STANDARD.decode(&access_token).unwrap();
     // let user_id = String::from_utf8(result).unwrap();
+    // todo need user_id to query
     return match command.as_str() {
         "file_get_all_workspace_files" => {
             let body: FileListGeneralBody = serde_json::from_value(args).unwrap();

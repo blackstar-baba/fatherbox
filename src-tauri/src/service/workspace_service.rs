@@ -22,9 +22,10 @@ pub struct GeneralBody {
 }
 
 
-pub async fn create_workspace(db: &DatabaseConnection, name: &str) -> AppResponse<Model> {
+pub async fn create_workspace(db: &DatabaseConnection, uid: &str, name: &str) -> AppResponse<Model> {
     let active_model = workspace::ActiveModel {
         id: Set(Uuid::new_v4().to_string()),
+        uid: Set(uid.to_string()),
         name: Set(name.to_string()),
         create_time: Set(Utc::now().timestamp()),
         update_time: Set(Utc::now().timestamp()),
@@ -97,13 +98,13 @@ mod tests {
             .unwrap();
         // begin invoke
         // 1. test create
-        let create_result = create_workspace(&db, "default").await.result;
+        let create_result = create_workspace(&db, "123","default").await.result;
         assert_eq!("default", create_result.name);
         // 2. test get
         let default_workspace_result = get_workspace(&db, &create_result.id).await.result;
         assert_eq!(false,default_workspace_result.is_none());
         // 3. test list
-        create_workspace(&db, "abc").await.result;
+        create_workspace(&db, "123","abc").await.result;
         let workspaces = list_workspaces(&db).await.result;
         assert_eq!(2, workspaces.len());
         assert_eq!("default", workspaces[0].name);

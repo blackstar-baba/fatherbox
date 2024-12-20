@@ -1,23 +1,24 @@
+use std::net::SocketAddr;
+use std::path::PathBuf;
+
+use sea_orm::DatabaseConnection;
+use serde::{Deserialize, Serialize};
+use tauri::api::path::home_dir;
+use thiserror::Error;
+
 pub mod api;
 pub mod entity;
 pub mod dao;
 pub mod service;
 pub mod util;
 
-use std::fs;
-use std::fs::File;
-use sea_orm::{Database, DatabaseConnection};
-use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
-use std::path::PathBuf;
-use std::sync::{Arc, Mutex, RwLock};
-use anyhow::{anyhow, Error};
-use tauri::api::path::home_dir;
-use thiserror::Error;
-use crate::util::db_util::exist_database_file;
+
+pub const DATA_DB_NAME: &str = "data.db";
 
 pub const ROOT_PATH: &str = ".fatherbox";
-pub const CONFIG_PATH: &str = "config";
+pub const CONFIG_PATH: &str = "configs";
+pub const FILE_PATH: &str = "files";
+pub const DATA_PATH: &str = "data";
 pub const WORKSPACE_PATH: &str = "workspace";
 pub const DEFAULT_WORKSPACE: &str = "default";
 
@@ -45,6 +46,17 @@ pub struct AppResponse<T> {
     pub r#type: String,
     pub message: String,
     pub result: T,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct LoginInfo {
+    pub access_token: String,
+    pub desc: String,
+    pub real_name: String,
+    pub user_id: String,
+    pub username: String,
+    pub mail: Option<String>,
 }
 
 impl<T> AppResponse<T> {
@@ -103,7 +115,6 @@ pub struct AppState {
     pub conn: DatabaseConnection,
     pub root_path: PathBuf,
     pub user_path: PathBuf,
-    pub file_conn: DatabaseConnection,
 }
 
 #[derive(Error, Debug)]

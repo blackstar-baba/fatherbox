@@ -13,18 +13,7 @@ use uuid::Uuid;
 use crate::entity::user;
 use crate::entity::user::Model;
 use crate::dao::user_dao::UserService;
-use crate::{AppResponse, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS};
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct LoginInfo {
-    pub access_token: String,
-    pub desc: String,
-    pub real_name: String,
-    pub user_id: String,
-    pub username: String,
-    pub mail: Option<String>,
-}
+use crate::{AppResponse, LoginInfo, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
 #[serde(rename_all = "camelCase")]

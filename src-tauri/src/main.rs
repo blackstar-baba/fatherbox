@@ -14,10 +14,7 @@ use app::service::user_service::{
 use app::service::workspace_service::create_workspace;
 use app::service::{file_service, user_service, workspace_service};
 use app::util::db_util::init_connection;
-use app::{
-    entity, AppResponse, AppState, Config, FileEntry, FileRequest, CONFIG_PATH, DEFAULT_WORKSPACE,
-    DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH, WORKSPACE_PATH,
-};
+use app::{entity, AppResponse, AppState, Config, FileEntry, FileRequest, CONFIG_PATH, DEFAULT_WORKSPACE, DIR_TYPE, FILE_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS, ROOT_PATH, WORKSPACE_PATH, DATA_PATH, FILE_PATH, DATA_DB_NAME};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use clap::Parser;
@@ -39,9 +36,6 @@ use tauri::State;
 mod route;
 
 static DEFAULT_CONFIG: &str = include_str!("../config.toml");
-
-static USER_DB_NAME: &str = "user.db";
-static FILE_DB_NAME: &str = "file.db";
 
 #[derive(Parser)]
 #[command(version)]
@@ -111,11 +105,19 @@ async fn main() {
     }
     let config_path = &root_path.join(CONFIG_PATH);
     if !config_path.exists() {
-        // create config
-        info!("Create config path: {}", config_path.display());
+        info!("Create {} path: {}", CONFIG_PATH, config_path.display());
         fs::create_dir(config_path).unwrap();
     }
-
+    let data_path = &root_path.join(DATA_PATH);
+    if !data_path.exists() {
+        info!("Create {} path: {}", DATA_PATH, data_path.display());
+        fs::create_dir(data_path).unwrap();
+    }
+    let file_path = &root_path.join(FILE_PATH);
+    if !file_path.exists() {
+        info!("Create {} path: {}", FILE_PATH, file_path.display());
+        fs::create_dir(file_path).unwrap();
+    }
     // process config
     let mut config_builder = config::Config::builder();
     config_builder = match &args.config {
@@ -126,9 +128,8 @@ async fn main() {
         }
     };
     let config: Config = config_builder.build().unwrap().try_deserialize().unwrap();
-
     // init user db
-    let db_result = init_user_db().await;
+    let db_result = init_data_db(data_path).await;
     if db_result.is_err() {
         exit(1);
     }
@@ -142,30 +143,24 @@ async fn main() {
         );
         exit(1);
     }
-    let user_id = user_id_result.unwrap();
+    let user_id = &user_id_result.unwrap();
     // init workspace dir
-    let user_path = &root_path.join(user_id);
-    if !user_path.exists() {
+    // e.g. .fatherbox/files/xxx-xxxxxxxx-xxxx-xxxxxxxx
+    let user_file_path = &file_path.join(user_id);
+    if !user_file_path.exists() {
         // create workspace
-        let create_workspace_result = fs::create_dir(user_path);
-        if create_workspace_result.is_err() {
+        let create_user_file_dir_result = fs::create_dir_all(user_file_path);
+        if create_user_file_dir_result.is_err() {
             error!(
-                "Create user dir failed, err: {}",
-                create_workspace_result.err().unwrap()
+                "Create user file dir failed, err: {}",
+                create_user_file_dir_result.err().unwrap()
             );
             exit(1)
         }
-        info!("Create user dir success, path: {}", user_path.display());
+        info!("Create user file dir success, path: {}", user_file_path.display());
     }
-    // init file db
-    let db_result = init_file_db(user_path).await;
-    if db_result.is_err() {
-        error!("Init file db failed, err: {}", db_result.err().unwrap());
-        exit(1);
-    }
-    let file_db = db_result.unwrap().unwrap();
     // init default workspace
-    let db_result = init_default_workspace(&file_db, user_path).await;
+    let db_result = init_default_workspace(&db, &user_id, user_file_path).await;
     if db_result.is_err() {
         error!("Init file db failed, err: {}", db_result.err().unwrap());
         exit(1);
@@ -174,9 +169,8 @@ async fn main() {
     tauri::Builder::default()
         .manage(AppState {
             conn: db,
-            file_conn: file_db,
             root_path: root_path.to_owned(),
-            user_path: user_path.to_owned(),
+            user_path: user_file_path.to_owned(),
         })
         // why sync fn must after sync fc
         .invoke_handler(tauri::generate_handler![route_cmd, my_custom_command,])
@@ -219,9 +213,10 @@ async fn init_default_user(db: &DatabaseConnection) -> Result<String, anyhow::Er
     }
 }
 
-async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
-    let db_file_path = home_dir().unwrap().join(ROOT_PATH).join(USER_DB_NAME);
-    info!("begin init db use file {:?}", db_file_path);
+async fn init_data_db(data_path: &PathBuf) -> Result<Option<DatabaseConnection>, DbErr> {
+    // e.g. ~/.fatherbox/data.db
+    let db_file_path = &data_path.join(DATA_DB_NAME);
+    info!("begin init data db use file {:?}", db_file_path);
     let db_exist = db_file_path.exists();
     let db = match init_connection(&db_file_path).await {
         Ok(conn) => conn,
@@ -231,7 +226,7 @@ async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
         }
     };
     if !db_exist {
-        info!("begin init tables in user db");
+        info!("begin init tables in data db");
         let builder = db.get_database_backend();
         let schema = Schema::new(builder);
         match db
@@ -240,7 +235,25 @@ async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
         {
             Ok(_) => {}
             Err(err) => {
-                info!("init user.db catch err: {:?}", err);
+                info!("init data.db catch err: {:?}", err);
+                return Err(err);
+            }
+        }
+        match db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::Workspace)))
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                info!("init data.db catch err: {:?}", err);
+                return Err(err);
+            }
+        }
+        match db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::File)))
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                info!("init data.db catch err: {:?}", err);
                 return Err(err);
             }
         }
@@ -248,38 +261,9 @@ async fn init_user_db() -> Result<Option<DatabaseConnection>, DbErr> {
     Ok(Some(db))
 }
 
-async fn init_file_db(workspace_path: &PathBuf) -> Result<Option<DatabaseConnection>, DbErr> {
-    // e.g. ~/.fatherbox/xxx-xxxx/file.db
-    let db_file_path = home_dir()
-        .unwrap()
-        .join(ROOT_PATH)
-        .join(workspace_path)
-        .join(FILE_DB_NAME);
-    info!("begin init db use file {:?}", db_file_path);
-    let db_exist = db_file_path.exists();
-    let db = match init_connection(&db_file_path).await {
-        Ok(conn) => conn,
-        Err(err) => {
-            info!("init connection catch err: {:?}", err);
-            exit(1)
-        }
-    };
-    if !db_exist {
-        info!("begin init tables in file db");
-        let builder = db.get_database_backend();
-        let schema = Schema::new(builder);
-        db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::Workspace)))
-            .await
-            .unwrap();
-        db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::File)))
-            .await
-            .unwrap();
-    }
-    Ok(Some(db))
-}
-
 async fn init_default_workspace(
     db: &DatabaseConnection,
+    uid: &str,
     workspace_path: &PathBuf,
 ) -> Result<Option<Model>, anyhow::Error> {
     let get_response = workspace_service::get_workspace_by_name(db, DEFAULT_WORKSPACE).await;
@@ -290,7 +274,7 @@ async fn init_default_workspace(
     let mut id = "".to_string();
     if option_model.is_none() {
         // create default workspace
-        let create_response = create_workspace(db, DEFAULT_WORKSPACE).await;
+        let create_response = create_workspace(db, uid, DEFAULT_WORKSPACE).await;
         if !create_response.is_success() {
             error!("{}", create_response.message);
             return Err(anyhow!("{}", create_response.message));
