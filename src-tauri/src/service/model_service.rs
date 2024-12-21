@@ -235,7 +235,12 @@ pub async fn get_models() -> ModelData {
         .unwrap()
         .response_type(ResponseType::Json);
     if let Ok(response) = client.send(request).await {
-        let data = response.read().await.unwrap().data;
+        let data_result = response.read().await;
+        if data_result.is_err() {
+            error!("read model data failed, err: {}", data_result.err().unwrap());
+            return ModelData { models: vec![] };
+        }
+        let data = data_result.unwrap().data;
         // println!("{}",data);
         let model_data: ModelData = serde_json::from_value(data).unwrap();
         return model_data;
