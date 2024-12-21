@@ -66,6 +66,7 @@ const dashboardMenus = [
         path: '/workspace',
         component: '/dashboard/workspace/index',
         meta: {
+          affixTab: true,
           title: 'page.dashboard.workspace',
         },
       },
