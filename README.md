@@ -13,9 +13,29 @@ FatherBox is an open-source, free utility app built using Vben & Tauri technolog
 
 ## Feature
 
-- Utils, Time Parser JsonFormatter UuidGenerator Encryptor RegExp
-- AI, Local LLM & Remote LLM Links
-- Editors, Markdown & Flow
+- Dashboard
+- Tools
+  - TimeParser
+  - JsonFormatter
+  - UuidGenerator
+  - Encryptor
+  - RegExp
+- AI
+  - Remote AI LLMS  Links only
+  - Local AI LLM Based on Ollama
+- Editors
+  - Markdown
+  - Flow
+- System
+  - FileManage
+- other
+  - Settings
+  - Mode Light/Dark
+  - Workspace // todo
+  - Languages 简体中文/English
+  - User Login/Logout
+ 
+https://github.com/user-attachments/assets/81d6a19b-e543-4faf-bdc2-b86634964337
 
 ## Preview
 
@@ -66,31 +86,6 @@ Double click fatherbox app. use username `default` & password `123456` to login 
 ```
 sudo xattr -rd com.apple.quarantine /Applications/fatherbox.app
 ```
-
-## Feature List
-- Dashboard
-- Tools
-  - TimeParser
-  - JsonFormatter
-  - UuidGenerator
-  - Encryptor
-  - RegExp
-- AI
-  - Remote AI LLMS  Links only
-  - Local AI LLM Based on Ollama
-- Editors
-  - Markdown
-  - Flow
-- System
-  - FileManage
-- other
-  - Settings
-  - Mode Light/Dark
-  - Workspace // todo
-  - Languages 简体中文/English
-  - User Login/Logout
- 
-https://github.com/user-attachments/assets/81d6a19b-e543-4faf-bdc2-b86634964337
 
 ## Change Log
 
