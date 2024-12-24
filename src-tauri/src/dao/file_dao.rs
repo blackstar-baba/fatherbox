@@ -1,23 +1,17 @@
+use chrono::Utc;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DbErr, EntityTrait,
+    IntoActiveModel, ModelTrait, PaginatorTrait, QueryFilter, Statement, Value,
+};
+use sea_orm::prelude::Expr;
+
+use crate::dto::file_dto::{ListByPageBody, ListByPidBody, ListGeneralBody, PageResult};
 use crate::entity::file::{
     ActiveModel as FileActiveModel, Column, DataTransModel as FileDataTransModel, Entity as File,
     Model as FileModel, Model,
 };
-use chrono::Utc;
-use sea_orm::prelude::Expr;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DbErr, EntityTrait,
-    IntoActiveModel, ModelTrait, PaginatorTrait, QueryFilter, Set, Statement, UpdateResult, Value,
-};
-use serde::{Deserialize, Serialize};
 
 pub struct FileService;
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct PageResult {
-    pub total: u64,
-    pub items: Vec<FileModel>,
-}
 
 impl FileService {
     pub async fn create_file(
@@ -125,6 +119,33 @@ impl FileService {
             .await
     }
 
+    pub async fn list_files_by_pid(
+        db: &DatabaseConnection,
+        body: &ListByPidBody,
+    ) -> Result<Vec<FileModel>, DbErr> {
+        let mut select = File::find()
+            .filter(Column::Pid.eq(&body.pid));
+        if body.r#type.is_some() {
+            let file_type = body.r#type.clone().unwrap();
+            select = select.filter(Column::Type.eq(file_type));
+        }
+        select.all(db).await
+    }
+
+    pub async fn list_files(
+        db: &DatabaseConnection,
+        body: &ListGeneralBody
+    ) -> Result<Vec<FileModel>, DbErr> {
+        let mut select = File::find()
+            .filter(Column::Wid.eq(&body.wid))
+            .filter(Column::Zone.eq(&body.zone));
+        if body.r#type.is_some() {
+            let file_type = body.r#type.clone().unwrap();
+            select = select.filter(Column::Type.eq(file_type));
+        }
+        select.all(db).await
+    }
+
     pub async fn list_files_by_wid_and_pid_and_type(
         db: &DatabaseConnection,
         wid: &str,
@@ -141,25 +162,19 @@ impl FileService {
 
     pub async fn list_files_by_page(
         db: &DatabaseConnection,
-        page_size: u64,
-        page_num: u64,
-        wid: &str,
-        pid: &str,
-        r#type: &str,
-        name: &str,
+        body: &ListByPageBody,
     ) -> Result<PageResult, DbErr> {
         let paginator = File::find()
-            .filter(Column::Wid.eq(wid))
-            .filter(Column::Pid.eq(pid))
-            .filter(Column::Type.eq(r#type))
-            .filter(Column::Name.like(name.to_owned() + "%"))
-            .paginate(db, page_size);
+            .filter(Column::Pid.eq(&body.pid))
+            .filter(Column::Type.eq(&body.r#type))
+            .filter(Column::Name.like(body.name.to_owned() + "%"))
+            .paginate(db, body.page_size);
         let total_result = paginator.num_items().await;
         if total_result.is_err() {
             return Err(total_result.err().unwrap());
         }
         let total = total_result.unwrap();
-        let page_result = paginator.fetch_page(page_num).await;
+        let page_result = paginator.fetch_page(body.page_num).await;
         if page_result.is_err() {
             return Err(page_result.err().unwrap());
         }
