@@ -11,6 +11,7 @@ pub mod dao;
 pub mod entity;
 pub mod service;
 pub mod util;
+pub mod dto;
 
 pub const DATA_DB_NAME: &str = "data.db";
 
