@@ -9,24 +9,21 @@ use std::path::PathBuf;
 use tauri::api::dir::is_dir;
 use uuid::Uuid;
 
-use crate::dao::file_dao::{FileService};
+use crate::dao::file_dao::FileService;
+use crate::dto::file_dto::{
+    CreateBody, GeneralBody, ListByPageBody, ListByPidBody, ListGeneralBody, PageResult,
+    UpdateContentBody, UpdateNameBody,
+};
 use crate::entity::file::{ActiveModel, Model};
 use crate::{AppResponse, DIR_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS};
-use crate::dto::file_dto::{CreateBody, GeneralBody, ListByPageBody, ListByPidBody, ListGeneralBody, PageResult, UpdateContentBody, UpdateNameBody};
 
 pub async fn get_workspace_files(
     db: &DatabaseConnection,
     general_body: &ListGeneralBody,
 ) -> AppResponse<Vec<Model>> {
     match FileService::list_files(db, general_body).await {
-        Ok(result) => {
-            AppResponse::success(result)
-        }
-        Err(err) => {
-            AppResponse::error(vec![],
-                &err.to_string(),
-            )
-        }
+        Ok(result) => AppResponse::success(result),
+        Err(err) => AppResponse::error(vec![], &err.to_string()),
     }
 }
 
@@ -35,14 +32,8 @@ pub async fn get_workspace_files_by_pid(
     body: &ListByPidBody,
 ) -> AppResponse<Vec<Model>> {
     match FileService::list_files_by_pid(db, body).await {
-        Ok(result) => {
-            AppResponse::success(result)
-        }
-        Err(err) => {
-            AppResponse::error(vec![],
-                               &err.to_string(),
-            )
-        }
+        Ok(result) => AppResponse::success(result),
+        Err(err) => AppResponse::error(vec![], &err.to_string()),
     }
 }
 
@@ -50,12 +41,7 @@ pub async fn get_workspace_files_by_page(
     db: &DatabaseConnection,
     body: &ListByPageBody,
 ) -> AppResponse<PageResult> {
-    match FileService::list_files_by_page(
-        db,
-        body,
-    )
-    .await
-    {
+    match FileService::list_files_by_page(db, body).await {
         Ok(result) => AppResponse::success(result),
         Err(err) => AppResponse::error(
             PageResult {
@@ -238,6 +224,13 @@ pub async fn delete_file(
     }
 }
 
+pub async fn list_workspace_zones(db: &DatabaseConnection, wid: &str) -> AppResponse<Vec<String>> {
+    match FileService::list_workspace_zones(db, wid).await {
+        Ok(result) => AppResponse::success(result),
+        Err(err) => AppResponse::error(vec![], &err.to_string()),
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::env::temp_dir;
@@ -246,8 +239,8 @@ mod test {
     use uuid::Uuid;
 
     use crate::service::file_service::{
-        create_file, delete_file, get_file, get_workspace_files, CreateBody, GeneralBody,
-        ListGeneralBody,
+        create_file, delete_file, get_file, get_workspace_files, list_workspace_zones, CreateBody,
+        GeneralBody, ListGeneralBody,
     };
     use crate::util::db_util::{drop_database_file, exist_database_file, init_connection};
     use crate::{entity, DIR_TYPE, FILE_TYPE};
@@ -287,19 +280,23 @@ mod test {
                 path: None,
             },
         )
-        .await.result.unwrap();
+        .await
+        .result
+        .unwrap();
         assert_eq!(zone_1_dir_1, dir_model.name);
         assert_eq!(zone_1, dir_model.zone);
         assert_eq!(wid, dir_model.wid);
         // get dir
-       dir_model = get_file(
+        dir_model = get_file(
             db,
             &GeneralBody {
                 wid: wid.clone(),
                 id: dir_model.id.clone(),
             },
         )
-        .await.result.unwrap();
+        .await
+        .result
+        .unwrap();
         assert_eq!(zone_1_dir_1, dir_model.name);
         assert_eq!(zone_1, dir_model.zone);
         assert_eq!(wid, dir_model.wid);
@@ -317,7 +314,9 @@ mod test {
                 path: None,
             },
         )
-        .await.result.unwrap();
+        .await
+        .result
+        .unwrap();
         // get all workspace files include file & dir
         let zone_1_models = get_workspace_files(
             db,
@@ -326,8 +325,14 @@ mod test {
                 zone: zone_1.to_string(),
                 r#type: None,
             },
-        ).await.result;
+        )
+        .await
+        .result;
         assert_eq!(2, zone_1_models.len());
+        // list zone 1
+        let mut zones = list_workspace_zones(db, &wid).await.result;
+        assert_eq!(1, zones.len());
+        assert_eq!(zone_1, zones[0]);
         let zone_2_models = get_workspace_files(
             db,
             &ListGeneralBody {
@@ -335,7 +340,9 @@ mod test {
                 zone: zone_2.to_string(),
                 r#type: None,
             },
-        ).await.result;
+        )
+        .await
+        .result;
         assert_eq!(0, zone_2_models.len());
         // get all workspace files
         let zone_1_file_models = get_workspace_files(
@@ -345,7 +352,9 @@ mod test {
                 zone: zone_1.to_string(),
                 r#type: Some(FILE_TYPE.to_string()),
             },
-        ).await.result;
+        )
+        .await
+        .result;
         assert_eq!(1, zone_1_file_models.len());
         let zone_2_file_models = get_workspace_files(
             db,
@@ -354,7 +363,9 @@ mod test {
                 zone: zone_2.to_string(),
                 r#type: Some(FILE_TYPE.to_string()),
             },
-        ).await.result;
+        )
+        .await
+        .result;
         assert_eq!(0, zone_2_file_models.len());
         // get all workspace dirs
         let zone_1_dir_models = get_workspace_files(
@@ -364,7 +375,9 @@ mod test {
                 zone: zone_1.to_string(),
                 r#type: Some(DIR_TYPE.to_string()),
             },
-        ).await.result;
+        )
+        .await
+        .result;
         assert_eq!(1, zone_1_dir_models.len());
         // delete dir, must failed, because dir is parent
 
@@ -396,7 +409,9 @@ mod test {
                 zone: zone_1.to_string(),
                 r#type: None,
             },
-        ).await.result;
+        )
+        .await
+        .result;
         assert_eq!(0, zone_1_after_delete_models.len());
     }
 }
