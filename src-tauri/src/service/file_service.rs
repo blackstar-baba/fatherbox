@@ -9,81 +9,21 @@ use std::path::PathBuf;
 use tauri::api::dir::is_dir;
 use uuid::Uuid;
 
-use crate::dao::file_dao::{FileService, PageResult};
+use crate::dao::file_dao::FileService;
+use crate::dto::file_dto::{
+    CreateBody, GeneralBody, ListByPageBody, ListByPidBody, ListGeneralBody, PageResult,
+    UpdateContentBody, UpdateNameBody,
+};
 use crate::entity::file::{ActiveModel, Model};
 use crate::{AppResponse, DIR_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS};
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateBody {
-    pub name: String,
-    pub pid: String,
-    pub wid: String,
-    pub r#type: String,
-    pub content: Option<String>,
-    pub path: Option<String>,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateContentBody {
-    pub id: String,
-    pub content: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateNameBody {
-    pub id: String,
-    pub name: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct ListGeneralBody {
-    pub wid: String,
-    pub r#type: Option<String>,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct ListByPidBody {
-    pub wid: String,
-    pub pid: String,
-    pub r#type: Option<String>,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct ListByPageBody {
-    pub page_size: u64,
-    pub page_num: u64,
-    pub wid: String,
-    pub pid: String,
-    pub r#type: String,
-    pub name: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct GeneralBody {
-    pub wid: String,
-    pub id: String,
-}
 
 pub async fn get_workspace_files(
     db: &DatabaseConnection,
     general_body: &ListGeneralBody,
 ) -> AppResponse<Vec<Model>> {
-    match &general_body.r#type {
-        None => match FileService::list_files_by_wid(db, &general_body.wid).await {
-            Ok(result) => AppResponse::success(result),
-            Err(err) => AppResponse::error(vec![], &err.to_string()),
-        },
-        Some(t) => match FileService::list_files_by_wid_and_type(db, &general_body.wid, t).await {
-            Ok(result) => AppResponse::success(result),
-            Err(err) => AppResponse::error(vec![], &err.to_string()),
-        },
+    match FileService::list_files(db, general_body).await {
+        Ok(result) => AppResponse::success(result),
+        Err(err) => AppResponse::error(vec![], &err.to_string()),
     }
 }
 
@@ -91,18 +31,9 @@ pub async fn get_workspace_files_by_pid(
     db: &DatabaseConnection,
     body: &ListByPidBody,
 ) -> AppResponse<Vec<Model>> {
-    match &body.r#type {
-        None => match FileService::list_files_by_wid_and_pid(db, &body.wid, &body.pid).await {
-            Ok(result) => AppResponse::success(result),
-            Err(err) => AppResponse::error(vec![], &err.to_string()),
-        },
-        Some(t) => {
-            match FileService::list_files_by_wid_and_pid_and_type(db, &body.wid, &body.pid, t).await
-            {
-                Ok(result) => AppResponse::success(result),
-                Err(err) => AppResponse::error(vec![], &err.to_string()),
-            }
-        }
+    match FileService::list_files_by_pid(db, body).await {
+        Ok(result) => AppResponse::success(result),
+        Err(err) => AppResponse::error(vec![], &err.to_string()),
     }
 }
 
@@ -110,17 +41,7 @@ pub async fn get_workspace_files_by_page(
     db: &DatabaseConnection,
     body: &ListByPageBody,
 ) -> AppResponse<PageResult> {
-    match FileService::list_files_by_page(
-        db,
-        body.page_size,
-        body.page_num,
-        &body.wid,
-        &body.pid,
-        &body.r#type,
-        &body.name,
-    )
-    .await
-    {
+    match FileService::list_files_by_page(db, body).await {
         Ok(result) => AppResponse::success(result),
         Err(err) => AppResponse::error(
             PageResult {
@@ -162,6 +83,7 @@ pub async fn create_file(
             r#type: Set(general_body.r#type.to_string()),
             pid: Set(general_body.pid.to_string()),
             wid: Set(general_body.wid.to_string()),
+            zone: Set(general_body.zone.to_string()),
             size: Set(0),
             create_time: Set(Utc::now().timestamp()),
             update_time: Set(Utc::now().timestamp()),
@@ -274,7 +196,6 @@ pub async fn update_file_content(
 
 pub async fn update_file_name(
     db: &DatabaseConnection,
-    user_path: &PathBuf,
     body: &UpdateNameBody,
 ) -> AppResponse<Option<Model>> {
     let get_result = FileService::get_file(db, &body.id).await;
@@ -303,6 +224,13 @@ pub async fn delete_file(
     }
 }
 
+pub async fn list_workspace_zones(db: &DatabaseConnection, wid: &str) -> AppResponse<Vec<String>> {
+    match FileService::list_workspace_zones(db, wid).await {
+        Ok(result) => AppResponse::success(result),
+        Err(err) => AppResponse::error(vec![], &err.to_string()),
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::env::temp_dir;
@@ -311,8 +239,8 @@ mod test {
     use uuid::Uuid;
 
     use crate::service::file_service::{
-        create_file, delete_file, get_file, get_workspace_files, CreateBody, GeneralBody,
-        ListGeneralBody,
+        create_file, delete_file, get_file, get_workspace_files, list_workspace_zones, CreateBody,
+        GeneralBody, ListGeneralBody,
     };
     use crate::util::db_util::{drop_database_file, exist_database_file, init_connection};
     use crate::{entity, DIR_TYPE, FILE_TYPE};
@@ -330,44 +258,50 @@ mod test {
         let db = &init_connection(&file_path).await.unwrap();
         let builder = db.get_database_backend();
         let schema = Schema::new(builder);
-        // db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::Workspace)))
-        //     .await
-        //     .unwrap();
         db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::File)))
             .await
             .unwrap();
         // create workspace file,not do this
         let wid = Uuid::new_v4().to_string();
+        let zone_1 = "zone-1";
+        let zone_2 = "zone-2";
         // create dir
-        let create_dir_response = create_file(
+        let zone_1_dir_1 = "test_dir";
+        let mut dir_model = create_file(
             db,
             user_path,
             &CreateBody {
-                name: "test_dir".to_string(),
+                name: zone_1_dir_1.to_string(),
                 pid: "".to_string(),
                 wid: wid.clone(),
                 r#type: DIR_TYPE.to_string(),
+                zone: zone_1.to_string(),
                 content: None,
                 path: None,
             },
         )
-        .await;
-        let dir_model = create_dir_response.result.unwrap();
+        .await
+        .result
+        .unwrap();
+        assert_eq!(zone_1_dir_1, dir_model.name);
+        assert_eq!(zone_1, dir_model.zone);
+        assert_eq!(wid, dir_model.wid);
         // get dir
-        let get_dir_response = get_file(
+        dir_model = get_file(
             db,
             &GeneralBody {
                 wid: wid.clone(),
                 id: dir_model.id.clone(),
             },
         )
-        .await;
-        if !get_dir_response.is_success() {
-            println!("create dir catch err: {}", get_dir_response.message);
-            return;
-        }
-        // create file,parent is dir
-        let create_file_response = create_file(
+        .await
+        .result
+        .unwrap();
+        assert_eq!(zone_1_dir_1, dir_model.name);
+        assert_eq!(zone_1, dir_model.zone);
+        assert_eq!(wid, dir_model.wid);
+        // create file, parent is dir
+        let file_model = create_file(
             db,
             user_path,
             &CreateBody {
@@ -375,59 +309,76 @@ mod test {
                 pid: dir_model.id.clone(),
                 wid: wid.clone(),
                 r#type: FILE_TYPE.to_string(),
+                zone: zone_1.to_string(),
                 content: None,
                 path: None,
             },
         )
-        .await;
-        let file_model = create_file_response.result.unwrap();
-        // get file
-        let get_file_response = get_file(
-            db,
-            &GeneralBody {
-                wid: wid.clone(),
-                id: file_model.id.clone(),
-            },
-        )
-        .await;
-        if !get_file_response.is_success() {
-            println!("create dir catch err: {}", get_file_response.message);
-            return;
-        }
+        .await
+        .result
+        .unwrap();
         // get all workspace files include file & dir
-        let get_all_files_response = get_workspace_files(
+        let zone_1_models = get_workspace_files(
             db,
             &ListGeneralBody {
                 wid: wid.clone(),
+                zone: zone_1.to_string(),
                 r#type: None,
             },
         )
-        .await;
-        if !get_all_files_response.is_success() {
-            println!("create dir catch err: {}", get_all_files_response.message);
-            return;
-        }
-        assert_eq!(2, get_all_files_response.result.len());
-        // get all workspace files
-        let get_files_response = get_workspace_files(
+        .await
+        .result;
+        assert_eq!(2, zone_1_models.len());
+        // list zone 1
+        let mut zones = list_workspace_zones(db, &wid).await.result;
+        assert_eq!(1, zones.len());
+        assert_eq!(zone_1, zones[0]);
+        let zone_2_models = get_workspace_files(
             db,
             &ListGeneralBody {
                 wid: wid.clone(),
+                zone: zone_2.to_string(),
+                r#type: None,
+            },
+        )
+        .await
+        .result;
+        assert_eq!(0, zone_2_models.len());
+        // get all workspace files
+        let zone_1_file_models = get_workspace_files(
+            db,
+            &ListGeneralBody {
+                wid: wid.clone(),
+                zone: zone_1.to_string(),
                 r#type: Some(FILE_TYPE.to_string()),
             },
         )
-        .await;
-        assert_eq!(1, get_files_response.result.len());
-        // get all workspace dirs
-        let get_dirs_response = get_workspace_files(
+        .await
+        .result;
+        assert_eq!(1, zone_1_file_models.len());
+        let zone_2_file_models = get_workspace_files(
             db,
             &ListGeneralBody {
                 wid: wid.clone(),
+                zone: zone_2.to_string(),
+                r#type: Some(FILE_TYPE.to_string()),
+            },
+        )
+        .await
+        .result;
+        assert_eq!(0, zone_2_file_models.len());
+        // get all workspace dirs
+        let zone_1_dir_models = get_workspace_files(
+            db,
+            &ListGeneralBody {
+                wid: wid.clone(),
+                zone: zone_1.to_string(),
                 r#type: Some(DIR_TYPE.to_string()),
             },
         )
-        .await;
-        assert_eq!(1, get_dirs_response.result.len());
+        .await
+        .result;
+        assert_eq!(1, zone_1_dir_models.len());
         // delete dir, must failed, because dir is parent
 
         // delete file
@@ -451,14 +402,16 @@ mod test {
         .await;
         assert_eq!(true, delete_dir_response.is_success());
         // get all files include dir
-        let get_all_files_response_2 = get_workspace_files(
+        let zone_1_after_delete_models = get_workspace_files(
             db,
             &ListGeneralBody {
                 wid: wid.clone(),
+                zone: zone_1.to_string(),
                 r#type: None,
             },
         )
-        .await;
-        assert_eq!(0, get_all_files_response_2.result.len());
+        .await
+        .result;
+        assert_eq!(0, zone_1_after_delete_models.len());
     }
 }
