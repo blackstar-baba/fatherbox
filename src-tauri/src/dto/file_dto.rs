@@ -7,6 +7,7 @@ pub struct CreateBody {
     pub pid: String,
     pub wid: String,
     pub r#type: String,
+    #[serde(default = "default_zone")]
     pub zone: String,
     pub content: Option<String>,
     pub path: Option<String>,
