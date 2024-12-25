@@ -261,6 +261,7 @@ watch(
       title: curWorkspace.name,
       value: curWorkspace.id,
       type: FILE_TYPE_DIR,
+      disabled: true,
     };
     root.children = getFileChildren(root.key, map);
     fileTree.value.push(root);
