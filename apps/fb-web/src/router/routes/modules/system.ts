@@ -19,7 +19,6 @@ const routes: RouteRecordRaw[] = [
         path: '/system/file-manage',
         component: () => import('#/views/system/file-manage/index.vue'),
         meta: {
-          affixTab: true,
           icon: 'tabler:files',
           title: $t('page.system.file-manage'),
         },

@@ -19,7 +19,6 @@ const routes: RouteRecordRaw[] = [
         path: '/editors/markdown',
         component: () => import('#/views/editors/markdown/index.vue'),
         meta: {
-          affixTab: true,
           icon: 'material-symbols:markdown-outline',
           title: $t('page.editors.markdown'),
         },
@@ -29,7 +28,6 @@ const routes: RouteRecordRaw[] = [
         path: '/editors/flow',
         component: () => import('#/views/editors/flow/index.vue'),
         meta: {
-          affixTab: true,
           icon: 'mdi:flowchart-outline',
           title: $t('page.editors.flow'),
         },
