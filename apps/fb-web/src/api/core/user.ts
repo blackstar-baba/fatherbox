@@ -20,7 +20,7 @@ export async function getUserInfoApi() {
       }).then((msg: any) => {
         if (msg.code !== 0) {
           message.error(msg.message);
-          return {} as UserInfo;
+          return null;
         }
         return msg.result as UserInfo;
       })

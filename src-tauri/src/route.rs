@@ -58,15 +58,19 @@ pub async fn route_cmd(
     };
 }
 
-fn get_user_info_from_access_token(access_token: Option<String>) -> Option<LoginInfo> {
-    if access_token.is_none() {
-        return None;
+fn get_user_info_from_access_token(access_token_option: Option<String>) -> Result<LoginInfo, anyhow::Error> {
+    if access_token_option.is_none() {
+        return Err(anyhow::anyhow!("User token is null"));
     }
-    let access_token = access_token.unwrap();
-    let result = BASE64_STANDARD.decode(&access_token).unwrap();
+    let access_token = &access_token_option.unwrap();
+    if access_token.is_empty() {
+        return Err(anyhow::anyhow!("User token is empty"));
+    }
+    // todo throw exception if access_token is expired
+    let result = BASE64_STANDARD.decode(access_token).unwrap();
     let user_id = String::from_utf8(result).unwrap();
-    Some(LoginInfo {
-        access_token: access_token.clone(),
+    Ok(LoginInfo {
+        access_token: access_token.to_string(),
         desc: "".to_string(),
         real_name: "".to_string(),
         user_id,
@@ -90,10 +94,15 @@ pub async fn invoke_user_cmd(
         let response = register(db, &result).await;
         return to_value(&response).unwrap();
     }
-    if access_token.is_none() {
-        return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap();
+    let login_info_result = get_user_info_from_access_token(access_token);
+    if login_info_result.is_err() {
+        return to_value(&AppResponse::error(
+            None::<String>,
+            &login_info_result.err().unwrap().to_string(),
+        ))
+       .unwrap();
     }
-    let login_info = get_user_info_from_access_token(access_token).unwrap();
+    let login_info = login_info_result.unwrap();
     let user_id = &login_info.user_id;
     let access_token_str = &login_info.access_token;
     return match command.as_str() {
@@ -179,7 +188,15 @@ pub async fn invoke_workspace_cmd(
     access_token: Option<String>,
     args: Value,
 ) -> Value {
-    let login_info = get_user_info_from_access_token(access_token).unwrap();
+    let login_info_result = get_user_info_from_access_token(access_token);
+    if login_info_result.is_err() {
+        return to_value(&AppResponse::error(
+            None::<String>,
+            &login_info_result.err().unwrap().to_string(),
+        ))
+            .unwrap();
+    }
+    let login_info = login_info_result.unwrap();
     let user_id = &login_info.user_id;
     return match command.as_str() {
         "workspace_list" => {

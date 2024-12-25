@@ -88,6 +88,19 @@ function setupAccessGuard(router: Router) {
     // 生成路由表
     // 当前登录用户拥有的角色标识列表
     const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
+    if (!userInfo) {
+      accessStore.setAccessToken(null);
+      return {
+        path: LOGIN_PATH,
+        // 如不需要，直接删除 query
+        query:
+          to.fullPath === DEFAULT_HOME_PATH
+            ? {}
+            : { redirect: encodeURIComponent(to.fullPath) },
+        // 携带当前跳转的页面，登录后重新跳转该页面
+        replace: true,
+      };
+    }
     const userRoles = userInfo.roles ?? [];
 
     // 生成菜单和路由
