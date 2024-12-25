@@ -19,7 +19,6 @@ const routes: RouteRecordRaw[] = [
         path: '/tools/time-parser',
         component: () => import('#/views/tools/time-parser/index.vue'),
         meta: {
-          affixTab: true,
           icon: 'lucide:timer',
           title: $t('page.tools.time-parser'),
         },
@@ -29,7 +28,6 @@ const routes: RouteRecordRaw[] = [
         path: '/tools/json-formatter',
         component: () => import('#/views/tools/json-formatter/index.vue'),
         meta: {
-          // affix: true,
           icon: 'lucide:file-json',
           title: $t('page.tools.json-formatter'),
         },
@@ -39,7 +37,6 @@ const routes: RouteRecordRaw[] = [
         path: '/tools/uuid-generator',
         component: () => import('#/views/tools/uuid-generator/index.vue'),
         meta: {
-          // affix: true,
           icon: 'lucide:key-round',
           title: $t('page.tools.uuid-generator'),
         },
@@ -49,7 +46,6 @@ const routes: RouteRecordRaw[] = [
         path: '/tools/encryptor',
         component: () => import('#/views/tools/encryptor/index.vue'),
         meta: {
-          // affix: true,
           icon: 'mdi:encryption-outline',
           title: $t('page.tools.encryptor'),
         },
@@ -59,7 +55,6 @@ const routes: RouteRecordRaw[] = [
         path: '/tools/reg-exp',
         component: () => import('#/views/tools/reg-exp/index.vue'),
         meta: {
-          // affix: true,
           icon: 'lucide:regex',
           title: $t('page.tools.reg-exp'),
         },
