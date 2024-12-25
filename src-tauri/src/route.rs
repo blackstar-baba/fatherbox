@@ -6,13 +6,15 @@ use sea_orm::DatabaseConnection;
 use serde_json::{to_value, Value};
 use tauri::State;
 
-use app::service::file_service::{
-    create_file, delete_file, get_file, get_path, get_workspace_files, get_workspace_files_by_page,
-    get_workspace_files_by_pid, update_file_content, update_file_name,
+use app::dto::file_dto::{
     CreateBody as FileCreateBody, GeneralBody as FileGeneralBody,
     ListByPageBody as FileListByPageBody, ListByPidBody as FileListByPidBody,
     ListGeneralBody as FileListGeneralBody, UpdateContentBody as FileUpdateContentBody,
     UpdateNameBody as FileUpdateNameBody,
+};
+use app::service::file_service::{
+    create_file, delete_file, get_file, get_path, get_workspace_files, get_workspace_files_by_page,
+    get_workspace_files_by_pid, update_file_content, update_file_name,
 };
 use app::service::model_service::{
     chat_request, get_chat_history_messages, get_chats, get_models, ChatRequestBody,
@@ -259,7 +261,7 @@ pub async fn invoke_file_cmd(
         }
         "file_update_name" => {
             let body: FileUpdateNameBody = serde_json::from_value(args).unwrap();
-            let response = update_file_name(db, user_path, &body).await;
+            let response = update_file_name(db, &body).await;
             to_value(&response).unwrap()
         }
         "file_delete" => {
