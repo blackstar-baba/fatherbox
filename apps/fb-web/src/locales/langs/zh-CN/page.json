@@ -26,7 +26,8 @@
   "editors": {
     "title": "编辑器",
     "markdown": "Markdown",
-    "flow": "流程图"
+    "flow": "流程图",
+    "text": "文本"
   },
   "tools": {
     "title": "工具",

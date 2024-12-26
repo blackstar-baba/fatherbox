@@ -22,7 +22,8 @@
   "editors": {
     "title": "Editors",
     "markdown": "Markdown",
-    "flow": "Flow"
+    "flow": "Flow",
+    "text": "Text"
   },
   "tools": {
     "title": "Tool",

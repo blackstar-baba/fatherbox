@@ -32,6 +32,15 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.editors.flow'),
         },
       },
+      {
+        name: 'Text',
+        path: '/editors/text',
+        component: () => import('#/views/editors/text/index.vue'),
+        meta: {
+          icon: 'mdi:text-box-outline',
+          title: $t('page.editors.text'),
+        },
+      },
     ],
   },
 ];
