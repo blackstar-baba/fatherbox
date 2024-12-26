@@ -5,6 +5,7 @@ import { useVbenModal } from '@vben/common-ui';
 
 // todo add new method
 import {
+  CopyOutlined,
   ExportOutlined,
   FileAddOutlined,
   FolderOpenOutlined,
@@ -51,8 +52,6 @@ interface TreeItem {
 interface Props {
   content: string;
 }
-
-defineOptions({ name: 'Menu' });
 
 const props = withDefaults(defineProps<Props>(), {});
 
@@ -325,9 +324,31 @@ function handleFileChange(event: any) {
     fileIdRef.value = '';
   }
 }
+
+function copy() {
+  const input = document.createElement('textarea');
+  input.style.position = 'fixed';
+  input.style.opacity = String(0);
+  input.value = props.content;
+  document.body.append(input);
+  input.select();
+  document.execCommand('Copy');
+  input.remove();
+  message.success('copy success');
+}
 </script>
 <template>
   <Card :bordered="false" class="mb-2 w-20">
+    <Row>
+      <Tooltip placement="top">
+        <template #title> Copy content</template>
+        <Button class="mb-2" type="primary" @click="copy">
+          <template #icon>
+            <CopyOutlined />
+          </template>
+        </Button>
+      </Tooltip>
+    </Row>
     <Row>
       <Button class="mb-2" type="primary" @click="addFile">
         <template #icon>
