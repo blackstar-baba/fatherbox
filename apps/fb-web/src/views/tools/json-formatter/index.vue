@@ -5,7 +5,6 @@ import { Page } from '@vben/common-ui';
 
 import {
   CompressOutlined,
-  CopyOutlined,
   DoubleRightOutlined,
   ExpandOutlined,
 } from '@ant-design/icons-vue';
@@ -138,18 +137,6 @@ function compress() {
   }
 }
 
-function copy() {
-  const input = document.createElement('textarea');
-  input.style.position = 'fixed';
-  input.style.opacity = String(0);
-  input.value = jsonText.value;
-  document.body.append(input);
-  input.select();
-  document.execCommand('Copy');
-  input.remove();
-  message.success('copy success');
-}
-
 function textToTree() {
   try {
     const jsonObject = JSON.parse(jsonText.value);
@@ -189,14 +176,6 @@ function setContent(content: string) {
               <Button class="ml-2" danger type="primary" @click="compress">
                 <template #icon>
                   <CompressOutlined />
-                </template>
-              </Button>
-            </Tooltip>
-            <Tooltip placement="top">
-              <template #title> Copy </template>
-              <Button class="ml-2" @click="copy">
-                <template #icon>
-                  <CopyOutlined />
                 </template>
               </Button>
             </Tooltip>
