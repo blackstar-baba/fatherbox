@@ -75,7 +75,7 @@ cargo tauri build
 
 ## Install
 
-1. Download app in `releases` page, https://github.com/blackstar-baba/fatherbox/releases.
+1. Download app in `releases` page, [https://github.com/blackstar-baba/fatherbox/releases](https://github.com/blackstar-baba/fatherbox/releases)
 2. Double click app binary file for install.
 
 ## Use
