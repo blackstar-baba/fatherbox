@@ -282,6 +282,9 @@ watch(
         fieldName: 'pid',
       },
     ]);
+    createFormApi.setValues({
+      pid: dirRoot.key,
+    });
   },
 );
 
