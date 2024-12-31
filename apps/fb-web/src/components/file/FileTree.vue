@@ -1,13 +1,10 @@
 <script lang="ts" setup>
-import { h, ref, unref, watchEffect } from 'vue';
+import { ref, unref, watchEffect } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
 import {
-  DeleteOutlined,
-  EditOutlined,
   ExpandAltOutlined,
-  PlusOutlined,
   RedoOutlined,
   ShrinkOutlined,
 } from '@ant-design/icons-vue';
@@ -27,6 +24,7 @@ import {
   deleteFile,
   type File,
   getAllWorkspaceFiles,
+  getFileContent,
   updateFileName,
 } from '#/api';
 import { useWorkspaceStore } from '#/store';
@@ -51,10 +49,9 @@ interface TreeItem {
   type: string;
 }
 
-defineOptions({ name: 'Menu' });
-
 const emits = defineEmits<{
   selectedId: [fileId: string];
+  sendContent: [content: string];
 }>();
 
 const workspaceStore = useWorkspaceStore();
@@ -64,21 +61,7 @@ const fileIdRef = ref<String>('');
 const selectedKeysRef = ref<any[]>([]);
 const expendedKeysRef = ref<any[]>([]);
 const deleteFileRef = ref<File>();
-const menuItemsRef = ref<any[]>([
-  {
-    key: 'create',
-    icon: () => h(Button, { size: 'small', type: 'primary' }, h(PlusOutlined)),
-  },
-  {
-    key: 'edit',
-    icon: () => h(Button, { size: 'small', type: 'primary' }, h(EditOutlined)),
-  },
-  {
-    key: 'delete',
-    icon: () =>
-      h(Button, { size: 'small', type: 'primary' }, h(DeleteOutlined)),
-  },
-]);
+const menuItemsRef = ref<any[]>([]);
 
 const expendAllKeyInner = (items: TreeItem[]) => {
   items.forEach((item: TreeItem) => {
@@ -88,7 +71,6 @@ const expendAllKeyInner = (items: TreeItem[]) => {
     }
   });
 };
-
 const expendAllKeys = () => {
   expendedKeysRef.value = [];
   expendAllKeyInner(fileTreeRef.value);
@@ -106,7 +88,6 @@ const onExpand = (keys: any) => {
 };
 
 const onRightClick = (obj: any) => {
-  message.success(obj.node.type);
   const nodeType = obj.node.type;
   switch (nodeType) {
     case '': {
@@ -121,6 +102,18 @@ const onRightClick = (obj: any) => {
       menuItemsRef.value = FILE_MENU;
       break;
     }
+  }
+};
+
+const onDoubleClick = (_: any, node: any) => {
+  const nodeType = node.type;
+  const key = node.key;
+  const title = node.title;
+  if (nodeType === FILE_TYPE_FILE) {
+    getFileContent(key).then((content: any) => {
+      emits('sendContent', content as string);
+      message.success(`open ${title} success`);
+    });
   }
 };
 
@@ -313,6 +306,17 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
       }
       break;
     }
+    case 'open': {
+      const file = getFileByKey(key);
+      if (file) {
+        getFileContent(key).then((content: any) => {
+          emits('sendContent', content as string);
+          message.success(`open ${file.name} success`);
+        });
+      } else {
+        message.error('can not find file');
+      }
+    }
   }
 };
 
@@ -344,6 +348,7 @@ watchEffect(() => {
       :selected-keys="selectedKeysRef"
       :tree-data="fileTreeRef"
       @click="selectTreeItem"
+      @dblclick="onDoubleClick"
       @expand="onExpand"
       @right-click="onRightClick"
     >
@@ -376,8 +381,6 @@ watchEffect(() => {
   </DeleteModal>
 </template>
 
-<!--// todo select emit event-->
-<!--// disable dir select-->
-<!--// file save-->
-<!--// file copy-->
-<!--// file new-->
+<!--// todo file save-->
+<!--// todo file copy-->
+<!--// todo file new-->

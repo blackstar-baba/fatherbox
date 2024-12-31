@@ -3,47 +3,22 @@ import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { CompressOutlined, ExpandOutlined } from '@ant-design/icons-vue';
-import { save } from '@tauri-apps/api/dialog';
-import { writeTextFile } from '@tauri-apps/api/fs';
-import { Button } from 'ant-design-vue';
+import { Card, Col, Row } from 'ant-design-vue';
 
+import FileTree from '#/components/file/FileTree.vue';
 import Cherry from '#/components/markdown/cherry.vue';
-import { downloadByData } from '#/utils/file/downloadUtil';
 
 const cherryRef = ref();
-const text = ref('### Hello World');
-const fileInput = ref<HTMLInputElement>();
-const fileName = ref('demo.md');
+const text = ref('### Hello FatherBox');
 
-function importDoc() {
-  if (fileInput.value) {
-    fileInput.value.click();
-  }
-}
-async function exportDoc() {
-  if (window.__TAURI__) {
-    const filePath = await save({ defaultPath: fileName.value });
-    if (filePath && cherryRef) {
-      await writeTextFile(filePath, cherryRef.value.getContent());
-    }
-  } else {
-    downloadByData(cherryRef.value.getContent(), fileName.value);
-  }
+function setContent(content: string) {
+  text.value = content;
+  // update manual, prevent circulation
+  cherryRef.value?.setContent(text.value);
 }
 
-function handleFileChange(event: any) {
-  const file = event.target.files[0];
-  fileName.value = file.name;
-  if (file) {
-    const fileReader = new FileReader();
-    fileReader.addEventListener('load', () => {
-      text.value = fileReader.result as string;
-      cherryRef.value?.setContent(text.value);
-    });
-    // eslint-disable-next-line unicorn/prefer-blob-reading-methods
-    fileReader.readAsText(file);
-  }
+function updateText(content: string) {
+  text.value = content;
 }
 
 // how to get locale & dark mode
@@ -55,27 +30,22 @@ function handleFileChange(event: any) {
     description="Cherry Markdown Editor is a Javascript Markdown editor. It has the advantages such as out-of-the-box, lightweight and easy to extend."
     title="Markdown Editor"
   >
-    <div class="mb-2">
-      <Button type="primary" @click="importDoc">
-        <template #icon>
-          <ExpandOutlined />
-        </template>
-        Import
-      </Button>
-      <input
-        ref="fileInput"
-        style="display: none"
-        type="file"
-        @change="handleFileChange"
-      />
-      <Button class="ml-2" danger type="primary" @click="exportDoc">
-        <template #icon>
-          <CompressOutlined />
-        </template>
-        Export
-      </Button>
-    </div>
-    <Cherry ref="cherryRef" />
+    <Row :gutter="16">
+      <Col :span="6">
+        <Card :body-style="{ height: '500px' }" :bordered="false">
+          <FileTree @send-content="setContent" />
+        </Card>
+      </Col>
+      <Col :span="18">
+        <Card :body-style="{ height: '500px' }" :bordered="false">
+          <Cherry
+            ref="cherryRef"
+            :model-value="text"
+            @send-content="updateText"
+          />
+        </Card>
+      </Col>
+    </Row>
   </Page>
 </template>
 

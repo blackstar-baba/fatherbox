@@ -19,8 +19,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['sendContent']);
 const cherryRef = ref<Cherry>();
-
 const setContent = (val: string) => {
   cherryRef.value?.setMarkdown(val);
 };
@@ -32,7 +32,6 @@ const getContent = () => {
 const getHtml = () => {
   return cherryRef.value?.getHtml();
 };
-
 // 图片加载回调
 // const beforeImageMounted = (e, src) => {
 //   return { [e]: src };
@@ -47,6 +46,7 @@ defineExpose({
 const { locale } = useI18n();
 
 const { theme } = usePreferences();
+
 watch([() => theme.value], ([theme]) => {
   cherryRef.value?.setTheme(theme);
 });
@@ -76,10 +76,14 @@ watch([() => theme.value], ([theme]) => {
 //     });
 // };
 
+const afterChange = (text: string, _: string) => {
+  emit('sendContent', text);
+};
+
 const initMd = () => {
   cherryRef.value = new Cherry({
     callback: {
-      // afterChange,
+      afterChange,
       // beforeImageMounted,
     },
     editor: {

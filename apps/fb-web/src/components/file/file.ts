@@ -3,6 +3,7 @@ import { h } from 'vue';
 import {
   DeleteOutlined,
   EditOutlined,
+  FolderOpenOutlined,
   PlusOutlined,
 } from '@ant-design/icons-vue';
 import { Button } from 'ant-design-vue';
@@ -143,6 +144,11 @@ export const ROOT_MENU = [
 ];
 
 export const FILE_MENU = [
+  {
+    key: 'open',
+    icon: () =>
+      h(Button, { size: 'small', type: 'primary' }, h(FolderOpenOutlined)),
+  },
   {
     key: 'edit',
     icon: () => h(Button, { size: 'small', type: 'primary' }, h(EditOutlined)),
