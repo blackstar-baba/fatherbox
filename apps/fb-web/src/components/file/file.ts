@@ -3,8 +3,11 @@ import { h } from 'vue';
 import {
   DeleteOutlined,
   EditOutlined,
+  ExportOutlined,
   FolderOpenOutlined,
+  ImportOutlined,
   PlusOutlined,
+  SaveOutlined,
 } from '@ant-design/icons-vue';
 import { Button } from 'ant-design-vue';
 
@@ -148,6 +151,20 @@ export const FILE_MENU = [
     key: 'open',
     icon: () =>
       h(Button, { size: 'small', type: 'primary' }, h(FolderOpenOutlined)),
+  },
+  {
+    key: 'save',
+    icon: () => h(Button, { size: 'small', type: 'primary' }, h(SaveOutlined)),
+  },
+  {
+    key: 'import',
+    icon: () =>
+      h(Button, { size: 'small', type: 'primary' }, h(ImportOutlined)),
+  },
+  {
+    key: 'export',
+    icon: () =>
+      h(Button, { size: 'small', type: 'primary' }, h(ExportOutlined)),
   },
   {
     key: 'edit',

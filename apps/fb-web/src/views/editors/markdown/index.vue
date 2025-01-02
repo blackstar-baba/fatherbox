@@ -33,7 +33,7 @@ function updateText(content: string) {
     <Row :gutter="16">
       <Col :span="6">
         <Card :body-style="{ height: '500px' }" :bordered="false">
-          <FileTree @send-content="setContent" />
+          <FileTree :content="text" @send-content="setContent" />
         </Card>
       </Col>
       <Col :span="18">

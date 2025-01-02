@@ -4,8 +4,13 @@ import { ref, unref, watchEffect } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 
 import {
+  DownOutlined,
   ExpandAltOutlined,
+  FileOutlined,
+  FolderOpenOutlined,
+  FolderOutlined,
   RedoOutlined,
+  SaveOutlined,
   ShrinkOutlined,
 } from '@ant-design/icons-vue';
 import {
@@ -25,6 +30,7 @@ import {
   type File,
   getAllWorkspaceFiles,
   getFileContent,
+  updateFileContent,
   updateFileName,
 } from '#/api';
 import { useWorkspaceStore } from '#/store';
@@ -48,6 +54,12 @@ interface TreeItem {
   disabled?: boolean;
   type: string;
 }
+
+interface Props {
+  content: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {});
 
 const emits = defineEmits<{
   selectedId: [fileId: string];
@@ -76,10 +88,34 @@ const expendAllKeys = () => {
   expendAllKeyInner(fileTreeRef.value);
 };
 
-const selectTreeItem = async (_: any, node: any) => {
-  fileIdRef.value = node.dataRef.key;
-  selectedKeysRef.value = [];
-  selectedKeysRef.value.push(node.dataRef.key);
+const getFileByKey = (key: string) => {
+  if (filesRef.value) {
+    const result = unref(filesRef).filter((item: any) => item.id === key);
+    if (result.length > 0) {
+      return result[0];
+    }
+  }
+  return undefined;
+};
+
+const onClick = async (_: any, node: any) => {
+  const key = node.dataRef.key;
+  const type = node.dataRef.type;
+  const title = node.dataRef.title;
+  if (type === FILE_TYPE_FILE) {
+    selectedKeysRef.value = [];
+    selectedKeysRef.value.push(key);
+    fileIdRef.value = key;
+    getFileContent(key).then((content: any) => {
+      emits('sendContent', content as string);
+      message.success(`open file ${title} success`);
+    });
+  } else {
+    expendedKeysRef.value = node.expanded
+      ? expendedKeysRef.value.filter((k) => k !== key)
+      : [...expendedKeysRef.value, key];
+    message.success(JSON.stringify(node.expanded));
+  }
   emits('selectedId', fileIdRef.value.toString());
 };
 
@@ -105,20 +141,22 @@ const onRightClick = (obj: any) => {
   }
 };
 
-const onDoubleClick = (_: any, node: any) => {
-  const nodeType = node.type;
-  const key = node.key;
-  const title = node.title;
-  if (nodeType === FILE_TYPE_FILE) {
-    getFileContent(key).then((content: any) => {
-      emits('sendContent', content as string);
-      message.success(`open ${title} success`);
-    });
-  }
-};
-
 const shrinkAllKeys = () => {
   expendedKeysRef.value = [];
+};
+
+const saveFile = () => {
+  if (fileIdRef.value) {
+    const file = getFileByKey(fileIdRef.value.toString());
+    if (file && file.type === FILE_TYPE_FILE) {
+      updateFileContent({
+        id: file.id,
+        content: props.content,
+      }).then(() => {
+        message.success(`save file ${file.name} success`);
+      });
+    }
+  }
 };
 
 const getTreeChildren = (key: String, map: Map<String, File[]>) => {
@@ -165,7 +203,7 @@ const updateFileTree = () => {
     root.children = getTreeChildren(root.key, map);
     fileTreeRef.value.push(root);
     fileIdRef.value = root.key;
-    selectedKeysRef.value.push(root.key);
+    // selectedKeysRef.value.push(root.key);
     // expend all keys
     expendAllKeys();
     emits('selectedId', fileIdRef.value.toString());
@@ -246,16 +284,6 @@ const [DeleteModal, deleteModalApi] = useVbenModal({
   },
 });
 
-const getFileByKey = (key: string) => {
-  if (filesRef.value) {
-    const result = unref(filesRef).filter((item: any) => item.id === key);
-    if (result.length > 0) {
-      return result[0];
-    }
-  }
-  return undefined;
-};
-
 const onContextMenuClick = (key: string, menuKey: number | string) => {
   const menu = menuKey.toString();
   switch (menu) {
@@ -311,7 +339,22 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
       if (file) {
         getFileContent(key).then((content: any) => {
           emits('sendContent', content as string);
-          message.success(`open ${file.name} success`);
+          message.success(`open file ${file.name} success`);
+        });
+      } else {
+        message.error('can not find file');
+      }
+      break;
+    }
+    case 'save': {
+      const file = getFileByKey(key);
+      if (file) {
+        saveFile();
+        updateFileContent({
+          id: file.id,
+          content: props.content,
+        }).then(() => {
+          message.success(`save file ${file.name} success`);
         });
       } else {
         message.error('can not find file');
@@ -342,13 +385,18 @@ watchEffect(() => {
           <ShrinkOutlined />
         </template>
       </Button>
+      <Button class="ml-2" size="small" type="primary" @click="saveFile">
+        <template #icon>
+          <SaveOutlined />
+        </template>
+      </Button>
     </div>
     <Tree
       :expanded-keys="expendedKeysRef"
       :selected-keys="selectedKeysRef"
       :tree-data="fileTreeRef"
-      @click="selectTreeItem"
-      @dblclick="onDoubleClick"
+      show-icon
+      @click="onClick"
       @expand="onExpand"
       @right-click="onRightClick"
     >
@@ -362,6 +410,18 @@ watchEffect(() => {
             />
           </template>
         </Dropdown>
+      </template>
+      <template #switcherIcon="{ switcherCls }">
+        <DownOutlined :class="switcherCls" />
+      </template>
+      <template #icon="{ dataRef, expanded }">
+        <template v-if="dataRef.type === FILE_TYPE_DIR || dataRef.type === ''">
+          <FolderOpenOutlined v-if="expanded" />
+          <FolderOutlined v-else />
+        </template>
+        <template v-else>
+          <FileOutlined />
+        </template>
       </template>
     </Tree>
   </Flex>
