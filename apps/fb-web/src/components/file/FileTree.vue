@@ -64,8 +64,10 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {});
 
 const emits = defineEmits<{
-  onOpen: [content: FileContent];
-  onSelect: [file: File];
+  delete: [id: string];
+  open: [content: FileContent];
+  select: [file: File];
+  update: [file: File];
 }>();
 
 const workspaceStore = useWorkspaceStore();
@@ -109,7 +111,7 @@ const onClick = async (_: any, node: any) => {
     selectedKeysRef.value.push(key);
     fileIdRef.value = key;
     getFileContent(key).then((content: any) => {
-      emits('onOpen', {
+      emits('open', {
         id: key,
         name: title,
         // todo may be need byte[]
@@ -121,9 +123,8 @@ const onClick = async (_: any, node: any) => {
     expendedKeysRef.value = node.expanded
       ? expendedKeysRef.value.filter((k) => k !== key)
       : [...expendedKeysRef.value, key];
-    message.success(JSON.stringify(node.expanded));
   }
-  emits('onSelect', node.dataRef);
+  emits('select', node.dataRef);
 };
 
 const onExpand = (keys: any) => {
@@ -234,7 +235,11 @@ function onUpdateSubmit(values: Record<string, any>) {
     id: values.id,
     name: values.name,
   }).then((_: any) => {
-    message.success(`update ${values.type} success`);
+    emits('update', {
+      id: values.id,
+      name: values.name,
+    });
+    message.success(`update success`);
     updateFileTree();
   });
 }
@@ -279,6 +284,7 @@ const [DeleteModal, deleteModalApi] = useVbenModal({
     const id = deleteFileRef.value?.id;
     if (id) {
       deleteFile(id).then(() => {
+        emits('delete', id);
         deleteFileRef.value = undefined;
         updateFileTree();
         message.success('delete dir success');
@@ -342,7 +348,7 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
       const file = getFileByKey(key);
       if (file) {
         getFileContent(key).then((content: any) => {
-          emits('onOpen', {
+          emits('open', {
             id: file.id,
             name: file.name,
             content: content.toString(),

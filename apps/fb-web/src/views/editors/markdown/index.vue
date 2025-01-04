@@ -7,6 +7,7 @@ import { Page } from '@vben/common-ui';
 
 import { Card, Col, Row, TabPane, Tabs } from 'ant-design-vue';
 
+import { type File } from '#/api';
 import { type FileContent } from '#/components/file/file';
 import FileTree from '#/components/file/FileTree.vue';
 import Cherry from '#/components/markdown/cherry.vue';
@@ -21,6 +22,36 @@ function setFile(fileContent: FileContent) {
     filesRef.value.push(fileContent);
   }
   activeKeyRef.value = fileContent.id;
+}
+
+function updateFile(file: File) {
+  for (let i = 0; i < filesRef.value.length; i++) {
+    const existFile = filesRef.value[i];
+    if (existFile && existFile.id === file.id) {
+      existFile.name = file.name;
+      break;
+    }
+  }
+}
+
+function deleteFile(id: string) {
+  const key = id;
+  let lastIndex = 0;
+  for (let i = 0; i < filesRef.value.length; i++) {
+    const file = filesRef.value[i];
+    if (file && file.id === key) {
+      lastIndex = i - 1;
+      if (lastIndex < 0) {
+        activeKeyRef.value = '';
+      } else {
+        const lastFile = filesRef.value[lastIndex];
+        if (lastFile) {
+          activeKeyRef.value = lastFile.id;
+        }
+      }
+    }
+  }
+  filesRef.value = filesRef.value.filter((file) => file.id !== key);
 }
 
 function updateContent(fileContent: FileContent) {
@@ -46,13 +77,13 @@ const onTabEdit = (
       if (file && file.id === key) {
         lastIndex = i - 1;
         if (lastIndex < 0) {
-          lastIndex = 0;
+          activeKeyRef.value = '';
+        } else {
+          const lastFile = filesRef.value[lastIndex];
+          if (lastFile) {
+            activeKeyRef.value = lastFile.id;
+          }
         }
-        const lastFile = filesRef.value[lastIndex];
-        if (lastFile) {
-          activeKeyRef.value = lastFile.id;
-        }
-        break;
       }
     }
     filesRef.value = filesRef.value.filter((file) => file.id !== key);
@@ -72,7 +103,9 @@ const onTabEdit = (
           <FileTree
             :content="textRef"
             :edit-files="editedFilesRef"
-            @on-open="setFile"
+            @delete="deleteFile"
+            @open="setFile"
+            @update="updateFile"
           />
         </Card>
       </Col>
@@ -115,3 +148,5 @@ const onTabEdit = (
   margin-top: -8px;
 }
 </style>
+
+<!-- todo auto height -->
