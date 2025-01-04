@@ -1,27 +1,63 @@
 <script lang="ts" setup>
+import type { Key } from 'ant-design-vue/es/_util/type';
+
 import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Card, Col, Row } from 'ant-design-vue';
+import { Card, Col, Row, TabPane, Tabs } from 'ant-design-vue';
 
+import { type FileContent } from '#/components/file/file';
 import FileTree from '#/components/file/FileTree.vue';
 import Cherry from '#/components/markdown/cherry.vue';
 
-const cherryRef = ref();
-const text = ref('### Hello FatherBox');
+const textRef = ref('Hello FatherBox Markdown Editor');
+const filesRef = ref<FileContent[]>([]);
+const activeKeyRef = ref('');
+const editedFilesRef = ref<FileContent[]>([]);
 
-function setContent(content: string) {
-  text.value = content;
-  // update manual, prevent circulation
-  cherryRef.value?.setContent(text.value);
+function setFile(fileContent: FileContent) {
+  if (!filesRef.value.some((k) => k.id === fileContent.id)) {
+    filesRef.value.push(fileContent);
+  }
+  activeKeyRef.value = fileContent.id;
 }
 
-function updateText(content: string) {
-  text.value = content;
+function updateContent(fileContent: FileContent) {
+  const existedFileContent = editedFilesRef.value.filter(
+    (k) => k.id === fileContent.id,
+  );
+  if (existedFileContent.length > 0 && existedFileContent[0]) {
+    existedFileContent[0].content = fileContent.content;
+  } else {
+    editedFilesRef.value.push(fileContent);
+  }
 }
 
-// how to get locale & dark mode
+const onTabEdit = (
+  targetKey: Key | KeyboardEvent | MouseEvent,
+  action: 'add' | 'remove',
+) => {
+  const key = targetKey as string;
+  if (action === 'remove') {
+    let lastIndex = 0;
+    for (let i = 0; i < filesRef.value.length; i++) {
+      const file = filesRef.value[i];
+      if (file && file.id === key) {
+        lastIndex = i - 1;
+        if (lastIndex < 0) {
+          lastIndex = 0;
+        }
+        const lastFile = filesRef.value[lastIndex];
+        if (lastFile) {
+          activeKeyRef.value = lastFile.id;
+        }
+        break;
+      }
+    }
+    filesRef.value = filesRef.value.filter((file) => file.id !== key);
+  }
+};
 </script>
 
 <template>
@@ -33,16 +69,32 @@ function updateText(content: string) {
     <Row :gutter="16">
       <Col :span="6">
         <Card :body-style="{ height: '500px' }" :bordered="false">
-          <FileTree :content="text" @send-content="setContent" />
+          <FileTree
+            :content="textRef"
+            :edit-files="editedFilesRef"
+            @on-open="setFile"
+          />
         </Card>
       </Col>
       <Col :span="18">
         <Card :body-style="{ height: '500px' }" :bordered="false">
-          <Cherry
-            ref="cherryRef"
-            :model-value="text"
-            @send-content="updateText"
-          />
+          <Tabs
+            v-model:active-key="activeKeyRef"
+            hide-add
+            type="editable-card"
+            @edit="onTabEdit"
+          >
+            <TabPane key="" :closable="false" tab="Introduction">
+              {{ textRef }}
+            </TabPane>
+            <TabPane v-for="file in filesRef" :key="file.id" :tab="file.name">
+              <Cherry
+                :md-id="file.id"
+                :model-value="file.content"
+                @send-content="updateContent"
+              />
+            </TabPane>
+          </Tabs>
         </Card>
       </Col>
     </Row>
@@ -56,5 +108,10 @@ function updateText(content: string) {
 
 .cherry-markdown ul {
   list-style: disc;
+}
+
+.ant-tabs-card .ant-tabs-content {
+  height: 400px;
+  margin-top: -8px;
 }
 </style>

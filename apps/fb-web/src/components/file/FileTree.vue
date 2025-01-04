@@ -41,6 +41,7 @@ import {
   FILE_MENU,
   FILE_TYPE_DIR,
   FILE_TYPE_FILE,
+  type FileContent,
   ROOT_MENU,
   UPDATE_FORM_SCHEMA,
 } from './file';
@@ -57,13 +58,14 @@ interface TreeItem {
 
 interface Props {
   content: string;
+  editFiles: FileContent[];
 }
 
 const props = withDefaults(defineProps<Props>(), {});
 
 const emits = defineEmits<{
-  selectedId: [fileId: string];
-  sendContent: [content: string];
+  onOpen: [content: FileContent];
+  onSelect: [file: File];
 }>();
 
 const workspaceStore = useWorkspaceStore();
@@ -107,7 +109,12 @@ const onClick = async (_: any, node: any) => {
     selectedKeysRef.value.push(key);
     fileIdRef.value = key;
     getFileContent(key).then((content: any) => {
-      emits('sendContent', content as string);
+      emits('onOpen', {
+        id: key,
+        name: title,
+        // todo may be need byte[]
+        content: content.toString(),
+      });
       message.success(`open file ${title} success`);
     });
   } else {
@@ -116,7 +123,7 @@ const onClick = async (_: any, node: any) => {
       : [...expendedKeysRef.value, key];
     message.success(JSON.stringify(node.expanded));
   }
-  emits('selectedId', fileIdRef.value.toString());
+  emits('onSelect', node.dataRef);
 };
 
 const onExpand = (keys: any) => {
@@ -146,17 +153,14 @@ const shrinkAllKeys = () => {
 };
 
 const saveFile = () => {
-  if (fileIdRef.value) {
-    const file = getFileByKey(fileIdRef.value.toString());
-    if (file && file.type === FILE_TYPE_FILE) {
-      updateFileContent({
-        id: file.id,
-        content: props.content,
-      }).then(() => {
-        message.success(`save file ${file.name} success`);
-      });
-    }
-  }
+  props.editFiles.forEach((fileContent) => {
+    updateFileContent({
+      id: fileContent.id,
+      content: fileContent.content,
+    }).then(() => {
+      message.success(`save file success`);
+    });
+  });
 };
 
 const getTreeChildren = (key: String, map: Map<String, File[]>) => {
@@ -206,7 +210,7 @@ const updateFileTree = () => {
     // selectedKeysRef.value.push(root.key);
     // expend all keys
     expendAllKeys();
-    emits('selectedId', fileIdRef.value.toString());
+    // emits('selectedId', fileIdRef.value.toString());
   });
 };
 
@@ -316,7 +320,7 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
       editModalApi.setState({ title: 'Edit' });
       const file = getFileByKey(key);
       if (file) {
-        formApi.setValues({
+        editFormApi.setValues({
           id: file?.id,
           pid: file?.pid,
           name: file?.name,
@@ -338,7 +342,11 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
       const file = getFileByKey(key);
       if (file) {
         getFileContent(key).then((content: any) => {
-          emits('sendContent', content as string);
+          emits('onOpen', {
+            id: file.id,
+            name: file.name,
+            content: content.toString(),
+          });
           message.success(`open file ${file.name} success`);
         });
       } else {
@@ -347,14 +355,13 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
       break;
     }
     case 'save': {
-      const file = getFileByKey(key);
-      if (file) {
-        saveFile();
+      const existedFileContent = props.editFiles.filter((k) => k.id === key);
+      if (existedFileContent.length > 0 && existedFileContent[0]) {
         updateFileContent({
-          id: file.id,
-          content: props.content,
+          id: existedFileContent[0].id,
+          content: existedFileContent[0].content,
         }).then(() => {
-          message.success(`save file ${file.name} success`);
+          message.success(`save file success`);
         });
       } else {
         message.error('can not find file');
@@ -441,6 +448,7 @@ watchEffect(() => {
   </DeleteModal>
 </template>
 
-<!--// todo file save-->
+<!--// todo file import-->
+<!--// todo file export-->
 <!--// todo file copy-->
 <!--// todo file new-->

@@ -77,7 +77,10 @@ watch([() => theme.value], ([theme]) => {
 // };
 
 const afterChange = (text: string, _: string) => {
-  emit('sendContent', text);
+  emit('sendContent', {
+    id: props.mdId,
+    content: text,
+  });
 };
 
 const initMd = () => {
