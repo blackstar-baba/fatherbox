@@ -9,6 +9,7 @@ import {
   FileOutlined,
   FolderOpenOutlined,
   FolderOutlined,
+  PlusOutlined,
   RedoOutlined,
   SaveOutlined,
   ShrinkOutlined,
@@ -153,17 +154,6 @@ const shrinkAllKeys = () => {
   expendedKeysRef.value = [];
 };
 
-const saveFile = () => {
-  props.editFiles.forEach((fileContent) => {
-    updateFileContent({
-      id: fileContent.id,
-      content: fileContent.content,
-    }).then(() => {
-      message.success(`save file success`);
-    });
-  });
-};
-
 const getTreeChildren = (key: String, map: Map<String, File[]>) => {
   const children: TreeItem[] = [];
   const value = map.get(key);
@@ -294,11 +284,37 @@ const [DeleteModal, deleteModalApi] = useVbenModal({
   },
 });
 
+const save = () => {
+  props.editFiles.forEach((fileContent) => {
+    updateFileContent({
+      id: fileContent.id,
+      content: fileContent.content,
+    }).then(() => {
+      message.success(`save file success`);
+    });
+  });
+};
+
+const create = () => {
+  formApi.updateSchema([
+    {
+      fieldName: 'pid',
+      componentProps: {
+        treeData: fileTreeRef.value,
+        disabled: false,
+      },
+    },
+  ]);
+  formApi.setValues({
+    pid: fileTreeRef.value[0].key,
+  });
+  modalApi.open();
+};
+
 const onContextMenuClick = (key: string, menuKey: number | string) => {
   const menu = menuKey.toString();
   switch (menu) {
     case 'create': {
-      modalApi.setState({ title: 'Create' });
       formApi.updateSchema([
         {
           fieldName: 'pid',
@@ -323,7 +339,6 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
       break;
     }
     case 'edit': {
-      editModalApi.setState({ title: 'Edit' });
       const file = getFileByKey(key);
       if (file) {
         editFormApi.setValues({
@@ -398,7 +413,12 @@ watchEffect(() => {
           <ShrinkOutlined />
         </template>
       </Button>
-      <Button class="ml-2" size="small" type="primary" @click="saveFile">
+      <Button class="ml-2" size="small" type="primary" @click="create">
+        <template #icon>
+          <PlusOutlined />
+        </template>
+      </Button>
+      <Button class="ml-2" size="small" type="primary" @click="save">
         <template #icon>
           <SaveOutlined />
         </template>
@@ -438,10 +458,10 @@ watchEffect(() => {
       </template>
     </Tree>
   </Flex>
-  <Modal>
+  <Modal title="Create">
     <Form />
   </Modal>
-  <EditModal>
+  <EditModal title="Edit">
     <EditForm />
   </EditModal>
   <DeleteModal title="Remove File">
@@ -457,4 +477,3 @@ watchEffect(() => {
 <!--// todo file import-->
 <!--// todo file export-->
 <!--// todo file copy-->
-<!--// todo file new-->
