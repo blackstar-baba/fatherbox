@@ -77,8 +77,8 @@ const emits = defineEmits<{
   select: [file: File];
   update: [
     file: {
-      content: string;
       id: string;
+      name: string;
     },
   ];
 }>();
@@ -239,8 +239,8 @@ function onUpdateSubmit(values: Record<string, any>) {
     name: values.name,
   }).then((_: any) => {
     emits('update', {
-      id: values.id,
-      name: values.name,
+      id: values.id as string,
+      name: values.name as string,
     });
     message.success('update success');
     updateFileTree();
@@ -555,6 +555,4 @@ watchEffect(() => {
   </DeleteModal>
 </template>
 
-<!--// todo file import-->
-<!--// todo file export-->
 <!--// todo file copy-->

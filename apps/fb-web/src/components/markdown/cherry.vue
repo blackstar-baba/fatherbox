@@ -12,22 +12,19 @@ import 'cherry-markdown/dist/cherry-markdown.min.css';
 
 interface Props {
   mdId: string;
-  modelValue: string;
-  file: FileContent;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   mdId: 'markdown-container',
-  modelValue: '',
-  file: () => {
-    return {
-      id: '',
-      name: '',
-      content: '',
-    };
+});
+const fileModel = defineModel<FileContent>('file', {
+  default: {
+    id: '',
+    name: '',
+    content: '',
   },
 });
-const emit = defineEmits(['sendContent']);
+
 const cherryRef = ref<Cherry>();
 const setContent = (val: string) => {
   cherryRef.value?.setMarkdown(val);
@@ -63,7 +60,7 @@ watch(
 );
 
 watch(
-  () => props.modelValue,
+  () => fileModel.value.content,
   (content: String) => {
     cherryRef.value?.setMarkdown(content as string);
   },
@@ -95,10 +92,7 @@ watch(
 // };
 
 const afterChange = (text: string, _: string) => {
-  emit('sendContent', {
-    id: props.mdId,
-    content: text,
-  });
+  fileModel.value.content = text;
 };
 
 const initMd = () => {
@@ -181,7 +175,7 @@ const initMd = () => {
         'togglePreview',
       ],
     },
-    value: props.modelValue,
+    value: fileModel.value.content,
   });
 };
 

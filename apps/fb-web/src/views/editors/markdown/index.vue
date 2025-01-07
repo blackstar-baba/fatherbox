@@ -14,7 +14,6 @@ import Cherry from '#/components/markdown/cherry.vue';
 const textRef = ref('Hello FatherBox Markdown Editor');
 const filesRef = ref<FileContent[]>([]);
 const activeKeyRef = ref('');
-const editedFilesRef = ref<FileContent[]>([]);
 
 function setFile(fileContent: FileContent) {
   if (!filesRef.value.some((k) => k.id === fileContent.id)) {
@@ -60,23 +59,6 @@ function importContent(content: string) {
   if (existedFileContent.length > 0 && existedFileContent[0]) {
     existedFileContent[0].content = content;
   }
-  const exitedFileContent = editedFilesRef.value.filter(
-    (k) => k.id === activeKeyRef.value,
-  );
-  if (exitedFileContent.length > 0 && exitedFileContent[0]) {
-    exitedFileContent[0].content = content;
-  }
-}
-
-function updateContent(fileContent: FileContent) {
-  const existedFileContent = editedFilesRef.value.filter(
-    (k) => k.id === fileContent.id,
-  );
-  if (existedFileContent.length > 0 && existedFileContent[0]) {
-    existedFileContent[0].content = fileContent.content;
-  } else {
-    editedFilesRef.value.push(fileContent);
-  }
 }
 
 const onTabEdit = (
@@ -117,7 +99,7 @@ const onTabEdit = (
           <FileTree
             :active-file-id="activeKeyRef"
             :content="textRef"
-            :edit-files="editedFilesRef"
+            :edit-files="filesRef"
             @delete="deleteFile"
             @import-content="importContent"
             @open="setFile"
@@ -136,13 +118,12 @@ const onTabEdit = (
             <TabPane key="" :closable="false" tab="Introduction">
               {{ textRef }}
             </TabPane>
-            <TabPane v-for="file in filesRef" :key="file.id" :tab="file.name">
-              <!-- todo use v-model xx -->
-              <Cherry
-                :md-id="file.id"
-                :model-value="file.content"
-                @send-content="updateContent"
-              />
+            <TabPane
+              v-for="(file, index) in filesRef"
+              :key="file.id"
+              :tab="file.name"
+            >
+              <Cherry v-model:file="filesRef[index]" :md-id="file.id" />
             </TabPane>
           </Tabs>
         </Card>
