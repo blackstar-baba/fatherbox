@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { FileContent } from '#/components/file/file';
+
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import { useI18n } from '@vben/locales';
@@ -8,17 +10,23 @@ import Cherry from 'cherry-markdown';
 
 import 'cherry-markdown/dist/cherry-markdown.min.css';
 
-const props = defineProps({
-  mdId: {
-    default: 'markdown-container',
-    type: String,
-  },
-  modelValue: {
-    default: '',
-    type: String,
+interface Props {
+  mdId: string;
+  modelValue: string;
+  file: FileContent;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  mdId: 'markdown-container',
+  modelValue: '',
+  file: () => {
+    return {
+      id: '',
+      name: '',
+      content: '',
+    };
   },
 });
-
 const emit = defineEmits(['sendContent']);
 const cherryRef = ref<Cherry>();
 const setContent = (val: string) => {
@@ -47,9 +55,19 @@ const { locale } = useI18n();
 
 const { theme } = usePreferences();
 
-watch([() => theme.value], ([theme]) => {
-  cherryRef.value?.setTheme(theme);
-});
+watch(
+  () => theme.value,
+  (theme) => {
+    cherryRef.value?.setTheme(theme);
+  },
+);
+
+watch(
+  () => props.modelValue,
+  (content: String) => {
+    cherryRef.value?.setMarkdown(content as string);
+  },
+);
 
 // const fileUpload = (file, callback) => {
 //   if (file.size / 1024 / 1024 > 200) {

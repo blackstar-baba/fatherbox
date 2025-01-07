@@ -6,14 +6,18 @@ import { useVbenModal } from '@vben/common-ui';
 import {
   DownOutlined,
   ExpandAltOutlined,
+  ExportOutlined,
   FileOutlined,
   FolderOpenOutlined,
   FolderOutlined,
+  ImportOutlined,
   PlusOutlined,
   RedoOutlined,
   SaveOutlined,
   ShrinkOutlined,
 } from '@ant-design/icons-vue';
+import { save as tauriSave } from '@tauri-apps/api/dialog';
+import { writeTextFile } from '@tauri-apps/api/fs';
 import {
   Button,
   Dropdown,
@@ -35,6 +39,7 @@ import {
   updateFileName,
 } from '#/api';
 import { useWorkspaceStore } from '#/store';
+import { downloadByData } from '#/utils/file/downloadUtil';
 
 import {
   CREATE_FORM_SCHEMA,
@@ -58,6 +63,7 @@ interface TreeItem {
 }
 
 interface Props {
+  activeFileId: string;
   content: string;
   editFiles: FileContent[];
 }
@@ -66,9 +72,15 @@ const props = withDefaults(defineProps<Props>(), {});
 
 const emits = defineEmits<{
   delete: [id: string];
+  importContent: [content: string];
   open: [content: FileContent];
   select: [file: File];
-  update: [file: File];
+  update: [
+    file: {
+      content: string;
+      id: string;
+    },
+  ];
 }>();
 
 const workspaceStore = useWorkspaceStore();
@@ -79,6 +91,7 @@ const selectedKeysRef = ref<any[]>([]);
 const expendedKeysRef = ref<any[]>([]);
 const deleteFileRef = ref<File>();
 const menuItemsRef = ref<any[]>([]);
+const fileInput = ref<HTMLInputElement>();
 
 const expendAllKeyInner = (items: TreeItem[]) => {
   items.forEach((item: TreeItem) => {
@@ -229,7 +242,7 @@ function onUpdateSubmit(values: Record<string, any>) {
       id: values.id,
       name: values.name,
     });
-    message.success(`update success`);
+    message.success('update success');
     updateFileTree();
   });
 }
@@ -284,17 +297,6 @@ const [DeleteModal, deleteModalApi] = useVbenModal({
   },
 });
 
-const save = () => {
-  props.editFiles.forEach((fileContent) => {
-    updateFileContent({
-      id: fileContent.id,
-      content: fileContent.content,
-    }).then(() => {
-      message.success(`save file success`);
-    });
-  });
-};
-
 const create = () => {
   formApi.updateSchema([
     {
@@ -305,10 +307,73 @@ const create = () => {
       },
     },
   ]);
-  formApi.setValues({
-    pid: fileTreeRef.value[0].key,
-  });
+  if (fileTreeRef.value && fileTreeRef.value.length > 0) {
+    formApi.setValues({
+      pid: fileTreeRef.value[0]?.key,
+    });
+  }
   modalApi.open();
+};
+
+const save = () => {
+  props.editFiles.forEach((fileContent) => {
+    updateFileContent({
+      id: fileContent.id,
+      content: fileContent.content,
+    }).then(() => {
+      message.success('save file success');
+    });
+  });
+};
+
+function handleFileChange(event: any) {
+  const file = event.target.files[0];
+  if (file) {
+    const fileReader = new FileReader();
+    fileReader.addEventListener('load', () => {
+      emits('importContent', fileReader.result as string);
+    });
+    // eslint-disable-next-line unicorn/prefer-blob-reading-methods
+    fileReader.readAsText(file);
+    if (fileInput.value) {
+      fileInput.value.value = '';
+    }
+  }
+}
+
+const importContent = async () => {
+  if (!props.activeFileId) {
+    message.warn('can not find can import content file');
+    return;
+  }
+  if (fileInput.value) {
+    fileInput.value.click();
+  }
+};
+
+const exportContent = async () => {
+  if (!props.activeFileId) {
+    message.warn('can not find can import content file');
+    return;
+  }
+  const existedFileContent = props.editFiles.filter(
+    (k) => k.id === props.activeFileId,
+  );
+  if (!existedFileContent || existedFileContent.length === 0) {
+    message.warn('can not find can import content file');
+    return;
+  }
+  const fileContent = existedFileContent[0];
+  if (fileContent) {
+    if (window.__TAURI__) {
+      const filePath = await tauriSave({ defaultPath: fileContent.name });
+      if (filePath) {
+        await writeTextFile(filePath, fileContent.content);
+      }
+    } else {
+      downloadByData(props.content, fileContent.name);
+    }
+  }
 };
 
 const onContextMenuClick = (key: string, menuKey: number | string) => {
@@ -382,7 +447,7 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
           id: existedFileContent[0].id,
           content: existedFileContent[0].content,
         }).then(() => {
-          message.success(`save file success`);
+          message.success('save file success');
         });
       } else {
         message.error('can not find file');
@@ -421,6 +486,22 @@ watchEffect(() => {
       <Button class="ml-2" size="small" type="primary" @click="save">
         <template #icon>
           <SaveOutlined />
+        </template>
+      </Button>
+      <Button class="ml-2" size="small" type="primary" @click="importContent">
+        <template #icon>
+          <ImportOutlined />
+        </template>
+      </Button>
+      <input
+        ref="fileInput"
+        style="display: none"
+        type="file"
+        @change="handleFileChange"
+      />
+      <Button class="ml-2" size="small" type="primary" @click="exportContent">
+        <template #icon>
+          <ExportOutlined />
         </template>
       </Button>
     </div>

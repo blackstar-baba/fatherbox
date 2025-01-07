@@ -7,7 +7,6 @@ import { Page } from '@vben/common-ui';
 
 import { Card, Col, Row, TabPane, Tabs } from 'ant-design-vue';
 
-import { type File } from '#/api';
 import { type FileContent } from '#/components/file/file';
 import FileTree from '#/components/file/FileTree.vue';
 import Cherry from '#/components/markdown/cherry.vue';
@@ -24,7 +23,7 @@ function setFile(fileContent: FileContent) {
   activeKeyRef.value = fileContent.id;
 }
 
-function updateFile(file: File) {
+function updateFile(file: { id: string; name: string }) {
   for (let i = 0; i < filesRef.value.length; i++) {
     const existFile = filesRef.value[i];
     if (existFile && existFile.id === file.id) {
@@ -52,6 +51,21 @@ function deleteFile(id: string) {
     }
   }
   filesRef.value = filesRef.value.filter((file) => file.id !== key);
+}
+
+function importContent(content: string) {
+  const existedFileContent = filesRef.value.filter(
+    (k) => k.id === activeKeyRef.value,
+  );
+  if (existedFileContent.length > 0 && existedFileContent[0]) {
+    existedFileContent[0].content = content;
+  }
+  const exitedFileContent = editedFilesRef.value.filter(
+    (k) => k.id === activeKeyRef.value,
+  );
+  if (exitedFileContent.length > 0 && exitedFileContent[0]) {
+    exitedFileContent[0].content = content;
+  }
 }
 
 function updateContent(fileContent: FileContent) {
@@ -101,9 +115,11 @@ const onTabEdit = (
       <Col :span="6">
         <Card :body-style="{ height: '500px' }" :bordered="false">
           <FileTree
+            :active-file-id="activeKeyRef"
             :content="textRef"
             :edit-files="editedFilesRef"
             @delete="deleteFile"
+            @import-content="importContent"
             @open="setFile"
             @update="updateFile"
           />
@@ -121,6 +137,7 @@ const onTabEdit = (
               {{ textRef }}
             </TabPane>
             <TabPane v-for="file in filesRef" :key="file.id" :tab="file.name">
+              <!-- todo use v-model xx -->
               <Cherry
                 :md-id="file.id"
                 :model-value="file.content"
