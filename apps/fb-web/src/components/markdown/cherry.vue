@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { FileContent } from '#/components/file/file';
+
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import { useI18n } from '@vben/locales';
@@ -8,19 +10,22 @@ import Cherry from 'cherry-markdown';
 
 import 'cherry-markdown/dist/cherry-markdown.min.css';
 
-const props = defineProps({
-  mdId: {
-    default: 'markdown-container',
-    type: String,
-  },
-  modelValue: {
-    default: '',
-    type: String,
+interface Props {
+  mdId: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  mdId: 'markdown-container',
+});
+const fileModel = defineModel<FileContent>('file', {
+  default: {
+    id: '',
+    name: '',
+    content: '',
   },
 });
 
 const cherryRef = ref<Cherry>();
-
 const setContent = (val: string) => {
   cherryRef.value?.setMarkdown(val);
 };
@@ -32,7 +37,6 @@ const getContent = () => {
 const getHtml = () => {
   return cherryRef.value?.getHtml();
 };
-
 // 图片加载回调
 // const beforeImageMounted = (e, src) => {
 //   return { [e]: src };
@@ -47,9 +51,20 @@ defineExpose({
 const { locale } = useI18n();
 
 const { theme } = usePreferences();
-watch([() => theme.value], ([theme]) => {
-  cherryRef.value?.setTheme(theme);
-});
+
+watch(
+  () => theme.value,
+  (theme) => {
+    cherryRef.value?.setTheme(theme);
+  },
+);
+
+watch(
+  () => fileModel.value.content,
+  (content: String) => {
+    cherryRef.value?.setMarkdown(content as string);
+  },
+);
 
 // const fileUpload = (file, callback) => {
 //   if (file.size / 1024 / 1024 > 200) {
@@ -76,10 +91,14 @@ watch([() => theme.value], ([theme]) => {
 //     });
 // };
 
+const afterChange = (text: string, _: string) => {
+  fileModel.value.content = text;
+};
+
 const initMd = () => {
   cherryRef.value = new Cherry({
     callback: {
-      // afterChange,
+      afterChange,
       // beforeImageMounted,
     },
     editor: {
@@ -156,7 +175,7 @@ const initMd = () => {
         'togglePreview',
       ],
     },
-    value: props.modelValue,
+    value: fileModel.value.content,
   });
 };
 

@@ -3,7 +3,11 @@ import { h } from 'vue';
 import {
   DeleteOutlined,
   EditOutlined,
+  ExportOutlined,
+  FolderOpenOutlined,
+  ImportOutlined,
   PlusOutlined,
+  SaveOutlined,
 } from '@ant-design/icons-vue';
 import { Button } from 'ant-design-vue';
 
@@ -11,6 +15,12 @@ import LocalUpload from '#/components/file/LocalUpload.vue';
 
 export const FILE_TYPE_DIR = 'dir';
 export const FILE_TYPE_FILE = 'file';
+
+export interface FileContent {
+  id: string;
+  name: string;
+  content: string;
+}
 
 export const CREATE_FORM_SCHEMA: any[] = [
   {
@@ -143,6 +153,25 @@ export const ROOT_MENU = [
 ];
 
 export const FILE_MENU = [
+  {
+    key: 'open',
+    icon: () =>
+      h(Button, { size: 'small', type: 'primary' }, h(FolderOpenOutlined)),
+  },
+  {
+    key: 'save',
+    icon: () => h(Button, { size: 'small', type: 'primary' }, h(SaveOutlined)),
+  },
+  {
+    key: 'import',
+    icon: () =>
+      h(Button, { size: 'small', type: 'primary' }, h(ImportOutlined)),
+  },
+  {
+    key: 'export',
+    icon: () =>
+      h(Button, { size: 'small', type: 'primary' }, h(ExportOutlined)),
+  },
   {
     key: 'edit',
     icon: () => h(Button, { size: 'small', type: 'primary' }, h(EditOutlined)),

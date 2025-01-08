@@ -1,16 +1,23 @@
 <script lang="ts" setup>
-import { h, ref, unref, watchEffect } from 'vue';
+import { ref, unref, watchEffect } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
 import {
-  DeleteOutlined,
-  EditOutlined,
+  DownOutlined,
   ExpandAltOutlined,
+  ExportOutlined,
+  FileOutlined,
+  FolderOpenOutlined,
+  FolderOutlined,
+  ImportOutlined,
   PlusOutlined,
   RedoOutlined,
+  SaveOutlined,
   ShrinkOutlined,
 } from '@ant-design/icons-vue';
+import { save as tauriSave } from '@tauri-apps/api/dialog';
+import { writeTextFile } from '@tauri-apps/api/fs';
 import {
   Button,
   Dropdown,
@@ -27,9 +34,12 @@ import {
   deleteFile,
   type File,
   getAllWorkspaceFiles,
+  getFileContent,
+  updateFileContent,
   updateFileName,
 } from '#/api';
 import { useWorkspaceStore } from '#/store';
+import { downloadByData } from '#/utils/file/downloadUtil';
 
 import {
   CREATE_FORM_SCHEMA,
@@ -37,6 +47,7 @@ import {
   FILE_MENU,
   FILE_TYPE_DIR,
   FILE_TYPE_FILE,
+  type FileContent,
   ROOT_MENU,
   UPDATE_FORM_SCHEMA,
 } from './file';
@@ -51,10 +62,25 @@ interface TreeItem {
   type: string;
 }
 
-defineOptions({ name: 'Menu' });
+interface Props {
+  activeFileId: string;
+  content: string;
+  editFiles: FileContent[];
+}
+
+const props = withDefaults(defineProps<Props>(), {});
 
 const emits = defineEmits<{
-  selectedId: [fileId: string];
+  delete: [id: string];
+  importContent: [content: string];
+  open: [content: FileContent];
+  select: [file: File];
+  update: [
+    file: {
+      id: string;
+      name: string;
+    },
+  ];
 }>();
 
 const workspaceStore = useWorkspaceStore();
@@ -64,21 +90,8 @@ const fileIdRef = ref<String>('');
 const selectedKeysRef = ref<any[]>([]);
 const expendedKeysRef = ref<any[]>([]);
 const deleteFileRef = ref<File>();
-const menuItemsRef = ref<any[]>([
-  {
-    key: 'create',
-    icon: () => h(Button, { size: 'small', type: 'primary' }, h(PlusOutlined)),
-  },
-  {
-    key: 'edit',
-    icon: () => h(Button, { size: 'small', type: 'primary' }, h(EditOutlined)),
-  },
-  {
-    key: 'delete',
-    icon: () =>
-      h(Button, { size: 'small', type: 'primary' }, h(DeleteOutlined)),
-  },
-]);
+const menuItemsRef = ref<any[]>([]);
+const fileInput = ref<HTMLInputElement>();
 
 const expendAllKeyInner = (items: TreeItem[]) => {
   items.forEach((item: TreeItem) => {
@@ -88,17 +101,44 @@ const expendAllKeyInner = (items: TreeItem[]) => {
     }
   });
 };
-
 const expendAllKeys = () => {
   expendedKeysRef.value = [];
   expendAllKeyInner(fileTreeRef.value);
 };
 
-const selectTreeItem = async (_: any, node: any) => {
-  fileIdRef.value = node.dataRef.key;
-  selectedKeysRef.value = [];
-  selectedKeysRef.value.push(node.dataRef.key);
-  emits('selectedId', fileIdRef.value.toString());
+const getFileByKey = (key: string) => {
+  if (filesRef.value) {
+    const result = unref(filesRef).filter((item: any) => item.id === key);
+    if (result.length > 0) {
+      return result[0];
+    }
+  }
+  return undefined;
+};
+
+const onClick = async (_: any, node: any) => {
+  const key = node.dataRef.key;
+  const type = node.dataRef.type;
+  const title = node.dataRef.title;
+  if (type === FILE_TYPE_FILE) {
+    selectedKeysRef.value = [];
+    selectedKeysRef.value.push(key);
+    fileIdRef.value = key;
+    getFileContent(key).then((content: any) => {
+      emits('open', {
+        id: key,
+        name: title,
+        // todo may be need byte[]
+        content: content.toString(),
+      });
+      message.success(`open file ${title} success`);
+    });
+  } else {
+    expendedKeysRef.value = node.expanded
+      ? expendedKeysRef.value.filter((k) => k !== key)
+      : [...expendedKeysRef.value, key];
+  }
+  emits('select', node.dataRef);
 };
 
 const onExpand = (keys: any) => {
@@ -106,7 +146,6 @@ const onExpand = (keys: any) => {
 };
 
 const onRightClick = (obj: any) => {
-  message.success(obj.node.type);
   const nodeType = obj.node.type;
   switch (nodeType) {
     case '': {
@@ -172,10 +211,10 @@ const updateFileTree = () => {
     root.children = getTreeChildren(root.key, map);
     fileTreeRef.value.push(root);
     fileIdRef.value = root.key;
-    selectedKeysRef.value.push(root.key);
+    // selectedKeysRef.value.push(root.key);
     // expend all keys
     expendAllKeys();
-    emits('selectedId', fileIdRef.value.toString());
+    // emits('selectedId', fileIdRef.value.toString());
   });
 };
 
@@ -199,7 +238,11 @@ function onUpdateSubmit(values: Record<string, any>) {
     id: values.id,
     name: values.name,
   }).then((_: any) => {
-    message.success(`update ${values.type} success`);
+    emits('update', {
+      id: values.id as string,
+      name: values.name as string,
+    });
+    message.success('update success');
     updateFileTree();
   });
 }
@@ -244,6 +287,7 @@ const [DeleteModal, deleteModalApi] = useVbenModal({
     const id = deleteFileRef.value?.id;
     if (id) {
       deleteFile(id).then(() => {
+        emits('delete', id);
         deleteFileRef.value = undefined;
         updateFileTree();
         message.success('delete dir success');
@@ -253,21 +297,89 @@ const [DeleteModal, deleteModalApi] = useVbenModal({
   },
 });
 
-const getFileByKey = (key: string) => {
-  if (filesRef.value) {
-    const result = unref(filesRef).filter((item: any) => item.id === key);
-    if (result.length > 0) {
-      return result[0];
+const create = () => {
+  formApi.updateSchema([
+    {
+      fieldName: 'pid',
+      componentProps: {
+        treeData: fileTreeRef.value,
+        disabled: false,
+      },
+    },
+  ]);
+  if (fileTreeRef.value && fileTreeRef.value.length > 0) {
+    formApi.setValues({
+      pid: fileTreeRef.value[0]?.key,
+    });
+  }
+  modalApi.open();
+};
+
+const save = () => {
+  props.editFiles.forEach((fileContent) => {
+    updateFileContent({
+      id: fileContent.id,
+      content: fileContent.content,
+    }).then(() => {
+      message.success('save file success');
+    });
+  });
+};
+
+function handleFileChange(event: any) {
+  const file = event.target.files[0];
+  if (file) {
+    const fileReader = new FileReader();
+    fileReader.addEventListener('load', () => {
+      emits('importContent', fileReader.result as string);
+    });
+    // eslint-disable-next-line unicorn/prefer-blob-reading-methods
+    fileReader.readAsText(file);
+    if (fileInput.value) {
+      fileInput.value.value = '';
     }
   }
-  return undefined;
+}
+
+const importContent = async () => {
+  if (!props.activeFileId) {
+    message.warn('can not find can import content file');
+    return;
+  }
+  if (fileInput.value) {
+    fileInput.value.click();
+  }
+};
+
+const exportContent = async () => {
+  if (!props.activeFileId) {
+    message.warn('can not find can import content file');
+    return;
+  }
+  const existedFileContent = props.editFiles.filter(
+    (k) => k.id === props.activeFileId,
+  );
+  if (!existedFileContent || existedFileContent.length === 0) {
+    message.warn('can not find can import content file');
+    return;
+  }
+  const fileContent = existedFileContent[0];
+  if (fileContent) {
+    if (window.__TAURI__) {
+      const filePath = await tauriSave({ defaultPath: fileContent.name });
+      if (filePath) {
+        await writeTextFile(filePath, fileContent.content);
+      }
+    } else {
+      downloadByData(props.content, fileContent.name);
+    }
+  }
 };
 
 const onContextMenuClick = (key: string, menuKey: number | string) => {
   const menu = menuKey.toString();
   switch (menu) {
     case 'create': {
-      modalApi.setState({ title: 'Create' });
       formApi.updateSchema([
         {
           fieldName: 'pid',
@@ -292,10 +404,9 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
       break;
     }
     case 'edit': {
-      editModalApi.setState({ title: 'Edit' });
       const file = getFileByKey(key);
       if (file) {
-        formApi.setValues({
+        editFormApi.setValues({
           id: file?.id,
           pid: file?.pid,
           name: file?.name,
@@ -312,6 +423,35 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
         editModalApi.open();
       }
       break;
+    }
+    case 'open': {
+      const file = getFileByKey(key);
+      if (file) {
+        getFileContent(key).then((content: any) => {
+          emits('open', {
+            id: file.id,
+            name: file.name,
+            content: content.toString(),
+          });
+          message.success(`open file ${file.name} success`);
+        });
+      } else {
+        message.error('can not find file');
+      }
+      break;
+    }
+    case 'save': {
+      const existedFileContent = props.editFiles.filter((k) => k.id === key);
+      if (existedFileContent.length > 0 && existedFileContent[0]) {
+        updateFileContent({
+          id: existedFileContent[0].id,
+          content: existedFileContent[0].content,
+        }).then(() => {
+          message.success('save file success');
+        });
+      } else {
+        message.error('can not find file');
+      }
     }
   }
 };
@@ -338,12 +478,39 @@ watchEffect(() => {
           <ShrinkOutlined />
         </template>
       </Button>
+      <Button class="ml-2" size="small" type="primary" @click="create">
+        <template #icon>
+          <PlusOutlined />
+        </template>
+      </Button>
+      <Button class="ml-2" size="small" type="primary" @click="save">
+        <template #icon>
+          <SaveOutlined />
+        </template>
+      </Button>
+      <Button class="ml-2" size="small" type="primary" @click="importContent">
+        <template #icon>
+          <ImportOutlined />
+        </template>
+      </Button>
+      <input
+        ref="fileInput"
+        style="display: none"
+        type="file"
+        @change="handleFileChange"
+      />
+      <Button class="ml-2" size="small" type="primary" @click="exportContent">
+        <template #icon>
+          <ExportOutlined />
+        </template>
+      </Button>
     </div>
     <Tree
       :expanded-keys="expendedKeysRef"
       :selected-keys="selectedKeysRef"
       :tree-data="fileTreeRef"
-      @click="selectTreeItem"
+      show-icon
+      @click="onClick"
       @expand="onExpand"
       @right-click="onRightClick"
     >
@@ -358,12 +525,24 @@ watchEffect(() => {
           </template>
         </Dropdown>
       </template>
+      <template #switcherIcon="{ switcherCls }">
+        <DownOutlined :class="switcherCls" />
+      </template>
+      <template #icon="{ dataRef, expanded }">
+        <template v-if="dataRef.type === FILE_TYPE_DIR || dataRef.type === ''">
+          <FolderOpenOutlined v-if="expanded" />
+          <FolderOutlined v-else />
+        </template>
+        <template v-else>
+          <FileOutlined />
+        </template>
+      </template>
     </Tree>
   </Flex>
-  <Modal>
+  <Modal title="Create">
     <Form />
   </Modal>
-  <EditModal>
+  <EditModal title="Edit">
     <EditForm />
   </EditModal>
   <DeleteModal title="Remove File">
@@ -376,8 +555,4 @@ watchEffect(() => {
   </DeleteModal>
 </template>
 
-<!--// todo select emit event-->
-<!--// disable dir select-->
-<!--// file save-->
-<!--// file copy-->
-<!--// file new-->
+<!--// todo file copy-->

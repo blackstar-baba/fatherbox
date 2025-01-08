@@ -1,52 +1,90 @@
 <script lang="ts" setup>
+import type { Key } from 'ant-design-vue/es/_util/type';
+
 import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { CompressOutlined, ExpandOutlined } from '@ant-design/icons-vue';
-import { save } from '@tauri-apps/api/dialog';
-import { writeTextFile } from '@tauri-apps/api/fs';
-import { Button } from 'ant-design-vue';
+import { Card, Col, Row, TabPane, Tabs } from 'ant-design-vue';
 
+import { type FileContent } from '#/components/file/file';
+import FileTree from '#/components/file/FileTree.vue';
 import Cherry from '#/components/markdown/cherry.vue';
-import { downloadByData } from '#/utils/file/downloadUtil';
 
-const cherryRef = ref();
-const text = ref('### Hello World');
-const fileInput = ref<HTMLInputElement>();
-const fileName = ref('demo.md');
+const textRef = ref('Hello FatherBox Markdown Editor');
+const filesRef = ref<FileContent[]>([]);
+const activeKeyRef = ref('');
 
-function importDoc() {
-  if (fileInput.value) {
-    fileInput.value.click();
+function setFile(fileContent: FileContent) {
+  if (!filesRef.value.some((k) => k.id === fileContent.id)) {
+    filesRef.value.push(fileContent);
   }
+  activeKeyRef.value = fileContent.id;
 }
-async function exportDoc() {
-  if (window.__TAURI__) {
-    const filePath = await save({ defaultPath: fileName.value });
-    if (filePath && cherryRef) {
-      await writeTextFile(filePath, cherryRef.value.getContent());
+
+function updateFile(file: { id: string; name: string }) {
+  for (let i = 0; i < filesRef.value.length; i++) {
+    const existFile = filesRef.value[i];
+    if (existFile && existFile.id === file.id) {
+      existFile.name = file.name;
+      break;
     }
-  } else {
-    downloadByData(cherryRef.value.getContent(), fileName.value);
   }
 }
 
-function handleFileChange(event: any) {
-  const file = event.target.files[0];
-  fileName.value = file.name;
-  if (file) {
-    const fileReader = new FileReader();
-    fileReader.addEventListener('load', () => {
-      text.value = fileReader.result as string;
-      cherryRef.value?.setContent(text.value);
-    });
-    // eslint-disable-next-line unicorn/prefer-blob-reading-methods
-    fileReader.readAsText(file);
+function deleteFile(id: string) {
+  const key = id;
+  let lastIndex = 0;
+  for (let i = 0; i < filesRef.value.length; i++) {
+    const file = filesRef.value[i];
+    if (file && file.id === key) {
+      lastIndex = i - 1;
+      if (lastIndex < 0) {
+        activeKeyRef.value = '';
+      } else {
+        const lastFile = filesRef.value[lastIndex];
+        if (lastFile) {
+          activeKeyRef.value = lastFile.id;
+        }
+      }
+    }
+  }
+  filesRef.value = filesRef.value.filter((file) => file.id !== key);
+}
+
+function importContent(content: string) {
+  const existedFileContent = filesRef.value.filter(
+    (k) => k.id === activeKeyRef.value,
+  );
+  if (existedFileContent.length > 0 && existedFileContent[0]) {
+    existedFileContent[0].content = content;
   }
 }
 
-// how to get locale & dark mode
+const onTabEdit = (
+  targetKey: Key | KeyboardEvent | MouseEvent,
+  action: 'add' | 'remove',
+) => {
+  const key = targetKey as string;
+  if (action === 'remove') {
+    let lastIndex = 0;
+    for (let i = 0; i < filesRef.value.length; i++) {
+      const file = filesRef.value[i];
+      if (file && file.id === key) {
+        lastIndex = i - 1;
+        if (lastIndex < 0) {
+          activeKeyRef.value = '';
+        } else {
+          const lastFile = filesRef.value[lastIndex];
+          if (lastFile) {
+            activeKeyRef.value = lastFile.id;
+          }
+        }
+      }
+    }
+    filesRef.value = filesRef.value.filter((file) => file.id !== key);
+  }
+};
 </script>
 
 <template>
@@ -55,27 +93,42 @@ function handleFileChange(event: any) {
     description="Cherry Markdown Editor is a Javascript Markdown editor. It has the advantages such as out-of-the-box, lightweight and easy to extend."
     title="Markdown Editor"
   >
-    <div class="mb-2">
-      <Button type="primary" @click="importDoc">
-        <template #icon>
-          <ExpandOutlined />
-        </template>
-        Import
-      </Button>
-      <input
-        ref="fileInput"
-        style="display: none"
-        type="file"
-        @change="handleFileChange"
-      />
-      <Button class="ml-2" danger type="primary" @click="exportDoc">
-        <template #icon>
-          <CompressOutlined />
-        </template>
-        Export
-      </Button>
-    </div>
-    <Cherry ref="cherryRef" />
+    <Row :gutter="16">
+      <Col :span="6">
+        <Card :body-style="{ height: '500px' }" :bordered="false">
+          <FileTree
+            :active-file-id="activeKeyRef"
+            :content="textRef"
+            :edit-files="filesRef"
+            @delete="deleteFile"
+            @import-content="importContent"
+            @open="setFile"
+            @update="updateFile"
+          />
+        </Card>
+      </Col>
+      <Col :span="18">
+        <Card :body-style="{ height: '500px' }" :bordered="false">
+          <Tabs
+            v-model:active-key="activeKeyRef"
+            hide-add
+            type="editable-card"
+            @edit="onTabEdit"
+          >
+            <TabPane key="" :closable="false" tab="Introduction">
+              {{ textRef }}
+            </TabPane>
+            <TabPane
+              v-for="(file, index) in filesRef"
+              :key="file.id"
+              :tab="file.name"
+            >
+              <Cherry v-model:file="filesRef[index]" :md-id="file.id" />
+            </TabPane>
+          </Tabs>
+        </Card>
+      </Col>
+    </Row>
   </Page>
 </template>
 
@@ -87,4 +140,11 @@ function handleFileChange(event: any) {
 .cherry-markdown ul {
   list-style: disc;
 }
+
+.ant-tabs-card .ant-tabs-content {
+  height: 400px;
+  margin-top: -8px;
+}
 </style>
+
+<!-- todo auto height -->
