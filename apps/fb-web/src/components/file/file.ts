@@ -1,13 +1,10 @@
 import { h } from 'vue';
 
 import {
+  CopyOutlined,
   DeleteOutlined,
   EditOutlined,
-  ExportOutlined,
-  FolderOpenOutlined,
-  ImportOutlined,
   PlusOutlined,
-  SaveOutlined,
 } from '@ant-design/icons-vue';
 import { Button } from 'ant-design-vue';
 
@@ -139,6 +136,50 @@ export const UPDATE_FORM_SCHEMA: any[] = [
       showSearch: false,
       treeData: [],
       treeNodeFilterProp: 'label',
+      disabled: true,
+    },
+    fieldName: 'pid',
+    label: 'Parent',
+  },
+];
+
+export const COPY_FORM_SCHEMA: any[] = [
+  {
+    component: 'Input',
+    controlClass: 'hidden',
+    fieldName: 'fromId',
+    label: 'From Id',
+    hideLabel: true,
+  },
+  // todo create parent tree 包含了文件
+  {
+    component: 'Input',
+    componentProps: {
+      placeholder: '请输入',
+      disabled: true,
+    },
+    fieldName: 'fromName',
+    label: 'From File',
+    rules: 'required',
+  },
+  {
+    component: 'Input',
+    componentProps: {
+      placeholder: '请输入',
+    },
+    fieldName: 'name',
+    label: 'Name',
+    rules: 'required',
+  },
+  {
+    component: 'TreeSelect',
+    componentProps: {
+      class: 'w-full',
+      allowClear: false,
+      placeholder: '请选择',
+      showSearch: false,
+      treeData: [],
+      treeNodeFilterProp: 'label',
     },
     fieldName: 'pid',
     label: 'Parent',
@@ -154,23 +195,8 @@ export const ROOT_MENU = [
 
 export const FILE_MENU = [
   {
-    key: 'open',
-    icon: () =>
-      h(Button, { size: 'small', type: 'primary' }, h(FolderOpenOutlined)),
-  },
-  {
-    key: 'save',
-    icon: () => h(Button, { size: 'small', type: 'primary' }, h(SaveOutlined)),
-  },
-  {
-    key: 'import',
-    icon: () =>
-      h(Button, { size: 'small', type: 'primary' }, h(ImportOutlined)),
-  },
-  {
-    key: 'export',
-    icon: () =>
-      h(Button, { size: 'small', type: 'primary' }, h(ExportOutlined)),
+    key: 'copy',
+    icon: () => h(Button, { size: 'small', type: 'primary' }, h(CopyOutlined)),
   },
   {
     key: 'edit',

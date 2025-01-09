@@ -24,6 +24,12 @@ export interface FileCreateBody {
   type: string;
 }
 
+export interface FileCopyBody {
+  name: string;
+  pid: string;
+  fromId: string;
+}
+
 export interface FileUpdateContentBody {
   id: string;
   content: string;
@@ -238,6 +244,29 @@ export async function createFile(body: FileCreateBody) {
   return window.__TAURI__
     ? invoke('route_cmd', {
         command: 'file_create',
+        accessToken: accessStore.accessToken,
+        args: {
+          wid: workspaceStore.getId(),
+          ...body,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return {};
+        }
+        return msg.result as File;
+      })
+    : new Promise((resolve) => {
+        resolve({});
+      });
+}
+
+export async function copyFile(body: FileCopyBody) {
+  const accessStore = useAccessStore();
+  const workspaceStore = useWorkspaceStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'file_copy',
         accessToken: accessStore.accessToken,
         args: {
           wid: workspaceStore.getId(),
