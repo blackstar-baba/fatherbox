@@ -24,6 +24,12 @@ export interface FileCreateBody {
   type: string;
 }
 
+export interface FileCopyBody {
+  name: string;
+  pid: string;
+  fromId: string;
+}
+
 export interface FileUpdateContentBody {
   id: string;
   content: string;
@@ -32,6 +38,12 @@ export interface FileUpdateContentBody {
 export interface FileUpdateNameBody {
   id: string;
   name: string;
+}
+
+export interface FileUpdateBody {
+  id: string;
+  name: string;
+  pid: string;
 }
 
 export interface FileSearchBody {
@@ -255,6 +267,29 @@ export async function createFile(body: FileCreateBody) {
       });
 }
 
+export async function copyFile(body: FileCopyBody) {
+  const accessStore = useAccessStore();
+  const workspaceStore = useWorkspaceStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'file_copy',
+        accessToken: accessStore.accessToken,
+        args: {
+          wid: workspaceStore.getId(),
+          ...body,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return {};
+        }
+        return msg.result as File;
+      })
+    : new Promise((resolve) => {
+        resolve({});
+      });
+}
+
 export async function updateFileContent(body: FileUpdateContentBody) {
   const accessStore = useAccessStore();
   const workspaceStore = useWorkspaceStore();
@@ -284,6 +319,29 @@ export async function updateFileName(body: FileUpdateNameBody) {
   return window.__TAURI__
     ? invoke('route_cmd', {
         command: 'file_update_name',
+        accessToken: accessStore.accessToken,
+        args: {
+          wid: workspaceStore.getId(),
+          ...body,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return [];
+        }
+        return msg.result as File;
+      })
+    : new Promise((resolve) => {
+        resolve({});
+      });
+}
+
+export async function updateFile(body: FileUpdateBody) {
+  const accessStore = useAccessStore();
+  const workspaceStore = useWorkspaceStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'file_update',
         accessToken: accessStore.accessToken,
         args: {
           wid: workspaceStore.getId(),

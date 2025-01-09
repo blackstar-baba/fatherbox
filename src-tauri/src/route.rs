@@ -7,14 +7,15 @@ use serde_json::{to_value, Value};
 use tauri::State;
 
 use app::dto::file_dto::{
-    CreateBody as FileCreateBody, GeneralBody as FileGeneralBody,
+    CopyBody as FileCopyBody, CreateBody as FileCreateBody, GeneralBody as FileGeneralBody,
     ListByPageBody as FileListByPageBody, ListByPidBody as FileListByPidBody,
-    ListGeneralBody as FileListGeneralBody, UpdateContentBody as FileUpdateContentBody,
-    UpdateNameBody as FileUpdateNameBody,
+    ListGeneralBody as FileListGeneralBody, UpdateBody as FileUpdateBody,
+    UpdateContentBody as FileUpdateContentBody, UpdateNameBody as FileUpdateNameBody,
 };
 use app::service::file_service::{
-    create_file, delete_file, get_file, get_path, get_workspace_files, get_workspace_files_by_page,
-    get_workspace_files_by_pid, update_file_content, update_file_name,
+    copy_file, create_file, delete_file, get_file, get_path, get_workspace_files,
+    get_workspace_files_by_page, get_workspace_files_by_pid, update_file, update_file_content,
+    update_file_name,
 };
 use app::service::model_service::{
     chat_request, get_chat_history_messages, get_chats, get_models, ChatRequestBody,
@@ -58,7 +59,9 @@ pub async fn route_cmd(
     };
 }
 
-fn get_user_info_from_access_token(access_token_option: Option<String>) -> Result<LoginInfo, anyhow::Error> {
+fn get_user_info_from_access_token(
+    access_token_option: Option<String>,
+) -> Result<LoginInfo, anyhow::Error> {
     if access_token_option.is_none() {
         return Err(anyhow::anyhow!("User token is null"));
     }
@@ -100,7 +103,7 @@ pub async fn invoke_user_cmd(
             None::<String>,
             &login_info_result.err().unwrap().to_string(),
         ))
-       .unwrap();
+        .unwrap();
     }
     let login_info = login_info_result.unwrap();
     let user_id = &login_info.user_id;
@@ -194,7 +197,7 @@ pub async fn invoke_workspace_cmd(
             None::<String>,
             &login_info_result.err().unwrap().to_string(),
         ))
-            .unwrap();
+        .unwrap();
     }
     let login_info = login_info_result.unwrap();
     let user_id = &login_info.user_id;
@@ -266,9 +269,19 @@ pub async fn invoke_file_cmd(
             let response = get_path(user_path, &body).await;
             to_value(&response).unwrap()
         }
+        "file_copy" => {
+            let body: FileCopyBody = serde_json::from_value(args).unwrap();
+            let response = copy_file(db, user_path, &body).await;
+            to_value(&response).unwrap()
+        }
         "file_create" => {
             let body: FileCreateBody = serde_json::from_value(args).unwrap();
             let response = create_file(db, user_path, &body).await;
+            to_value(&response).unwrap()
+        }
+        "file_update" => {
+            let body: FileUpdateBody = serde_json::from_value(args).unwrap();
+            let response = update_file(db, &body).await;
             to_value(&response).unwrap()
         }
         "file_update_content" => {

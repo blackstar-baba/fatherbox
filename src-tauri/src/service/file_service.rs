@@ -3,6 +3,7 @@ use log::error;
 use sea_orm::{DatabaseConnection, DbErr, Set};
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::fs::copy;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -10,10 +11,7 @@ use tauri::api::dir::is_dir;
 use uuid::Uuid;
 
 use crate::dao::file_dao::FileService;
-use crate::dto::file_dto::{
-    CreateBody, GeneralBody, ListByPageBody, ListByPidBody, ListGeneralBody, PageResult,
-    UpdateContentBody, UpdateNameBody,
-};
+use crate::dto::file_dto::{CopyBody, CreateBody, GeneralBody, ListByPageBody, ListByPidBody, ListGeneralBody, PageResult, UpdateBody, UpdateContentBody, UpdateNameBody};
 use crate::entity::file::{ActiveModel, Model};
 use crate::{AppResponse, DIR_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS};
 
@@ -68,22 +66,28 @@ pub async fn get_path(user_path: &PathBuf, general_body: &GeneralBody) -> AppRes
     AppResponse::success(file_path.to_str().unwrap().to_string())
 }
 
-pub async fn create_file(
+pub async fn copy_file(
     db: &DatabaseConnection,
     user_path: &PathBuf,
-    general_body: &CreateBody,
+    body: &CopyBody,
 ) -> AppResponse<Option<Model>> {
     // todo check parent first
     // if type is dir and parent is file, no allow to create
-    let create_response = match FileService::create_file(
+
+    let get_from_file_result = FileService::get_file(db, &body.from_id).await;
+    if get_from_file_result.is_err() {
+        return AppResponse::error(None::<Model>, &get_from_file_result.err().unwrap().to_string());
+    }
+    let from_file = get_from_file_result.unwrap().unwrap();
+    let copy_response = match FileService::create_file(
         db,
         ActiveModel {
             id: Set(Uuid::new_v4().to_string()),
-            name: Set(general_body.name.clone()),
-            r#type: Set(general_body.r#type.to_string()),
-            pid: Set(general_body.pid.to_string()),
-            wid: Set(general_body.wid.to_string()),
-            zone: Set(general_body.zone.to_string()),
+            name: Set(body.name.clone()),
+            r#type: Set(from_file.r#type.clone()),
+            pid: Set(from_file.pid.clone()),
+            wid: Set(from_file.wid.clone()),
+            zone: Set(from_file.zone.clone()),
             size: Set(0),
             create_time: Set(Utc::now().timestamp()),
             update_time: Set(Utc::now().timestamp()),
@@ -91,65 +95,122 @@ pub async fn create_file(
             ..Default::default()
         },
     )
-    .await
+        .await
     {
         Ok(model) => AppResponse::success(Some(model)),
         Err(err) => AppResponse::error(None::<Model>, &err.to_string()),
     };
-    if create_response.is_error() {
-        return create_response;
+    if copy_response.is_error() {
+        return copy_response;
     }
-    let file_model = create_response.result.unwrap();
-    let file_path = &user_path.join(&general_body.wid).join(&file_model.id);
+    let file_model = copy_response.result.unwrap();
+    let from_file_path = &user_path.join(&file_model.wid).join(&body.from_id);
+    let file_path = &user_path.join(&file_model.wid).join(&file_model.id);
+    if !from_file_path.exists() {
+        return AppResponse::error(
+            None,
+            "source file not found, please make sure the file exists",
+        );
+    }
     if !file_path.exists() {
-        if general_body.r#type == DIR_TYPE {
+        if file_model.r#type == DIR_TYPE {
             fs::create_dir_all(file_path).unwrap();
         } else {
-            let result = File::create(file_path);
+            let result = copy(from_file_path, file_path);
             if result.is_err() {
-                error!("create file on disk failed, err: {}", result.err().unwrap());
+                error!("copy file on disk failed, err: {}", result.err().unwrap());
                 return AppResponse::error(
                     None,
-                    "create file on disk failed, please check your disk space and permissions",
+                    "copy file on disk failed, please check your disk space and permissions",
                 );
             }
         }
     }
-    // direct return if type is dir
-    if file_model.r#type == DIR_TYPE {
-        return AppResponse::success(Some(file_model));
-    }
-    let mut size = 0i64;
-    // insert content or copy file
-    if general_body.content.is_some() {
-        let open_result = File::options().write(true).open(file_path);
-        if open_result.is_err() {
-            error!(
+    AppResponse::success(Some(file_model))
+}
+
+pub async fn create_file(
+        db: &DatabaseConnection,
+        user_path: &PathBuf,
+        general_body: &CreateBody,
+    ) -> AppResponse<Option<Model>> {
+        // todo check parent first
+        // if type is dir and parent is file, no allow to create
+        let create_response = match FileService::create_file(
+            db,
+            ActiveModel {
+                id: Set(Uuid::new_v4().to_string()),
+                name: Set(general_body.name.clone()),
+                r#type: Set(general_body.r#type.to_string()),
+                pid: Set(general_body.pid.to_string()),
+                wid: Set(general_body.wid.to_string()),
+                zone: Set(general_body.zone.to_string()),
+                size: Set(0),
+                create_time: Set(Utc::now().timestamp()),
+                update_time: Set(Utc::now().timestamp()),
+                state: Set(1),
+                ..Default::default()
+            },
+        )
+            .await
+        {
+            Ok(model) => AppResponse::success(Some(model)),
+            Err(err) => AppResponse::error(None::<Model>, &err.to_string()),
+        };
+        if create_response.is_error() {
+            return create_response;
+        }
+        let file_model = create_response.result.unwrap();
+        let file_path = &user_path.join(&general_body.wid).join(&file_model.id);
+        if !file_path.exists() {
+            if general_body.r#type == DIR_TYPE {
+                fs::create_dir_all(file_path).unwrap();
+            } else {
+                let result = File::create(file_path);
+                if result.is_err() {
+                    error!("create file on disk failed, err: {}", result.err().unwrap());
+                    return AppResponse::error(
+                        None,
+                        "create file on disk failed, please check your disk space and permissions",
+                    );
+                }
+            }
+        }
+        // direct return if type is dir
+        if file_model.r#type == DIR_TYPE {
+            return AppResponse::success(Some(file_model));
+        }
+        let mut size = 0i64;
+        // insert content or copy file
+        if general_body.content.is_some() {
+            let open_result = File::options().write(true).open(file_path);
+            if open_result.is_err() {
+                error!(
                 "open file on disk failed, err: {}",
                 open_result.err().unwrap()
             );
-            return AppResponse::error(
-                None,
-                "open file on disk failed, please check your disk space and permissions",
-            );
+                return AppResponse::error(
+                    None,
+                    "open file on disk failed, please check your disk space and permissions",
+                );
+            }
+            let mut file = open_result.unwrap();
+            let content = general_body.content.as_ref().unwrap();
+            if content.len() > 0 {
+                file.write_all(content.as_bytes()).unwrap();
+            }
+            size = file.metadata().unwrap().len() as i64;
+        } else if general_body.path.is_some() {
+            // extract this
+            let path = general_body.path.as_ref().unwrap();
+            fs::copy(path, file_path).unwrap();
+            size = file_path.metadata().unwrap().len() as i64;
         }
-        let mut file = open_result.unwrap();
-        let content = general_body.content.as_ref().unwrap();
-        if content.len() > 0 {
-            file.write_all(content.as_bytes()).unwrap();
+        // update file model size
+        match FileService::update_file_size(db, &file_model.id, size).await {
+            Ok(_) => AppResponse::success(Some(file_model)),
+            Err(err) => AppResponse::error(None, &err.to_string()),
         }
-        size = file.metadata().unwrap().len() as i64;
-    } else if general_body.path.is_some() {
-        // extract this
-        let path = general_body.path.as_ref().unwrap();
-        fs::copy(path, file_path).unwrap();
-        size = file_path.metadata().unwrap().len() as i64;
-    }
-    // update file model size
-    match FileService::update_file_size(db, &file_model.id, size).await {
-        Ok(_) => AppResponse::success(Some(file_model)),
-        Err(err) => AppResponse::error(None, &err.to_string()),
-    }
 }
 
 pub async fn update_file_content(
@@ -208,6 +269,25 @@ pub async fn update_file_name(
     }
     let model = option_model.unwrap();
     match FileService::update_file_name(db, &body.id, &body.name).await {
+        Ok(_) => AppResponse::success(Some(model)),
+        Err(err) => AppResponse::error(None, &err.to_string()),
+    }
+}
+
+pub async fn update_file(
+    db: &DatabaseConnection,
+    body: &UpdateBody,
+) -> AppResponse<Option<Model>> {
+    let get_result = FileService::get_file(db, &body.id).await;
+    if get_result.is_err() {
+        return AppResponse::error(None, &get_result.err().unwrap().to_string());
+    }
+    let option_model = get_result.unwrap();
+    if option_model.is_none() {
+        return AppResponse::error(None, "file not found");
+    }
+    let model = option_model.unwrap();
+    match FileService::update_file(db, &body.id, &body.name, &body.pid).await {
         Ok(_) => AppResponse::success(Some(model)),
         Err(err) => AppResponse::error(None, &err.to_string()),
     }

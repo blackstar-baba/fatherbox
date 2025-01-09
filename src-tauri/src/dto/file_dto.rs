@@ -1,5 +1,14 @@
 use serde::{Deserialize, Serialize};
 
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct CopyBody {
+    pub from_id: String,
+    pub name: String,
+    pub pid: String,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateBody {
@@ -41,6 +50,14 @@ pub struct ListByPageBody {
 pub struct UpdateContentBody {
     pub id: String,
     pub content: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateBody {
+    pub id: String,
+    pub name: String,
+    pub pid: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]

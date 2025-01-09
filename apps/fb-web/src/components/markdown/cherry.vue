@@ -26,6 +26,7 @@ const fileModel = defineModel<FileContent>('file', {
 });
 
 const cherryRef = ref<Cherry>();
+let innerUpdate = false;
 const setContent = (val: string) => {
   cherryRef.value?.setMarkdown(val);
 };
@@ -62,7 +63,11 @@ watch(
 watch(
   () => fileModel.value.content,
   (content: String) => {
-    cherryRef.value?.setMarkdown(content as string);
+    if (innerUpdate) {
+      innerUpdate = false;
+    } else {
+      cherryRef.value?.setMarkdown(content as string);
+    }
   },
 );
 
@@ -92,6 +97,7 @@ watch(
 // };
 
 const afterChange = (text: string, _: string) => {
+  innerUpdate = true;
   fileModel.value.content = text;
 };
 

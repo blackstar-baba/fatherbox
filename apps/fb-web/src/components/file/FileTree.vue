@@ -30,18 +30,20 @@ import {
 
 import { useVbenForm } from '#/adapter';
 import {
+  copyFile,
   createFile,
   deleteFile,
   type File,
   getAllWorkspaceFiles,
   getFileContent,
+  updateFile,
   updateFileContent,
-  updateFileName,
 } from '#/api';
 import { useWorkspaceStore } from '#/store';
 import { downloadByData } from '#/utils/file/downloadUtil';
 
 import {
+  COPY_FORM_SCHEMA,
   CREATE_FORM_SCHEMA,
   DIR_MENU,
   FILE_MENU,
@@ -86,6 +88,7 @@ const emits = defineEmits<{
 const workspaceStore = useWorkspaceStore();
 const filesRef = ref<File[]>([]);
 const fileTreeRef = ref<TreeItem[]>([]);
+const dirTreeRef = ref<TreeItem[]>([]);
 const fileIdRef = ref<String>('');
 const selectedKeysRef = ref<any[]>([]);
 const expendedKeysRef = ref<any[]>([]);
@@ -185,6 +188,26 @@ const getTreeChildren = (key: String, map: Map<String, File[]>) => {
   return children;
 };
 
+const getDirTreeChildren = (key: String, map: Map<String, File[]>) => {
+  const children: TreeItem[] = [];
+  const value = map.get(key);
+  if (value) {
+    value.forEach((element: File) => {
+      if (element.type === FILE_TYPE_DIR) {
+        children.push({
+          key: element.id,
+          value: element.id,
+          title: element.name,
+          pkey: element.pid,
+          children: getDirTreeChildren(element.id, map),
+          type: element.type,
+        });
+      }
+    });
+  }
+  return children;
+};
+
 const updateFileTree = () => {
   const curWorkspace = workspaceStore.getWorkspace();
   if (!curWorkspace) {
@@ -193,6 +216,7 @@ const updateFileTree = () => {
   getAllWorkspaceFiles().then((files: File[]) => {
     filesRef.value = files;
     fileTreeRef.value = [];
+    dirTreeRef.value = [];
     const map: Map<String, File[]> = new Map();
     const root: TreeItem = {
       key: curWorkspace.id,
@@ -212,6 +236,14 @@ const updateFileTree = () => {
     fileTreeRef.value.push(root);
     fileIdRef.value = root.key;
     // selectedKeysRef.value.push(root.key);
+    const dirRoot: TreeItem = {
+      key: curWorkspace.id,
+      value: curWorkspace.id,
+      title: `${curWorkspace.name} (workspace)`,
+      type: '',
+    };
+    dirRoot.children = getDirTreeChildren(dirRoot.key, map);
+    dirTreeRef.value.push(dirRoot);
     // expend all keys
     expendAllKeys();
     // emits('selectedId', fileIdRef.value.toString());
@@ -234,15 +266,27 @@ function onSubmit(values: Record<string, any>) {
 }
 
 function onUpdateSubmit(values: Record<string, any>) {
-  updateFileName({
+  updateFile({
     id: values.id,
     name: values.name,
+    pid: values.pid,
   }).then((_: any) => {
     emits('update', {
       id: values.id as string,
       name: values.name as string,
     });
     message.success('update success');
+    updateFileTree();
+  });
+}
+
+function onCopySubmit(values: Record<string, any>) {
+  copyFile({
+    fromId: values.fromId,
+    name: values.name,
+    pid: values.pid,
+  }).then((_: any) => {
+    message.success('copy success');
     updateFileTree();
   });
 }
@@ -279,6 +323,22 @@ const [EditModal, editModalApi] = useVbenModal({
   },
 });
 
+const [CopyForm, copyFormApi] = useVbenForm({
+  handleSubmit: onCopySubmit,
+  schema: COPY_FORM_SCHEMA,
+  showDefaultActions: false,
+});
+
+const [CopyModal, copyModalApi] = useVbenModal({
+  onCancel() {
+    copyModalApi.close();
+  },
+  onConfirm: async () => {
+    await copyFormApi.validateAndSubmitForm();
+    copyModalApi.close();
+  },
+});
+
 const [DeleteModal, deleteModalApi] = useVbenModal({
   onCancel() {
     deleteModalApi.close();
@@ -303,7 +363,6 @@ const create = () => {
       fieldName: 'pid',
       componentProps: {
         treeData: fileTreeRef.value,
-        disabled: false,
       },
     },
   ]);
@@ -379,12 +438,32 @@ const exportContent = async () => {
 const onContextMenuClick = (key: string, menuKey: number | string) => {
   const menu = menuKey.toString();
   switch (menu) {
+    case 'copy': {
+      const file = getFileByKey(key);
+      copyFormApi.updateSchema([
+        {
+          fieldName: 'pid',
+          componentProps: {
+            treeData: dirTreeRef.value,
+            disabled: false,
+          },
+        },
+      ]);
+      copyFormApi.setValues({
+        fromId: key,
+        fromName: file?.name,
+        name: file?.name,
+        pid: file?.pid,
+      });
+      copyModalApi.open();
+      break;
+    }
     case 'create': {
       formApi.updateSchema([
         {
           fieldName: 'pid',
           componentProps: {
-            treeData: fileTreeRef.value,
+            treeData: dirTreeRef.value,
             disabled: false,
           },
         },
@@ -415,8 +494,7 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
           {
             fieldName: 'pid',
             componentProps: {
-              treeData: fileTreeRef.value,
-              disabled: true,
+              treeData: dirTreeRef.value,
             },
           },
         ]);
@@ -545,7 +623,10 @@ watchEffect(() => {
   <EditModal title="Edit">
     <EditForm />
   </EditModal>
-  <DeleteModal title="Remove File">
+  <CopyModal title="copy">
+    <CopyForm />
+  </CopyModal>
+  <DeleteModal title="Remove">
     <div class="m-2">
       Are you sure to delete dir:
       <Tag class="mb-2 ml-2" color="#87d068">
