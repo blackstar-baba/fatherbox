@@ -124,6 +124,34 @@ impl FileService {
         }
     }
 
+    pub async fn update_file(
+        db: &DatabaseConnection,
+        id: &str,
+        name: &str,
+        pid: &str,
+    ) -> Result<u64, DbErr> {
+        match File::update_many()
+            .col_expr(
+                Column::Name,
+                Expr::value(Value::String(Some(Box::from(name.to_string())))),
+            )
+            .col_expr(
+                Column::Pid,
+                Expr::value(Value::String(Some(Box::from(pid.to_string())))),
+            )
+            .col_expr(
+                Column::UpdateTime,
+                Expr::value(Value::BigInt(Some(Utc::now().timestamp()))),
+            )
+            .filter(Column::Id.eq(id))
+            .exec(db)
+            .await
+        {
+            Ok(result) => Ok(result.rows_affected),
+            Err(err) => Err(err),
+        }
+    }
+
     pub async fn list_workspace_zones(
         db: &DatabaseConnection,
         wid: &str,

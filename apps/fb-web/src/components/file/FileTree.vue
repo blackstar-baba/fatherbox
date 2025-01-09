@@ -36,8 +36,8 @@ import {
   type File,
   getAllWorkspaceFiles,
   getFileContent,
+  updateFile,
   updateFileContent,
-  updateFileName,
 } from '#/api';
 import { useWorkspaceStore } from '#/store';
 import { downloadByData } from '#/utils/file/downloadUtil';
@@ -266,9 +266,10 @@ function onSubmit(values: Record<string, any>) {
 }
 
 function onUpdateSubmit(values: Record<string, any>) {
-  updateFileName({
+  updateFile({
     id: values.id,
     name: values.name,
+    pid: values.pid,
   }).then((_: any) => {
     emits('update', {
       id: values.id as string,
@@ -281,7 +282,7 @@ function onUpdateSubmit(values: Record<string, any>) {
 
 function onCopySubmit(values: Record<string, any>) {
   copyFile({
-    fromId: values.id,
+    fromId: values.fromId,
     name: values.name,
     pid: values.pid,
   }).then((_: any) => {

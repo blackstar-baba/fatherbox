@@ -136,7 +136,6 @@ export const UPDATE_FORM_SCHEMA: any[] = [
       showSearch: false,
       treeData: [],
       treeNodeFilterProp: 'label',
-      disabled: true,
     },
     fieldName: 'pid',
     label: 'Parent',
@@ -151,7 +150,6 @@ export const COPY_FORM_SCHEMA: any[] = [
     label: 'From Id',
     hideLabel: true,
   },
-  // todo create parent tree 包含了文件
   {
     component: 'Input',
     componentProps: {
