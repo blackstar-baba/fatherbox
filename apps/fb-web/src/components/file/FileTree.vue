@@ -2,6 +2,7 @@
 import { ref, unref, watchEffect } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { cloneDeep } from '@vben/utils';
 
 import {
   DownOutlined,
@@ -206,6 +207,34 @@ const getDirTreeChildren = (key: String, map: Map<String, File[]>) => {
     });
   }
   return children;
+};
+
+const removeTreeItem = (key: String, treeItem: TreeItem) => {
+  if (treeItem && treeItem.children) {
+    const children = [];
+    for (let i = 0; i < treeItem.children.length; i++) {
+      const item = treeItem.children[i];
+      if (item) {
+        if (item.key === key) {
+          treeItem.children = treeItem.children.splice(i, 1);
+          return true;
+        } else {
+          if (item.children) {
+            children.push(...item.children);
+          }
+        }
+      }
+    }
+    for (const item of children) {
+      if (item) {
+        const result = removeTreeItem(key, item);
+        if (result) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 };
 
 const updateFileTree = () => {
@@ -490,11 +519,18 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
           pid: file?.pid,
           name: file?.name,
         });
+        let treeData = dirTreeRef.value;
+        if (file.type === FILE_TYPE_DIR) {
+          treeData = cloneDeep(dirTreeRef.value);
+          if (treeData[0]) {
+            removeTreeItem(key, treeData[0]);
+          }
+        }
         editFormApi.updateSchema([
           {
             fieldName: 'pid',
             componentProps: {
-              treeData: dirTreeRef.value,
+              treeData,
             },
           },
         ]);
