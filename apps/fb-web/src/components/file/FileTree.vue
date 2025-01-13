@@ -51,7 +51,9 @@ import {
   FILE_TYPE_DIR,
   FILE_TYPE_FILE,
   type FileContent,
+  getFileType,
   ROOT_MENU,
+  TYPE_UNKNOWN,
   UPDATE_FORM_SCHEMA,
 } from './file';
 
@@ -124,25 +126,32 @@ const onClick = async (_: any, node: any) => {
   const key = node.dataRef.key;
   const type = node.dataRef.type;
   const title = node.dataRef.title;
-  if (type === FILE_TYPE_FILE) {
-    selectedKeysRef.value = [];
-    selectedKeysRef.value.push(key);
-    fileIdRef.value = key;
-    getFileContent(key).then((content: any) => {
-      emits('open', {
-        id: key,
-        name: title,
-        type,
-        content,
+  const file = getFileByKey(key);
+  if (file) {
+    if (type === FILE_TYPE_FILE) {
+      if (getFileType(file.name) === TYPE_UNKNOWN) {
+        message.error(`can not open unknown file ${file.name}`);
+        return;
+      }
+      selectedKeysRef.value = [];
+      selectedKeysRef.value.push(key);
+      fileIdRef.value = key;
+      getFileContent(key).then((content: any) => {
+        emits('open', {
+          id: key,
+          name: title,
+          type,
+          content,
+        });
+        message.success(`open file ${title} success`);
       });
-      message.success(`open file ${title} success`);
-    });
-  } else {
-    expendedKeysRef.value = node.expanded
-      ? expendedKeysRef.value.filter((k) => k !== key)
-      : [...expendedKeysRef.value, key];
+    } else {
+      expendedKeysRef.value = node.expanded
+        ? expendedKeysRef.value.filter((k) => k !== key)
+        : [...expendedKeysRef.value, key];
+    }
+    emits('select', node.dataRef);
   }
-  emits('select', node.dataRef);
 };
 
 const onExpand = (keys: any) => {
@@ -503,22 +512,6 @@ const onContextMenuClick = (key: string, menuKey: number | string) => {
           },
         ]);
         editModalApi.open();
-      }
-      break;
-    }
-    case 'open': {
-      const file = getFileByKey(key);
-      if (file) {
-        getFileContent(key).then((content: any) => {
-          emits('open', {
-            id: file.id,
-            name: file.name,
-            content: content.toString(),
-          });
-          message.success(`open file ${file.name} success`);
-        });
-      } else {
-        message.error('can not find file');
       }
       break;
     }

@@ -223,6 +223,8 @@ export const DIR_MENU = [
 export const TYPE_MD = 'md';
 export const TYPE_IMAGE = 'image';
 
+export const TYPE_TXT = 'txt';
+
 export const TYPE_UNKNOWN = 'unknown';
 
 export const getFileExtension = (name: string) => {
@@ -235,15 +237,15 @@ export const getFileExtension = (name: string) => {
 };
 
 export const getFileType = (name: string) => {
-  const lastDotIndex = name.lastIndexOf('.');
-  let fileExtension = '';
-  if (lastDotIndex !== -1) {
-    fileExtension = name.slice(lastDotIndex + 1);
-  }
-  let fileType = 'unknown';
+  const fileExtension = getFileExtension(name);
+  let fileType = TYPE_UNKNOWN;
   switch (fileExtension) {
     case 'jpg': {
       fileType = TYPE_IMAGE;
+      break;
+    }
+    case 'json': {
+      fileType = TYPE_TXT;
       break;
     }
     case 'md': {
@@ -260,6 +262,10 @@ export const getFileType = (name: string) => {
     }
     case 'svg': {
       fileType = TYPE_IMAGE;
+      break;
+    }
+    case 'txt': {
+      fileType = TYPE_TXT;
       break;
     }
   }
