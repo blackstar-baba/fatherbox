@@ -7,8 +7,18 @@ import { Page } from '@vben/common-ui';
 
 import { Card, Col, Row, TabPane, Tabs } from 'ant-design-vue';
 
-import { type FileContent } from '#/components/file/file';
+import {
+  decodeUint8ArrayToString,
+  encodeStringToUint8Array,
+  type FileContent,
+  getFileType,
+  TYPE_IMAGE,
+  TYPE_MD,
+  uint8ArrayToImageSrc,
+} from '#/components/file/file';
 import FileTree from '#/components/file/FileTree.vue';
+import ImageView from '#/components/file/ImageView.vue';
+import TextView from '#/components/file/TextView.vue';
 import Cherry from '#/components/markdown/cherry.vue';
 
 const textRef = ref('Hello FatherBox Markdown Editor');
@@ -57,7 +67,7 @@ function importContent(content: string) {
     (k) => k.id === activeKeyRef.value,
   );
   if (existedFileContent.length > 0 && existedFileContent[0]) {
-    existedFileContent[0].content = content;
+    existedFileContent[0].content = encodeStringToUint8Array(content);
   }
 }
 
@@ -123,7 +133,17 @@ const onTabEdit = (
               :key="file.id"
               :tab="file.name"
             >
-              <Cherry v-model:file="filesRef[index]" :md-id="file.id" />
+              <template v-if="getFileType(file.name) === TYPE_MD">
+                <Cherry v-model:file="filesRef[index]" :md-id="file.id" />
+              </template>
+              <template v-else-if="getFileType(file.name) === TYPE_IMAGE">
+                <ImageView
+                  :content="uint8ArrayToImageSrc(file.name, file.content)"
+                />
+              </template>
+              <template v-else>
+                <TextView :content="decodeUint8ArrayToString(file.content)" />
+              </template>
             </TabPane>
           </Tabs>
         </Card>

@@ -18,7 +18,7 @@ pub struct CreateBody {
     pub r#type: String,
     #[serde(default = "default_zone")]
     pub zone: String,
-    pub content: Option<String>,
+    pub content: Option<Vec<u8>>,
     pub path: Option<String>,
 }
 
@@ -49,7 +49,7 @@ pub struct ListByPageBody {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateContentBody {
     pub id: String,
-    pub content: String,
+    pub content: Vec<u8>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]

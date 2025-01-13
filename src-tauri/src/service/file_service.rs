@@ -197,13 +197,13 @@ pub async fn create_file(
             let mut file = open_result.unwrap();
             let content = general_body.content.as_ref().unwrap();
             if content.len() > 0 {
-                file.write_all(content.as_bytes()).unwrap();
+                file.write_all(content).unwrap();
             }
             size = file.metadata().unwrap().len() as i64;
         } else if general_body.path.is_some() {
             // extract this
             let path = general_body.path.as_ref().unwrap();
-            fs::copy(path, file_path).unwrap();
+            copy(path, file_path).unwrap();
             size = file_path.metadata().unwrap().len() as i64;
         }
         // update file model size
@@ -245,7 +245,7 @@ pub async fn update_file_content(
     let mut file = open_result.unwrap();
     let content = &body.content;
     if content.len() > 0 {
-        file.write_all(content.as_bytes()).unwrap();
+        file.write_all(content).unwrap();
     }
     let size = file.metadata().unwrap().len() as i64;
     model.size = size;

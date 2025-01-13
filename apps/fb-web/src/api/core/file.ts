@@ -1,6 +1,6 @@
 import { useAccessStore } from '@vben/stores';
 
-import { readTextFile } from '@tauri-apps/api/fs';
+import { readBinaryFile } from '@tauri-apps/api/fs';
 import { invoke } from '@tauri-apps/api/tauri';
 import { message } from 'ant-design-vue';
 
@@ -19,7 +19,7 @@ export interface File {
 export interface FileCreateBody {
   name: string;
   pid: string;
-  content?: string;
+  content?: Uint8Array;
   path?: string;
   type: string;
 }
@@ -32,7 +32,7 @@ export interface FileCopyBody {
 
 export interface FileUpdateContentBody {
   id: string;
-  content: string;
+  content: Uint8Array;
 }
 
 export interface FileUpdateNameBody {
@@ -253,7 +253,11 @@ export async function createFile(body: FileCreateBody) {
         accessToken: accessStore.accessToken,
         args: {
           wid: workspaceStore.getId(),
-          ...body,
+          name: body.name,
+          pid: body.pid,
+          content: body.content ? [...body.content] : undefined,
+          path: body.path ?? undefined,
+          type: body.type,
         },
       }).then((msg: any) => {
         if (msg.code !== 0) {
@@ -299,7 +303,8 @@ export async function updateFileContent(body: FileUpdateContentBody) {
         accessToken: accessStore.accessToken,
         args: {
           wid: workspaceStore.getId(),
-          ...body,
+          id: body.id,
+          content: [...body.content],
         },
       }).then((msg: any) => {
         if (msg.code !== 0) {
@@ -396,18 +401,18 @@ export async function getFileContent(id: string) {
     }).then((msg: any) => {
       if (msg.code !== 0) {
         message.error(msg.message);
-        return '';
+        return new Uint8Array([]);
       }
       return msg.result as string;
     });
     if (filePath.length > 0) {
-      return readTextFile(filePath);
+      return readBinaryFile(filePath as string);
     }
     return new Promise((resolve) => {
-      resolve('');
+      resolve(new Uint8Array([]));
     });
   }
   return new Promise((resolve) => {
-    resolve('');
+    resolve(new Uint8Array([]));
   });
 }

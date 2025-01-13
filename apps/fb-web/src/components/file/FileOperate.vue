@@ -37,7 +37,11 @@ import {
 import { useWorkspaceStore } from '#/store';
 import { downloadByData } from '#/utils/file/downloadUtil';
 
-import { FILE_TYPE_DIR, FILE_TYPE_FILE } from './file';
+import {
+  encodeStringToUint8Array,
+  FILE_TYPE_DIR,
+  FILE_TYPE_FILE,
+} from './file';
 
 interface TreeItem {
   key: string;
@@ -227,7 +231,7 @@ const saveFile = async (_: any) => {
   if (fileIdRef.value) {
     updateFileContent({
       id: fileIdRef.value.toString(),
-      content: props.content,
+      content: encodeStringToUint8Array(props.content),
     }).then(() => {
       message.success('save file success');
     });

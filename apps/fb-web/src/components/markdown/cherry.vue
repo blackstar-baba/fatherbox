@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import type { FileContent } from '#/components/file/file';
-
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import { useI18n } from '@vben/locales';
 import { usePreferences } from '@vben-core/preferences';
 
 import Cherry from 'cherry-markdown';
+
+import {
+  decodeUint8ArrayToString,
+  encodeStringToUint8Array,
+  type FileContent,
+} from '#/components/file/file';
 
 import 'cherry-markdown/dist/cherry-markdown.min.css';
 
@@ -62,11 +66,11 @@ watch(
 
 watch(
   () => fileModel.value.content,
-  (content: String) => {
+  (content: Uint8Array) => {
     if (innerUpdate) {
       innerUpdate = false;
     } else {
-      cherryRef.value?.setMarkdown(content as string);
+      cherryRef.value?.setMarkdown(decodeUint8ArrayToString(content));
     }
   },
 );
@@ -98,7 +102,7 @@ watch(
 
 const afterChange = (text: string, _: string) => {
   innerUpdate = true;
-  fileModel.value.content = text;
+  fileModel.value.content = encodeStringToUint8Array(text);
 };
 
 const initMd = () => {
@@ -181,7 +185,7 @@ const initMd = () => {
         'togglePreview',
       ],
     },
-    value: fileModel.value.content,
+    value: decodeUint8ArrayToString(fileModel.value.content),
   });
 };
 

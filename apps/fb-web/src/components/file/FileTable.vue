@@ -23,7 +23,7 @@ import {
 } from '#/api';
 import LocalUpload from '#/components/file/LocalUpload.vue';
 
-import { FILE_TYPE_FILE } from './file';
+import { encodeStringToUint8Array, FILE_TYPE_FILE } from './file';
 
 interface RowType {
   category: string;
@@ -133,7 +133,9 @@ function onSubmit(values: Record<string, any>) {
     createFileApi({
       name: values.name,
       pid: pidRef.value.toString(),
-      content: values.content ?? undefined,
+      content: values.content
+        ? encodeStringToUint8Array(values.content)
+        : undefined,
       path: values.file ?? undefined,
       type: FILE_TYPE_FILE,
     }).then((file: any) => {

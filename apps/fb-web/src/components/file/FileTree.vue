@@ -17,7 +17,7 @@ import {
   ShrinkOutlined,
 } from '@ant-design/icons-vue';
 import { save as tauriSave } from '@tauri-apps/api/dialog';
-import { writeTextFile } from '@tauri-apps/api/fs';
+import { writeBinaryFile } from '@tauri-apps/api/fs';
 import {
   Button,
   Dropdown,
@@ -46,6 +46,7 @@ import {
   COPY_FORM_SCHEMA,
   CREATE_FORM_SCHEMA,
   DIR_MENU,
+  encodeStringToUint8Array,
   FILE_MENU,
   FILE_TYPE_DIR,
   FILE_TYPE_FILE,
@@ -131,8 +132,8 @@ const onClick = async (_: any, node: any) => {
       emits('open', {
         id: key,
         name: title,
-        // todo may be need byte[]
-        content: content.toString(),
+        type,
+        content,
       });
       message.success(`open file ${title} success`);
     });
@@ -255,7 +256,10 @@ function onSubmit(values: Record<string, any>) {
     name: values.name,
     pid: values.pid,
     type: values.type,
-    ...values,
+    content: values.content
+      ? encodeStringToUint8Array(values.content)
+      : undefined,
+    path: values.path ?? undefined,
   }).then((file: any) => {
     if (file.id) {
       fileIdRef.value = file.id;
@@ -427,7 +431,7 @@ const exportContent = async () => {
     if (window.__TAURI__) {
       const filePath = await tauriSave({ defaultPath: fileContent.name });
       if (filePath) {
-        await writeTextFile(filePath, fileContent.content);
+        await writeBinaryFile(filePath, fileContent.content);
       }
     } else {
       downloadByData(props.content, fileContent.name);
@@ -635,5 +639,3 @@ watchEffect(() => {
     </div>
   </DeleteModal>
 </template>
-
-<!--// todo file copy-->
