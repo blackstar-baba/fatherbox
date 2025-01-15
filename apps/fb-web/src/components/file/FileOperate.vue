@@ -141,7 +141,7 @@ function onSubmit(values: Record<string, any>) {
   createFile({
     name: values.name,
     pid: values.pid,
-    content: props.content,
+    content: encodeStringToUint8Array(props.content),
     type: FILE_TYPE_FILE,
   }).then((file: any) => {
     if (file.id) {
