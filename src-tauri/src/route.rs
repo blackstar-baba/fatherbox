@@ -17,10 +17,7 @@ use app::service::file_service::{
     get_workspace_files_by_page, get_workspace_files_by_pid, update_file, update_file_content,
     update_file_name,
 };
-use app::service::model_service::{
-    chat_request, get_chat_history_messages, get_chats, get_models, ChatRequestBody,
-    DeepChatRequestBody,
-};
+use app::service::model_service::{chat_request, get_chat_history_messages, get_chats, get_models, ChatRequestBody, DeepChatRequestBody, RequestBody as ModelRequestBody, RegenerateBody as ModelMessageRegenerateBody, EditBody as ModelMessageEditBody, chat_message_regenerate, chat_message_edit};
 use app::service::user_service::{
     get_access_codes, get_user_info, login, logout, refresh_token, register, LoginBody,
     RegisterBody,
@@ -48,6 +45,8 @@ pub async fn route_cmd(
         Ok(invoke_user_cmd(db, command, access_token, args).await)
     } else if command.starts_with("model") {
         Ok(invoke_model_cmd(db, command, access_token, args).await)
+    } else if command.starts_with("chat") {
+        Ok(invoke_chat_cmd(db, command, access_token, args).await)
     } else if command.starts_with("workspace") {
         Ok(invoke_workspace_cmd(db, command, access_token, args).await)
     } else if command.starts_with("file") {
@@ -164,11 +163,6 @@ pub async fn invoke_model_cmd(
             let response = get_chat_history_messages(body.id).await;
             to_value(&response).unwrap()
         }
-        "model_chat_request" => {
-            let body: DeepChatRequestBody = serde_json::from_value(args).unwrap();
-            let response = chat_request(body).await;
-            to_value(&response).unwrap()
-        }
         "model_chat_stream_request" => {
             // todo
             Value::Null
@@ -182,6 +176,42 @@ pub async fn invoke_model_cmd(
             "Model command not found",
         ))
         .unwrap(),
+    };
+}
+
+pub async fn invoke_chat_cmd(
+    db: &DatabaseConnection,
+    command: String,
+    access_token: Option<String>,
+    args: Value,
+) -> Value {
+    // if access_token.is_none() {
+    //     return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap()
+    // }
+    // let access_token = access_token.unwrap();
+    // let result = BASE64_STANDARD.decode(&access_token).unwrap();
+    // let user_id = String::from_utf8(result).unwrap();
+    return match command.as_str() {
+        "chat_request" => {
+            let body: ModelRequestBody = serde_json::from_value(args).unwrap();
+            let response = chat_request(body).await;
+            to_value(&response).unwrap()
+        }
+        "chat_message_regenerate" => {
+            let body: ModelMessageRegenerateBody = serde_json::from_value(args).unwrap();
+            let response = chat_message_regenerate(body).await;
+            to_value(&response).unwrap()
+        }
+        "chat_message_edit" => {
+            let body: ModelMessageEditBody = serde_json::from_value(args).unwrap();
+            let response = chat_message_edit(body).await;
+            to_value(&response).unwrap()
+        }
+        _ => to_value(&AppResponse::error(
+            None::<String>,
+            "Model command not found",
+        ))
+            .unwrap(),
     };
 }
 
