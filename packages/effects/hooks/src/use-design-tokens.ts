@@ -25,6 +25,13 @@ export function useAntdDesignTokens() {
     colorSuccess: '',
     colorTextBase: '',
     colorWarning: '',
+    colorBgHeader: '',
+  });
+
+  const components = reactive({
+    Layout: {
+      colorBgHeader: '',
+    },
   });
 
   const getCssVariableValue = (variable: string, isColor: boolean = true) => {
@@ -62,14 +69,21 @@ export function useAntdDesignTokens() {
       // 1rem = 16px
       tokens.borderRadius = radius * 16;
 
-      tokens.colorBgLayout = getCssVariableValue('--background-deep');
+      // tokens.colorBgLayout = getCssVariableValue('--background-deep');
       tokens.colorBgMask = getCssVariableValue('--overlay');
+      tokens.colorBgHeader = getCssVariableValue('--background-deep');
+
+      // components
+      components.Layout = {
+        colorBgHeader: getCssVariableValue('--background-deep'),
+      };
     },
     { immediate: true },
   );
 
   return {
     tokens,
+    components,
   };
 }
 

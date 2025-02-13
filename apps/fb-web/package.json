@@ -33,6 +33,7 @@
     "@logicflow/vue-node-registry": "catalog:",
     "@vben-core/preferences": "workspace:*",
     "@vben-core/shadcn-ui": "workspace:*",
+    "@vben-core/shared": "workspace:*",
     "@vben/access": "workspace:*",
     "@vben/common-ui": "workspace:*",
     "@vben/constants": "workspace:*",
@@ -47,21 +48,29 @@
     "@vben/styles": "workspace:*",
     "@vben/types": "workspace:*",
     "@vben/utils": "workspace:*",
+    "@vscode/markdown-it-katex": "catalog:",
     "@vueuse/core": "catalog:",
     "ant-design-vue": "catalog:",
     "cherry-markdown": "catalog:",
     "crypto-js": "catalog:",
     "dayjs": "catalog:",
-    "deep-chat": "catalog:",
+    "markdown-it": "catalog:",
+    "markdown-it-link-attributes": "catalog:",
+    "mermaid-it-markdown": "catalog:",
     "pinia": "catalog:",
     "roughjs": "catalog:",
     "uuid": "catalog:",
     "vue": "catalog:",
-    "vue-router": "catalog:"
+    "vue-router": "catalog:",
+    "@iconify/vue": "catalog:",
+    "highlight.js": "catalog:",
+    "html-to-image": "catalog:"
   },
   "devDependencies": {
     "@tauri-apps/api": "catalog:",
     "@types/crypto-js": "catalog:",
+    "@types/markdown-it": "catalog:",
+    "@types/markdown-it-link-attributes": "catalog:",
     "@types/uuid": "catalog:"
   }
 }

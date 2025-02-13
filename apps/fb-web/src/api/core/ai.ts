@@ -1,18 +1,13 @@
+import { useAccessStore } from '@vben/stores';
+
 import { invoke } from '@tauri-apps/api/tauri';
 
-export interface DeepChatRequestMessage {
+export interface ChatMessage {
   role: string;
-  text: string;
-}
-
-export interface DeepChatRequestBody {
-  messages: DeepChatRequestMessage[];
-  model: string;
-  stream: boolean;
-}
-
-export interface DeepChatTextResponse {
-  text: string;
+  content: string;
+  error?: boolean;
+  loading: boolean;
+  time?: string;
 }
 
 export interface Model {
@@ -30,32 +25,24 @@ export interface ModelData {
 export interface ChatInfo {
   id: string;
   name: string;
+  created_at: string;
+  oldName?: string;
+  isEdit: boolean;
 }
-/**
- * 获取用户信息
- */
-export async function chatRequest(body: DeepChatRequestBody) {
-  return window.__TAURI__
-    ? invoke('route_cmd', {
-        command: 'model_chat_request',
-        args: {
-          ...body,
-        },
-      }).then((message: any) => {
-        return message as DeepChatTextResponse;
-      })
-    : new Promise((resolve) => {
-        const response: DeepChatTextResponse = {
-          text: 'Sorry, this can used in app mode only.',
-        };
-        resolve(response);
-      });
+
+export interface MessageResponse {
+  id: string;
+  index: number;
+  text?: string;
+  error?: string;
 }
 
 export async function getModels() {
+  const accessStore = useAccessStore();
   return window.__TAURI__
     ? invoke('route_cmd', {
         command: 'model_get_models',
+        accessToken: accessStore.accessToken,
         args: {},
       }).then((message: any) => {
         return message as ModelData;
@@ -69,29 +56,167 @@ export async function getModels() {
 }
 
 export async function getChats() {
+  const accessStore = useAccessStore();
   return window.__TAURI__
     ? invoke('route_cmd', {
-        command: 'model_get_chats',
+        command: 'chat_list',
+        accessToken: accessStore.accessToken,
         args: {},
       }).then((message: any) => {
         return message as ChatInfo[];
       })
-    : new Promise((resolve) => {
+    : new Promise<ChatInfo[]>((resolve) => {
         const response: ChatInfo[] = [];
         resolve(response);
       });
 }
 
-export async function getChatHistoryMessages(id: string) {
+export async function updateChatName(params: { id: string; name: string }) {
+  const accessStore = useAccessStore();
   return window.__TAURI__
     ? invoke('route_cmd', {
-        command: 'model_get_chat_history_messages',
-        args: { id },
+        command: 'chat_update_name',
+        accessToken: accessStore.accessToken,
+        args: {
+          ...params,
+        },
       }).then((message: any) => {
-        return message as DeepChatRequestMessage[];
+        return message as ChatInfo;
       })
-    : new Promise((resolve) => {
-        const response: DeepChatRequestMessage[] = [];
+    : new Promise<ChatInfo>((resolve) => {
+        // todo use http client replace this
+        resolve({
+          ...params,
+        } as ChatInfo);
+      });
+}
+
+export async function createChat(params: { name: string }) {
+  const accessStore = useAccessStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'chat_create',
+        accessToken: accessStore.accessToken,
+        args: {
+          ...params,
+        },
+      }).then((message: any) => {
+        return message as ChatInfo;
+      })
+    : new Promise<ChatInfo>((resolve: any) => {
+        // todo use http client replace this
+        resolve({
+          id: '',
+          name: '',
+          created_at: '',
+        } as ChatInfo);
+      });
+}
+export async function deleteChat(params: { id: string }) {
+  const accessStore = useAccessStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'chat_delete',
+        accessToken: accessStore.accessToken,
+        args: {
+          ...params,
+        },
+      }).then(() => {
+        return {};
+      })
+    : new Promise<any>((resolve) => {
+        // todo use http client replace this
+        resolve({});
+      });
+}
+
+export async function getChatMessages(params: { id: string }) {
+  const accessStore = useAccessStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'chat_message_list',
+        accessToken: accessStore.accessToken,
+        args: { ...params },
+      }).then((message: any) => {
+        return message as ChatMessage[];
+      })
+    : new Promise<ChatMessage[]>((resolve) => {
+        const response: ChatMessage[] = [];
         resolve(response);
       });
+}
+
+// todo
+// 思考过程
+
+export async function fetchChatAPIProcessNew(params: {
+  id: string;
+  model: string;
+  onDownloadProgress?: (data: any) => void;
+  parentMessageId?: number;
+  prompt: string;
+}) {
+  const accessStore = useAccessStore();
+  invoke('route_cmd', {
+    command: 'chat_message_request',
+    accessToken: accessStore.accessToken,
+    args: {
+      id: params.id,
+      prompt: params.prompt,
+      model: params.model,
+      stream: false,
+    },
+  }).then((response: any) => {
+    if (params.onDownloadProgress) {
+      params.onDownloadProgress(response.text ?? response.error);
+    }
+  });
+}
+
+export async function regenerateMessage(params: {
+  id: string;
+  index: number;
+  model: string;
+  onDownloadProgress?: (data: any) => void;
+}) {
+  const accessStore = useAccessStore();
+  invoke('route_cmd', {
+    command: 'chat_message_regenerate',
+    accessToken: accessStore.accessToken,
+    args: {
+      id: params.id,
+      index: params.index,
+      model: params.model,
+      stream: false,
+    },
+  }).then((response: any) => {
+    if (params.onDownloadProgress) {
+      params.onDownloadProgress(response.text ?? response.error);
+    }
+  });
+}
+
+export async function editMessage(params: {
+  id: string;
+  index: number;
+  model: string;
+  onDownloadProgress?: (data: any) => void;
+  prompt: string;
+}) {
+  const accessStore = useAccessStore();
+  invoke('route_cmd', {
+    command: 'chat_message_edit',
+    accessToken: accessStore.accessToken,
+    args: {
+      id: params.id,
+      index: params.index,
+      prompt: params.prompt,
+      model: params.model,
+      stream: false,
+    },
+  }).then((response: any) => {
+    if (params.onDownloadProgress) {
+      params.onDownloadProgress(response.text ?? response.error);
+    }
+  });
 }

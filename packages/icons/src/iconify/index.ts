@@ -15,3 +15,19 @@ export const MdiQqchat = createIconifyIcon('mdi:qqchat');
 export const LucideInfo = createIconifyIcon('lucide:info');
 
 export const BiPersonWorkspace = createIconifyIcon('bi:person-workspace');
+
+export const RiDeleteBinLine = createIconifyIcon('ri:delete-bin-line');
+
+export const RiDownload2Line = createIconifyIcon('ri:download-2-line');
+
+export const RiChatHistoryLine = createIconifyIcon('ri:chat-history-line');
+
+export const RiSendPlaneFill = createIconifyIcon('ri:send-plane-fill');
+
+export const RiCloseCircleFill = createIconifyIcon('ri:close-circle-line');
+
+export const RiStopCircleFill = createIconifyIcon('ri:stop-circle-line');
+
+export const RiMessage3Line = createIconifyIcon('ri:message-3-line');
+
+export const RiBubbleChartFill = createIconifyIcon('ri:bubble-chart-fill');
