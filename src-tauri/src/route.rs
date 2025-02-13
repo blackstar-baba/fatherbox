@@ -17,7 +17,14 @@ use app::service::file_service::{
     get_workspace_files_by_page, get_workspace_files_by_pid, update_file, update_file_content,
     update_file_name,
 };
-use app::service::model_service::{chat_request, get_chat_history_messages, get_chats, get_models, ChatRequestBody, DeepChatRequestBody, RequestBody as ModelRequestBody, RegenerateBody as ModelMessageRegenerateBody, EditBody as ModelMessageEditBody, chat_message_regenerate, chat_message_edit};
+use app::service::chat_service::{
+    create as chat_create, delete as chat_delete, list as chat_list, message_edit as chat_message_edit, message_list as chat_message_list,
+    message_regenerate  as chat_message_regenerate,
+    message_request as chat_message_request, update_name as chat_update_name, model_list as chat_model_list,
+    RequestBody as ChatRequestBody, CommonBody as ChatCommonBody, EditBody as ModelMessageEditBody,
+    RegenerateBody as ModelMessageRegenerateBody, RequestBody as ModelRequestBody,
+    CreateBody as ChatCreateBody, UpdateNameBody as ChatUpdateNameBody
+};
 use app::service::user_service::{
     get_access_codes, get_user_info, login, logout, refresh_token, register, LoginBody,
     RegisterBody,
@@ -143,24 +150,24 @@ pub async fn invoke_model_cmd(
     access_token: Option<String>,
     args: Value,
 ) -> Value {
-    // if access_token.is_none() {
-    //     return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap()
-    // }
-    // let access_token = access_token.unwrap();
-    // let result = BASE64_STANDARD.decode(&access_token).unwrap();
-    // let user_id = String::from_utf8(result).unwrap();
+    if access_token.is_none() {
+        return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap()
+    }
+    let access_token = access_token.unwrap();
+    let result = BASE64_STANDARD.decode(&access_token).unwrap();
+    let user_id = String::from_utf8(result).unwrap();
     return match command.as_str() {
         "model_get_models" => {
-            let response = get_models().await;
+            let response = chat_model_list().await;
             to_value(&response).unwrap()
         }
         "model_get_chats" => {
-            let response = get_chats().await;
+            let response = chat_list(&user_id).await;
             to_value(&response).unwrap()
         }
         "model_get_chat_history_messages" => {
             let body: ChatRequestBody = serde_json::from_value(args).unwrap();
-            let response = get_chat_history_messages(body.id).await;
+            let response = chat_message_list(&user_id, &body.id).await;
             to_value(&response).unwrap()
         }
         "model_chat_stream_request" => {
@@ -185,33 +192,61 @@ pub async fn invoke_chat_cmd(
     access_token: Option<String>,
     args: Value,
 ) -> Value {
-    // if access_token.is_none() {
-    //     return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap()
-    // }
-    // let access_token = access_token.unwrap();
-    // let result = BASE64_STANDARD.decode(&access_token).unwrap();
-    // let user_id = String::from_utf8(result).unwrap();
+    if access_token.is_none() {
+        return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap();
+    }
+    let access_token = access_token.unwrap();
+    let result = BASE64_STANDARD.decode(&access_token).unwrap();
+    let user_id = String::from_utf8(result).unwrap();
     return match command.as_str() {
-        "chat_request" => {
+        "chat_list" => {
+            let response = chat_list(&user_id).await;
+            to_value(&response).unwrap()
+        }
+        "chat_create" => {
+            let body: ChatCreateBody = serde_json::from_value(args).unwrap();
+            let response = chat_create(&user_id, &body).await;
+            to_value(&response).unwrap()
+        }
+        "chat_delete" => {
+            let body: ChatCommonBody = serde_json::from_value(args).unwrap();
+            let response = chat_delete(&user_id, &body.id).await;
+            to_value(&response).unwrap()
+        }
+        "chat_update_name" => {
+            let body: ChatUpdateNameBody = serde_json::from_value(args).unwrap();
+            let response = chat_update_name(&user_id, &body).await;
+            to_value(&response).unwrap()
+        }
+        "chat_model_list" => {
+            let response = chat_model_list().await;
+            to_value(&response).unwrap()
+        }
+        "chat_message_list" => {
+            let body: ChatCommonBody = serde_json::from_value(args).unwrap();
+            let response = chat_message_list(&user_id, &body.id).await;
+            to_value(&response).unwrap()
+        }
+        "chat_message_request" => {
             let body: ModelRequestBody = serde_json::from_value(args).unwrap();
-            let response = chat_request(body).await;
+            let response = chat_message_request(&body).await;
             to_value(&response).unwrap()
         }
         "chat_message_regenerate" => {
             let body: ModelMessageRegenerateBody = serde_json::from_value(args).unwrap();
-            let response = chat_message_regenerate(body).await;
+            let response = chat_message_regenerate(&body).await;
             to_value(&response).unwrap()
         }
         "chat_message_edit" => {
             let body: ModelMessageEditBody = serde_json::from_value(args).unwrap();
-            let response = chat_message_edit(body).await;
+            let response = chat_message_edit(&body).await;
             to_value(&response).unwrap()
         }
         _ => to_value(&AppResponse::error(
             None::<String>,
-            "Model command not found",
+            "Chat command not found",
         ))
-            .unwrap(),
+        .unwrap(),
     };
 }
 
