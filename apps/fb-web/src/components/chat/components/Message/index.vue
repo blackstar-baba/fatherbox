@@ -86,7 +86,7 @@ function handleCopy() {
     </div>
     <div
       :class="[inversion ? 'items-end' : 'items-start']"
-      class="overflow-hidden text-sm"
+      class="overflow-hidden"
     >
       <p
         :class="[inversion ? 'text-right' : 'text-left']"

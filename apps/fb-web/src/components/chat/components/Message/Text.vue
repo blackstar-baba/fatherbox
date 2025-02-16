@@ -8,8 +8,7 @@ import MdLinkAttributes from 'markdown-it-link-attributes';
 import MdMermaid from 'mermaid-it-markdown';
 
 import { $t } from '#/locales';
-
-// import { copyToClip } from '@/utils/copy'
+import { copy } from '#/utils';
 
 interface Props {
   inversion?: boolean;
@@ -79,13 +78,7 @@ function addCopyEvents() {
       btn.addEventListener('click', () => {
         const code = btn.parentElement?.nextElementSibling?.textContent;
         if (code) {
-          // todo
-          // copyToClip(code).then(() => {
-          //   btn.textContent = t('chat.message.copied');
-          //   setTimeout(() => {
-          //     btn.textContent = t('chat.message.copyCode');
-          //   }, 1000);
-          // });
+          copy(code);
         }
       });
     });
@@ -153,9 +146,8 @@ onUnmounted(() => {
           v-if="!asRawText"
           :class="{ 'markdown-body-generate': loading }"
           class="markdown-body"
-        >
-          {{ text }}
-        </div>
+          v-html="text"
+        ></div>
         <div v-else class="whitespace-pre-wrap" v-text="text"></div>
       </div>
       <div v-else class="whitespace-pre-wrap" v-text="text"></div>
@@ -164,5 +156,7 @@ onUnmounted(() => {
 </template>
 
 <style lang="less">
+@import url(./github-markdown.less);
+@import url(./highlight.less);
 @import url(./style.less);
 </style>

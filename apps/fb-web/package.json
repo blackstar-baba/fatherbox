@@ -28,6 +28,7 @@
   "dependencies": {
     "@ant-design/icons-vue": "catalog:",
     "@ckpack/vue-color": "catalog:",
+    "@iconify/vue": "catalog:",
     "@logicflow/core": "catalog:",
     "@logicflow/extension": "catalog:",
     "@logicflow/vue-node-registry": "catalog:",
@@ -54,6 +55,8 @@
     "cherry-markdown": "catalog:",
     "crypto-js": "catalog:",
     "dayjs": "catalog:",
+    "highlight.js": "catalog:",
+    "html-to-image": "catalog:",
     "markdown-it": "catalog:",
     "markdown-it-link-attributes": "catalog:",
     "mermaid-it-markdown": "catalog:",
@@ -61,10 +64,7 @@
     "roughjs": "catalog:",
     "uuid": "catalog:",
     "vue": "catalog:",
-    "vue-router": "catalog:",
-    "@iconify/vue": "catalog:",
-    "highlight.js": "catalog:",
-    "html-to-image": "catalog:"
+    "vue-router": "catalog:"
   },
   "devDependencies": {
     "@tauri-apps/api": "catalog:",
