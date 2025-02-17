@@ -1,11 +1,20 @@
 <script lang="ts" setup>
-import { onMounted } from 'vue';
+import { computed, onMounted, type StyleValue } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT } from '@vben-core/shared/constants';
 
 import { Card } from 'ant-design-vue';
 
 import Chat from '#/components/chat/index.vue';
+
+const contentStyle = computed<StyleValue>(() => {
+  return {
+    width: '100%',
+    height: `calc(var(${CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT}) - 180px)`,
+    overflowY: 'auto',
+  };
+});
 
 onMounted(() => {});
 </script>
@@ -25,7 +34,7 @@ onMounted(() => {});
       </div>
     </template>
     <Card :bordered="false">
-      <div class="my-2" style="width: 100%; height: 450px">
+      <div :style="contentStyle" class="my-2">
         <Chat />
       </div>
     </Card>
