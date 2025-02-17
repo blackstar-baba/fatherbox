@@ -8,7 +8,9 @@ import {
 } from '@ant-design/icons-vue';
 import { Button } from 'ant-design-vue';
 
+import { type File, getAllWorkspaceFiles } from '#/api';
 import LocalUpload from '#/components/file/LocalUpload.vue';
+import { useWorkspaceStore } from '#/store';
 
 export const FILE_TYPE_DIR = 'dir';
 export const FILE_TYPE_FILE = 'file';
@@ -21,6 +23,15 @@ export interface FileContent {
   name: string;
   type?: string;
   content: Uint8Array;
+}
+
+interface TreeItem {
+  key: string;
+  value: string;
+  title: string;
+  pkey?: string;
+  children?: TreeItem[];
+  disabled?: boolean;
 }
 
 export const CREATE_FORM_SCHEMA: any[] = [
@@ -287,4 +298,46 @@ export const uint8ArrayToImageSrc = (name: string, content: Uint8Array) => {
   // 创建一个指向Blob内容的URL
   // 返回创建的URL
   return URL.createObjectURL(blob);
+};
+
+const getTreeChildren = (key: string, map: Map<string, File[]>) => {
+  const children: TreeItem[] = [];
+  const value = map.get(key);
+  if (value) {
+    value.forEach((element: File) => {
+      children.push({
+        key: element.id,
+        value: element.id,
+        title: element.name,
+        pkey: element.pid,
+        children: getTreeChildren(element.id, map),
+      });
+    });
+  }
+  return children;
+};
+
+export const getFileTree = async () => {
+  const workspaceStore = useWorkspaceStore();
+  const curWorkspace = workspaceStore.getWorkspace();
+  if (!curWorkspace) {
+    return;
+  }
+  const files = await getAllWorkspaceFiles(FILE_TYPE_DIR);
+  const map: Map<string, File[]> = new Map();
+  const root: TreeItem = {
+    key: curWorkspace.id,
+    value: curWorkspace.id,
+    title: `${curWorkspace.name} (workspace)`,
+  };
+  files.forEach((file: File) => {
+    let values = map.get(file.pid);
+    if (!values) {
+      values = [];
+    }
+    values.push(file);
+    map.set(file.pid, values);
+  });
+  root.children = getTreeChildren(root.key, map);
+  return root;
 };

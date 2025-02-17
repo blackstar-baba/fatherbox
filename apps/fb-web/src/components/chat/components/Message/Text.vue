@@ -1,12 +1,22 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, onUpdated, ref } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
+
 import MdKatex from '@vscode/markdown-it-katex';
+import { message } from 'ant-design-vue';
 import hljs from 'highlight.js';
 import MarkdownIt from 'markdown-it';
 import MdLinkAttributes from 'markdown-it-link-attributes';
 import MdMermaid from 'mermaid-it-markdown';
 
+import { useVbenForm } from '#/adapter';
+import { createFile as createFileApi } from '#/api';
+import {
+  encodeStringToUint8Array,
+  FILE_TYPE_FILE,
+  getFileTree,
+} from '#/components/file/file';
 import { $t } from '#/locales';
 import { copy } from '#/utils';
 
@@ -68,17 +78,115 @@ const text = computed(() => {
 });
 
 function highlightBlock(str: string, lang?: string) {
-  return `<pre class="code-block-wrapper"><div class="code-block-header"><span class="code-block-header__lang">${lang}</span><span class="code-block-header__copy">${$t('chat.message.copy')}</span></div><code class="max-w-[1000px] hljs code-block-body ${lang}">${str}</code></pre>`;
+  return `<pre class="code-block-wrapper"><div class="code-block-header"><span class="code-block-header__lang">${lang}</span><span><span class="code-block-header__copy">${$t('chat.message.copy')}</span><span class="code-block-header__save ml-2">${$t('chat.message.save')}</span></span></div><code class="max-w-[1000px] hljs code-block-body ${lang}">${str}</code></pre>`;
 }
+
+function onSubmit(values: Record<string, any>) {
+  createFileApi({
+    name: values.name,
+    pid: values.pid,
+    content: values.content
+      ? encodeStringToUint8Array(values.content)
+      : undefined,
+    path: values.file ?? undefined,
+    type: FILE_TYPE_FILE,
+  }).then((file: any) => {
+    if (file.id) {
+      message.success('save file success');
+    }
+  });
+}
+
+const [createForm, createFormApi] = useVbenForm({
+  handleSubmit: onSubmit,
+  schema: [
+    {
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入',
+      },
+      fieldName: 'name',
+      label: 'Name',
+      rules: 'required',
+    },
+    {
+      component: 'TreeSelect',
+      componentProps: {
+        class: 'w-full',
+        allowClear: false,
+        placeholder: '请选择',
+        showSearch: false,
+        treeData: [],
+        treeNodeFilterProp: 'label',
+      },
+      fieldName: 'pid',
+      label: 'Parent',
+    },
+    {
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入内容',
+      },
+      fieldName: 'content',
+      label: 'Content',
+    },
+  ],
+  showDefaultActions: false,
+});
+
+const [CreateModal, createModalApi] = useVbenModal({
+  onCancel() {
+    createModalApi.close();
+  },
+  onConfirm: async () => {
+    await createFormApi.validateAndSubmitForm();
+    createModalApi.close();
+  },
+});
 
 function addCopyEvents() {
   if (textRef.value) {
     const copyBtn = textRef.value.querySelectorAll('.code-block-header__copy');
     copyBtn.forEach((btn) => {
       btn.addEventListener('click', () => {
-        const code = btn.parentElement?.nextElementSibling?.textContent;
+        const code =
+          btn.parentElement?.parentElement?.nextElementSibling?.textContent;
         if (code) {
           copy(code);
+        }
+      });
+    });
+  }
+}
+
+function addSaveEvents() {
+  if (textRef.value) {
+    const saveButton = textRef.value.querySelectorAll(
+      '.code-block-header__save',
+    );
+    saveButton.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const content =
+          btn.parentElement?.parentElement?.nextElementSibling?.textContent;
+        if (content) {
+          const fileTree = await getFileTree();
+          // todo can throw error
+          if (fileTree) {
+            createFormApi.updateSchema([
+              {
+                fieldName: 'pid',
+                componentProps: {
+                  treeData: [fileTree],
+                  disabled: false,
+                },
+              },
+            ]);
+            createFormApi.setValues({
+              content,
+              pid: fileTree?.value,
+            });
+            createModalApi.open();
+          }
         }
       });
     });
@@ -89,6 +197,16 @@ function removeCopyEvents() {
   if (textRef.value) {
     const copyBtn = textRef.value.querySelectorAll('.code-block-header__copy');
     copyBtn.forEach((btn) => {
+      // eslint-disable-next-line unicorn/no-invalid-remove-event-listener
+      btn.removeEventListener('click', () => {});
+    });
+  }
+}
+
+function removeSaveEvents() {
+  if (textRef.value) {
+    const saveBtn = textRef.value.querySelectorAll('.code-block-header__save');
+    saveBtn.forEach((btn) => {
       // eslint-disable-next-line unicorn/no-invalid-remove-event-listener
       btn.removeEventListener('click', () => {});
     });
@@ -127,14 +245,14 @@ function escapeBrackets(text: string) {
 
 onMounted(() => {
   addCopyEvents();
+  addSaveEvents();
 });
 
-onUpdated(() => {
-  addCopyEvents();
-});
+onUpdated(() => {});
 
 onUnmounted(() => {
   removeCopyEvents();
+  removeSaveEvents();
 });
 </script>
 
@@ -153,6 +271,9 @@ onUnmounted(() => {
       <div v-else class="whitespace-pre-wrap" v-text="text"></div>
     </div>
   </div>
+  <CreateModal>
+    <createForm />
+  </CreateModal>
 </template>
 
 <style lang="less">

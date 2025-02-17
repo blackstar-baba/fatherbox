@@ -20,6 +20,7 @@
     "placeholder": "我能帮助你什么",
     "stopResponding": "停止响应",
     "notFound": "找不到消息",
+    "save": "保存",
     "wrong": "获取消息失败"
   }
 }

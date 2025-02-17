@@ -20,6 +20,7 @@
     "placeholder": "how can i help you?",
     "stopResponding": "stop responding",
     "notFound": "message not found",
+    "save": "save",
     "wrong": "get message failed"
   }
 }
