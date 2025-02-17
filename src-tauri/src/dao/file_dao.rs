@@ -7,7 +7,7 @@ use sea_orm::{
 
 use crate::dto::file_dto::{ListByPageBody, ListByPidBody, ListGeneralBody, PageResult};
 use crate::entity::file::{
-    ActiveModel as FileActiveModel, Column, Entity as File, Model as FileModel, Model,
+    ActiveModel as FileActiveModel, Column, Entity as File, Model as FileModel,
 };
 
 pub struct FileService;
@@ -20,7 +20,7 @@ impl FileService {
         file.insert(db).await
     }
 
-    pub async fn get_file(db: &DatabaseConnection, id: &str) -> Result<Option<Model>, DbErr> {
+    pub async fn get_file(db: &DatabaseConnection, id: &str) -> Result<Option<FileModel>, DbErr> {
         File::find().filter(Column::Id.eq(id)).one(db).await
     }
 
