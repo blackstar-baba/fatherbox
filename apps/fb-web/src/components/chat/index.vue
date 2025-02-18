@@ -346,7 +346,6 @@ onUnmounted(() => {});
                     <Message
                       v-for="(item, index) of chatMessagesRef"
                       :key="index"
-                      :date-time="item.time"
                       :error="item.error"
                       :inversion="item.role === 'user'"
                       :loading="item.loading"

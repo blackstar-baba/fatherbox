@@ -18,7 +18,6 @@ import AvatarComponent from './Avatar.vue';
 import TextComponent from './Text.vue';
 
 interface Props {
-  dateTime?: string;
   text: string;
   inversion?: boolean;
   error?: boolean;
@@ -88,12 +87,6 @@ function handleCopy() {
       :class="[inversion ? 'items-end' : 'items-start']"
       class="overflow-hidden"
     >
-      <p
-        :class="[inversion ? 'text-right' : 'text-left']"
-        class="text-xs text-[#b4bbc4]"
-      >
-        {{ dateTime }}
-      </p>
       <div
         :class="[inversion ? 'flex-row-reverse' : 'flex-row']"
         class="mt-2 flex items-end gap-1 p-3"

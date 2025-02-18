@@ -7,7 +7,6 @@ export interface ChatMessage {
   content: string;
   error?: boolean;
   loading: boolean;
-  time?: string;
 }
 
 export interface Model {
