@@ -89,7 +89,7 @@ function handleCopy() {
     >
       <div
         :class="[inversion ? 'flex-row-reverse' : 'flex-row']"
-        class="mt-2 flex items-end gap-1 p-3"
+        class="flex items-end pb-3"
       >
         <TextComponent
           v-if="!isEditRef"

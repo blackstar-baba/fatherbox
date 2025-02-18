@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, type Ref, ref } from 'vue';
+import { onMounted, onUnmounted, type Ref, ref, watchEffect } from 'vue';
 
 import { LucideInfo, RiStopCircleFill } from '@vben/icons';
 
@@ -52,11 +52,6 @@ const chatInfosRef = ref<ChatInfo[]>([]);
 const workspaceStore = useWorkspaceStore();
 
 // todo we need store to cache message
-// todo 什么时候cache，cache什么时候消失
-// const db = window.indexedDB.open('chat', 1);
-// db.transaction('messages', 'readwrite');
-// const store = transaction.objectStore('users');
-// store.put({ id: 1, name: 'chat-test', age: 25 });
 const chatMessagesRef = ref<ChatMessage[]>([]);
 
 const collapsedRef = ref<boolean>(false);
@@ -240,9 +235,6 @@ function handleStop() {
 }
 
 onMounted(async () => {
-  chatInfosRef.value = await getChats({
-    wid: workspaceStore.getId() ?? '',
-  });
   scrollToBottom();
   if (inputRef.value) inputRef.value?.focus();
   // get models
@@ -263,22 +255,14 @@ onMounted(async () => {
 
 onUnmounted(() => {});
 
-// watch(
-//   () => chatStore.getActive(),
-//   (value) => {
-//     if (value) {
-//       uuidRef.value = value;
-//       chatMessagesRef.value = chatStore.getChatMessages(+uuidRef.value);
-//       conversationsRef.value = chatMessagesRef.value.filter(
-//         (item) => !item.inversion && !!item.conversationOptions,
-//       );
-//     } else {
-//       uuidRef.value = -1;
-//       chatMessagesRef.value = [];
-//       conversationsRef.value = [];
-//     }
-//   },
-// );
+watchEffect(async () => {
+  const wid = workspaceStore.getId();
+  if (wid) {
+    chatInfosRef.value = await getChats({
+      wid,
+    });
+  }
+});
 </script>
 
 <template>

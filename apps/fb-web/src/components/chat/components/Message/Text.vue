@@ -55,13 +55,13 @@ mdi
 
 const wrapClass = computed(() => {
   return [
-    'p-2',
+    'pt-2 pb-2 pl-3 pr-3',
     'text-wrap',
     'min-w-[20px]',
     'max-w-[1000px]',
     'rounded-md',
     props.inversion ? 'bg-[#f4f6f8]' : '',
-    'dark:bg-[#1e1e1e]',
+    props.inversion ? 'dark:bg-[#414158]' : '',
     props.inversion ? 'message-request' : 'message-reply',
     { 'text-red-500': props.error },
   ];
