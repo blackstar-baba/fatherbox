@@ -28,13 +28,14 @@ import {
   type ChatMessage,
   createChat,
   editMessage,
-  fetchChatAPIProcessNew,
+  fetchChatAPIProcess,
   getChatMessages,
   getChats,
   getModels,
   regenerateMessage,
 } from '#/api';
 import { $t } from '#/locales';
+import { useWorkspaceStore } from '#/store';
 
 import { History, Input, Message } from './components';
 import { useScroll } from './hooks/useScroll';
@@ -47,6 +48,8 @@ const templatesRef = ref<SelectProps['options']>([]);
 const templateRef = ref('');
 const activeIdRef = ref<null | string>(null);
 const chatInfosRef = ref<ChatInfo[]>([]);
+
+const workspaceStore = useWorkspaceStore();
 
 // todo we need store to cache message
 // todo 什么时候cache，cache什么时候消失
@@ -66,7 +69,7 @@ async function handleSelect(id: null | string) {
     chatMessagesRef.value = [];
     return;
   }
-  chatMessagesRef.value = (await getChatMessages({ id })) as ChatMessage[];
+  chatMessagesRef.value = await getChatMessages({ id });
 }
 
 async function handleSubmit(value: string) {
@@ -80,12 +83,20 @@ async function onConversation(message: string) {
   let currentUuid = activeIdRef.value;
   // create new chat
   if (currentUuid === null) {
-    const chatInfo = await createChat({ name: message.slice(0, 20) });
-    chatInfosRef.value.push(chatInfo);
-    currentUuid = chatInfo.id;
-    activeIdRef.value = currentUuid;
+    const currWorkspace = workspaceStore.getWorkspace();
+    if (currWorkspace) {
+      const chatInfo = await createChat({
+        name: message.slice(0, 20),
+        wid: currWorkspace.id,
+      });
+      chatInfosRef.value.push(chatInfo);
+      currentUuid = chatInfo.id;
+      activeIdRef.value = currentUuid;
+    }
   }
-
+  if (currentUuid === null) {
+    return;
+  }
   // add user message & think system message
   chatMessagesRef.value.push(
     {
@@ -101,7 +112,7 @@ async function onConversation(message: string) {
   );
   scrollToBottom();
   // request
-  await fetchChatAPIProcessNew({
+  await fetchChatAPIProcess({
     id: currentUuid,
     prompt: message,
     model: modelRef.value,
@@ -229,7 +240,9 @@ function handleStop() {
 }
 
 onMounted(async () => {
-  chatInfosRef.value = await getChats();
+  chatInfosRef.value = await getChats({
+    wid: workspaceStore.getId() ?? '',
+  });
   scrollToBottom();
   if (inputRef.value) inputRef.value?.focus();
   // get models

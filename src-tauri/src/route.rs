@@ -21,8 +21,8 @@ use app::service::chat_service::{
     create as chat_create, delete as chat_delete, list as chat_list, message_edit as chat_message_edit, message_list as chat_message_list,
     message_regenerate  as chat_message_regenerate,
     message_request as chat_message_request, update_name as chat_update_name, model_list as chat_model_list,
-    RequestBody as ChatRequestBody, CommonBody as ChatCommonBody, EditBody as ModelMessageEditBody,
-    RegenerateBody as ModelMessageRegenerateBody, RequestBody as ModelRequestBody,
+    ListBody as ChatListBody, CommonBody as ChatCommonBody, EditBody as ModelMessageEditBody,
+    RegenerateBody as ModelMessageRegenerateBody, RequestBody as ChatRequestBody,
     CreateBody as ChatCreateBody, UpdateNameBody as ChatUpdateNameBody
 };
 use app::service::user_service::{
@@ -50,10 +50,8 @@ pub async fn route_cmd(
     let user_path = &state.user_path;
     return if command.starts_with("user") {
         Ok(invoke_user_cmd(db, command, access_token, args).await)
-    } else if command.starts_with("model") {
-        Ok(invoke_model_cmd(db, command, access_token, args).await)
-    } else if command.starts_with("chat") {
-        Ok(invoke_chat_cmd(db, command, access_token, args).await)
+    }  else if command.starts_with("chat") {
+        Ok(invoke_chat_cmd(db, user_path, command, access_token, args).await)
     } else if command.starts_with("workspace") {
         Ok(invoke_workspace_cmd(db, command, access_token, args).await)
     } else if command.starts_with("file") {
@@ -144,50 +142,9 @@ pub async fn invoke_user_cmd(
     };
 }
 
-pub async fn invoke_model_cmd(
-    db: &DatabaseConnection,
-    command: String,
-    access_token: Option<String>,
-    args: Value,
-) -> Value {
-    if access_token.is_none() {
-        return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap()
-    }
-    let access_token = access_token.unwrap();
-    let result = BASE64_STANDARD.decode(&access_token).unwrap();
-    let user_id = String::from_utf8(result).unwrap();
-    return match command.as_str() {
-        "model_get_models" => {
-            let response = chat_model_list().await;
-            to_value(&response).unwrap()
-        }
-        "model_get_chats" => {
-            let response = chat_list(&user_id).await;
-            to_value(&response).unwrap()
-        }
-        "model_get_chat_history_messages" => {
-            let body: ChatRequestBody = serde_json::from_value(args).unwrap();
-            let response = chat_message_list(&user_id, &body.id).await;
-            to_value(&response).unwrap()
-        }
-        "model_chat_stream_request" => {
-            // todo
-            Value::Null
-        }
-        "modeL_chat_files_request" => {
-            // todo
-            Value::Null
-        }
-        _ => to_value(&AppResponse::error(
-            None::<String>,
-            "Model command not found",
-        ))
-        .unwrap(),
-    };
-}
-
 pub async fn invoke_chat_cmd(
     db: &DatabaseConnection,
+    user_path: &PathBuf,
     command: String,
     access_token: Option<String>,
     args: Value,
@@ -199,23 +156,28 @@ pub async fn invoke_chat_cmd(
     let result = BASE64_STANDARD.decode(&access_token).unwrap();
     let user_id = String::from_utf8(result).unwrap();
     return match command.as_str() {
+        "chat_get_models" => {
+            let response = chat_model_list().await;
+            to_value(&response).unwrap()
+        },
         "chat_list" => {
-            let response = chat_list(&user_id).await;
+            let body: ChatListBody = serde_json::from_value(args).unwrap();
+            let response = chat_list(db, &user_id, &body.wid).await;
             to_value(&response).unwrap()
         }
         "chat_create" => {
             let body: ChatCreateBody = serde_json::from_value(args).unwrap();
-            let response = chat_create(&user_id, &body).await;
+            let response = chat_create(db, &user_id, &body).await;
             to_value(&response).unwrap()
         }
         "chat_delete" => {
             let body: ChatCommonBody = serde_json::from_value(args).unwrap();
-            let response = chat_delete(&user_id, &body.id).await;
+            let response = chat_delete(db, &user_id, &body.id).await;
             to_value(&response).unwrap()
         }
         "chat_update_name" => {
             let body: ChatUpdateNameBody = serde_json::from_value(args).unwrap();
-            let response = chat_update_name(&user_id, &body).await;
+            let response = chat_update_name(db, &user_id, &body).await;
             to_value(&response).unwrap()
         }
         "chat_model_list" => {
@@ -224,22 +186,22 @@ pub async fn invoke_chat_cmd(
         }
         "chat_message_list" => {
             let body: ChatCommonBody = serde_json::from_value(args).unwrap();
-            let response = chat_message_list(&user_id, &body.id).await;
+            let response = chat_message_list(db, user_path, &user_id, &body.id).await;
             to_value(&response).unwrap()
         }
         "chat_message_request" => {
-            let body: ModelRequestBody = serde_json::from_value(args).unwrap();
-            let response = chat_message_request(&body).await;
+            let body: ChatRequestBody = serde_json::from_value(args).unwrap();
+            let response = chat_message_request(db, user_path, &user_id, &body).await;
             to_value(&response).unwrap()
         }
         "chat_message_regenerate" => {
             let body: ModelMessageRegenerateBody = serde_json::from_value(args).unwrap();
-            let response = chat_message_regenerate(&body).await;
+            let response = chat_message_regenerate(db, user_path, &user_id, &body).await;
             to_value(&response).unwrap()
         }
         "chat_message_edit" => {
             let body: ModelMessageEditBody = serde_json::from_value(args).unwrap();
-            let response = chat_message_edit(&body).await;
+            let response = chat_message_edit(db, user_path, &user_id, &body).await;
             to_value(&response).unwrap()
         }
         _ => to_value(&AppResponse::error(

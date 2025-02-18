@@ -2,16 +2,20 @@ use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::future::Future;
 use std::ops::Deref;
+use std::path::PathBuf;
 use std::sync::{Mutex, RwLock};
-use std::vec;
+use std::{fs, vec};
 
+use crate::entity::file::{
+    ActiveModel as FileActiveModel, Column, Entity as File, Model as FileModel,
+};
 use anyhow::Context;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::Role::{System, User};
 use async_openai::types::{
     ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage,
-    ChatCompletionRequestSystemMessageArgs, ChatCompletionRequestUserMessageArgs,
-    CreateChatCompletionRequestArgs,
+    ChatCompletionRequestSystemMessageArgs, ChatCompletionRequestUserMessage,
+    ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs,
 };
 use async_openai::Client;
 use chrono::Utc;
@@ -19,13 +23,17 @@ use futures::future::ok;
 use futures::StreamExt;
 use log::{debug, error, info};
 use once_cell::sync::Lazy;
+use sea_orm::{DatabaseConnection, Set};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Error};
 use tauri::api::http::{Body, ClientBuilder, HttpRequestBuilder, ResponseType};
-use tauri::Window;
+use tauri::{App, Window};
 use uuid::Uuid;
 
-use crate::AppResponse;
+use crate::dao::file_dao::FileService;
+use crate::dto::file_dto::ListGeneralBody;
+use crate::entity::file::ActiveModel;
+use crate::{AppResponse, CHAT_ZONE, FILE_TYPE};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelData {
@@ -34,9 +42,9 @@ pub struct ModelData {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ChatInfo {
-    id: String,
-    name: String,
-    created_at: String,
+    pub id: String,
+    pub name: String,
+    pub create_time: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -52,13 +60,20 @@ pub struct Model {
 #[serde(rename_all = "camelCase")]
 pub struct Message {
     role: String,
-    text: String,
+    content: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ListBody {
+    pub wid: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateBody {
     name: String,
+    wid: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
@@ -111,182 +126,306 @@ pub struct Response {
     error: Option<String>,
 }
 
-static GLOBAL_CHATS: Lazy<RwLock<Box<Vec<ChatInfo>>>> = Lazy::new(|| {
-    let m = Box::new(vec![]);
-    RwLock::new(m)
-});
-
-static GLOBAL_CHAT_MESSAGES: Lazy<RwLock<HashMap<String, Box<Vec<Message>>>>> = Lazy::new(|| {
-    let m = HashMap::new();
-    RwLock::new(m)
-});
-
 // static API_ADDRESS: &str = https://api.deepseek.com/v1
 static API_ADDRESS: &str = "http://localhost:11434/v1";
 
-pub async fn list(user_id: &str) -> Vec<ChatInfo> {
-    let vec = GLOBAL_CHATS.read().unwrap();
-    *vec.clone()
+pub async fn list(
+    db: &DatabaseConnection,
+    user_id: &str,
+    wid: &str,
+) -> AppResponse<Option<Vec<ChatInfo>>> {
+    match FileService::list_files(
+        db,
+        &ListGeneralBody {
+            wid: wid.to_string(),
+            zone: CHAT_ZONE.to_string(),
+            r#type: Some(FILE_TYPE.to_string()),
+        },
+    )
+    .await
+    {
+        Ok(result) => {
+            let mut chat_infos = vec![];
+            for model in result {
+                chat_infos.push(ChatInfo {
+                    id: model.id,
+                    name: model.name,
+                    create_time: model.create_time,
+                })
+            }
+            return AppResponse::success(Some(chat_infos));
+        }
+        Err(err) => AppResponse::error(None, &err.to_string()),
+    }
 }
 
-pub async fn create(user_id: &str, body: &CreateBody) -> ChatInfo {
-    let uuid = Uuid::new_v4().to_string();
-    let mut write_guard = GLOBAL_CHATS.write().unwrap();
-    let chat_info = ChatInfo {
-        id: uuid.clone(),
-        name: body.name.clone(),
-        created_at: Utc::now().timestamp().to_string(),
-    };
-    write_guard.push(chat_info.clone());
-    let mut write_messages_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
-    write_messages_guard.insert(uuid.clone(), Box::new(vec![]));
-    chat_info
+pub async fn create(
+    db: &DatabaseConnection,
+    user_id: &str,
+    body: &CreateBody,
+) -> AppResponse<Option<ChatInfo>> {
+    match FileService::create_file(
+        db,
+        ActiveModel {
+            id: Set(Uuid::new_v4().to_string()),
+            name: Set(body.name.clone()),
+            r#type: Set(FILE_TYPE.to_string()),
+            pid: Set(body.wid.to_string()),
+            wid: Set(body.wid.to_string()),
+            zone: Set(CHAT_ZONE.to_string()),
+            size: Set(0),
+            create_time: Set(Utc::now().timestamp()),
+            update_time: Set(Utc::now().timestamp()),
+            state: Set(1),
+            ..Default::default()
+        },
+    )
+    .await
+    {
+        Ok(model) => AppResponse::success(Some(ChatInfo {
+            id: model.id,
+            name: model.name,
+            create_time: model.create_time,
+        })),
+        Err(err) => AppResponse::error(None::<ChatInfo>, &err.to_string()),
+    }
 }
 
-pub async fn delete(user_id: &str, id: &str) {
-    let mut write_guard = GLOBAL_CHATS.write().unwrap();
-    write_guard.dedup_by_key(|c| c.id == id);
+pub async fn delete(db: &DatabaseConnection, user_id: &str, id: &str) -> AppResponse<String> {
+    match FileService::delete_file(db, &id).await {
+        Ok(_) => AppResponse::success("".to_string()),
+        Err(err) => AppResponse::error("".to_string(), &err.to_string()),
+    }
 }
 
-pub async fn update_name(user_id: &str, body: &UpdateNameBody) {
-    let mut write_guard = GLOBAL_CHATS.write().unwrap();
-    // 遍历向量，找到指定 id 的 ChatInfo
-    for chat in write_guard.iter_mut() {
-        if chat.id == body.id {
-            // 修改 name
-            chat.name = body.name.clone();
+pub async fn update_name(
+    db: &DatabaseConnection,
+    user_id: &str,
+    body: &UpdateNameBody,
+) -> AppResponse<Option<ChatInfo>> {
+    let get_result = FileService::get_file(db, &body.id).await;
+    if get_result.is_err() {
+        return AppResponse::error(None, &get_result.err().unwrap().to_string());
+    }
+    let option_model = get_result.unwrap();
+    if option_model.is_none() {
+        return AppResponse::error(None, "chat not found");
+    }
+    let model = option_model.unwrap();
+    match FileService::update_file_name(db, &body.id, &body.name).await {
+        Ok(_) => AppResponse::success(Some(ChatInfo {
+            id: model.id,
+            name: model.name,
+            create_time: model.create_time,
+        })),
+        Err(err) => AppResponse::error(None, &err.to_string()),
+    }
+}
+
+pub async fn message_list(
+    db: &DatabaseConnection,
+    user_path: &PathBuf,
+    user_id: &str,
+    id: &str,
+) -> AppResponse<Option<Vec<Message>>> {
+    let get_result = FileService::get_file(db, id).await;
+    if get_result.is_err() {
+        return AppResponse::error(None, &get_result.err().unwrap().to_string());
+    }
+    let option_model = get_result.unwrap();
+    if option_model.is_none() {
+        return AppResponse::error(None, "chat not found in db");
+    }
+    let mut model = option_model.unwrap();
+    let file_path = &user_path.join(&model.wid).join(&model.id);
+    if !file_path.exists() {
+        return AppResponse::error(None, "chat not found in file system");
+    }
+    // todo catch error
+    // 读取文件内容到字符串
+    let file_content = fs::read_to_string(file_path).unwrap();
+    // 将 JSON 字符串反序列化为结构体
+    let data: Vec<Message> = serde_json::from_str(&file_content).unwrap();
+    AppResponse::success(Some(data))
+}
+
+async fn get_chat_model(db: &DatabaseConnection, id: &str) -> AppResponse<Option<FileModel>> {
+    let get_result = FileService::get_file(db, id).await;
+    if get_result.is_err() {
+        return AppResponse::error(None, &get_result.err().unwrap().to_string());
+    }
+    let option_model = get_result.unwrap();
+    if option_model.is_none() {
+        return AppResponse::error(None, "chat not found in db");
+    }
+    AppResponse::success(Some(option_model.unwrap()))
+}
+
+pub async fn message_request(
+    db: &DatabaseConnection,
+    user_path: &PathBuf,
+    user_id: &str,
+    body: &RequestBody,
+) -> AppResponse<Option<Response>> {
+    let app_response = get_chat_model(db, &body.id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
+    }
+    let model = app_response.result.unwrap();
+    let file_path = &user_path.join(&model.wid).join(&model.id);
+    if !file_path.exists() {
+        let result = fs::File::create(file_path);
+        if result.is_err() {
+            error!(
+                "create chat file on disk failed, err: {}",
+                result.err().unwrap()
+            );
+            return AppResponse::error(
+                None,
+                "create chat file on disk failed, please check your disk space and permissions",
+            );
         }
     }
-}
-
-pub async fn message_list(user_id: &str, id: &str) -> Vec<ChatCompletionRequestMessage> {
-    get_request_history_messages(id)
-}
-
-pub async fn message_request(body: &RequestBody) -> Response {
-    if !exist(&body.id) {
-        return Response {
-            id: body.id.clone(),
-            index: 0,
-            text: None,
-            error: Some("Chat not found".to_string()),
-        };
+    // todo catch error
+    // 读取文件内容到字符串
+    let file_content = fs::read_to_string(file_path).unwrap();
+    // 将 JSON 字符串反序列化为结构体
+    let mut messages = Vec::new();
+    if !file_content.is_empty() {
+        messages = serde_json::from_str(&file_content).unwrap();
     }
-    // write message
-    {
-        let mut write_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
-        let vec = write_guard.entry(body.id.clone()).or_default();
-        vec.push(Message {
-            role: User.to_string(),
-            text: body.prompt.clone(),
-        })
-    }
-    let text = do_openai_request(&body.id, &body.model).await;
-    // write response
-    let mut index: usize = 0;
-    {
-        let mut write_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
-        let vec = write_guard.entry(body.id.clone()).or_default();
-        vec.push(Message {
-            role: System.to_string(),
-            text: text.clone(),
-        });
-        index = vec.len() - 1 ;
-    }
-    return Response {
-        id:  body.id.clone(),
-        index,
+    // add user message
+    messages.push(Message {
+        role: User.to_string(),
+        content: body.prompt.clone(),
+    });
+    // add system message
+    let text = do_openai_request(&messages, &body.model).await;
+    messages.push(Message {
+        role: System.to_string(),
+        content: text.clone(),
+    });
+    // save to file
+    let json_str = serde_json::to_string(&messages).unwrap();
+    fs::write(file_path, json_str).unwrap();
+    // return
+    AppResponse::success(Some(Response {
+        id: body.id.clone(),
+        index: messages.len() - 1,
         text: Some(text),
         error: None,
-    };
+    }))
 }
 
-pub async fn message_regenerate(body: &RegenerateBody) -> Response {
-    if !exist(&body.id) {
-        return Response {
-            id: body.id.clone(),
-            index: body.index.clone(),
-            text: None,
-            error: Some("Chat not found".to_string()),
-        };
+pub async fn message_regenerate(
+    db: &DatabaseConnection,
+    user_path: &PathBuf,
+    user_id: &str,
+    body: &RegenerateBody,
+) -> AppResponse<Option<Response>> {
+    let app_response = get_chat_model(db, &body.id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
     }
-    // truncate old message
-    {
-        let mut write_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
-        let vec = write_guard.entry(body.id.clone()).or_default();
-        if body.index < vec.len() {
-            vec.truncate(body.index);
-        }
+    let model = app_response.result.unwrap();
+    let file_path = &user_path.join(&model.wid).join(&model.id);
+    if !file_path.exists() {
+        return AppResponse::error(None, "chat not found in file system");
     }
-    let text = do_openai_request(&body.id, &body.model).await;
-    // write response
-    {
-        let mut write_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
-        let vec = write_guard.entry(body.id.clone()).or_default();
-        vec.push(Message {
-            role: System.to_string(),
-            text: text.clone(),
-        })
+    // todo catch error
+    // 读取文件内容到字符串
+    let file_content = fs::read_to_string(file_path).unwrap();
+    // 将 JSON 字符串反序列化为结构体
+    let mut messages: Vec<Message> = serde_json::from_str(&file_content).unwrap();
+    if body.index < messages.len() {
+        messages.truncate(body.index);
     }
-    return Response {
-        id:  body.id.clone(),
+    let text = do_openai_request(&messages, &body.model).await;
+    // add system message
+    messages.push(Message {
+        role: System.to_string(),
+        content: text.clone(),
+    });
+    // save to file
+    let json_str = serde_json::to_string(&messages).unwrap();
+    fs::write(file_path, json_str).unwrap();
+    // return
+    AppResponse::success(Some(Response {
+        id: body.id.clone(),
         index: body.index.clone(),
         text: Some(text),
         error: None,
-    };
+    }))
 }
 
-pub async fn message_edit(body: &EditBody) -> Response {
-    if !exist(&body.id) {
-        return Response {
-            id: body.id.clone(),
-            index: body.index.clone(),
-            text: None,
-            error: Some("Chat not found".to_string()),
-        };
+pub async fn message_edit(
+    db: &DatabaseConnection,
+    user_path: &PathBuf,
+    user_id: &str,
+    body: &EditBody,
+) -> AppResponse<Option<Response>> {
+    let app_response = get_chat_model(db, &body.id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
     }
-    // truncate old message and add new message
-    {
-        let mut write_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
-        let vec = write_guard.entry(body.id.clone()).or_default();
-        if body.index < vec.len() {
-            vec.truncate(body.index);
-        }
-        vec.push(Message {
-            role: User.to_string(),
-            text: body.prompt.clone(),
-        })
+    let model = app_response.result.unwrap();
+    let file_path = &user_path.join(&model.wid).join(&model.id);
+    if !file_path.exists() {
+        return AppResponse::error(None, "chat not found in file system");
     }
-    // request openai api
-    let text = do_openai_request(&body.id, &body.model).await;
-    // write response
-    {
-        let mut write_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
-        let vec = write_guard.entry(body.id.clone()).or_default();
-        vec.push(Message {
-            role: System.to_string(),
-            text: text.clone(),
-        })
+    // todo catch error
+    // 读取文件内容到字符串
+    let file_content = fs::read_to_string(file_path).unwrap();
+    // 将 JSON 字符串反序列化为结构体
+    let mut messages: Vec<Message> = serde_json::from_str(&file_content).unwrap();
+    if body.index < messages.len() {
+        messages.truncate(body.index);
     }
-    return Response {
-        id:  body.id.clone(),
+    // add user message
+    messages.push(Message {
+        role: User.to_string(),
+        content: body.prompt.clone(),
+    });
+    let text = do_openai_request(&messages, &body.model).await;
+    // add system message
+    messages.push(Message {
+        role: System.to_string(),
+        content: text.clone(),
+    });
+    // save to file
+    let json_str = serde_json::to_string(&messages).unwrap();
+    fs::write(file_path, json_str).unwrap();
+    // return
+    AppResponse::success(Some(Response {
+        id: body.id.clone(),
         index: body.index.clone(),
         text: Some(text),
         error: None,
-    };
+    }))
 }
 
-async fn do_openai_request(id: &str, model: &str) -> String {
+async fn do_openai_request(messages: &Vec<Message>, model: &str) -> String {
     // new openai client
     let api_key = "sk-4d1596f494474a3ab21fc674b3cb42b7"; // This secret could be from a file, or environment variable.
     let config = OpenAIConfig::new()
         .with_api_base(API_ADDRESS)
         .with_api_key(api_key);
     let client = Client::with_config(config);
-
+    // todo convert message to chat message
+    let mut request_messages = vec![];
+    for msg in messages.iter() {
+        request_messages.push(
+            ChatCompletionRequestUserMessageArgs::default()
+                .name(msg.role.clone())
+                .content(msg.content.clone())
+                .build()
+                .unwrap()
+                .into(),
+        )
+    }
     let request = CreateChatCompletionRequestArgs::default()
         .model(model.to_string())
-        .messages(get_request_history_messages(id))
+        .messages(request_messages)
         .build()
         .unwrap();
     debug!("request {:?}", request);
@@ -305,150 +444,113 @@ async fn do_openai_request(id: &str, model: &str) -> String {
     text
 }
 
-fn get_history_messages(id: &str) -> Vec<Message> {
-    let mut map = GLOBAL_CHAT_MESSAGES.read().unwrap();
-    return match map.get(id) {
-        None => vec![],
-        Some(vec) => (**vec).clone(),
-    };
-}
-
-fn get_request_history_messages(id: &str) -> Vec<ChatCompletionRequestMessage> {
-    let history_messages = get_history_messages(id);
-    let mut messages: Vec<ChatCompletionRequestMessage> = vec![];
-    for message in history_messages {
-        if message.role == User.to_string() {
-            messages.push(
-                ChatCompletionRequestUserMessageArgs::default()
-                    .content(message.text.clone())
-                    .build()
-                    .unwrap()
-                    .into(),
-            );
-        } else {
-            messages.push(
-                ChatCompletionRequestSystemMessageArgs::default()
-                    .content(message.text.clone())
-                    .build()
-                    .unwrap()
-                    .into(),
-            );
-        }
-    }
-    messages
-}
-
-fn exist(id: &str) -> bool {
-    get(id).is_some()
-}
-
-fn get(id: &str) -> Option<ChatInfo> {
-    let read_guard = GLOBAL_CHATS.read().unwrap();
-    let chat_infos = read_guard.as_ref();
-    for chat_info in chat_infos {
-        if chat_info.id == id {
-            return Some(ChatInfo{
-                id: id.to_string(),
-                name: chat_info.name.clone(),
-                created_at: chat_info.created_at.clone(),
-            })
-        }
-    }
-    None
-}
-
-fn init_if_need(id: &str, name: &str) {
-    if !exist(id) {
-        let mut write_guard = GLOBAL_CHATS.write().unwrap();
-        write_guard.push(ChatInfo {
-            created_at: Utc::now().timestamp().to_string(),
-            id: id.to_string(),
-            name: name.to_string(),
-        });
-        let mut write_messages_guard = GLOBAL_CHAT_MESSAGES.write().unwrap();
-        write_messages_guard.insert(id.to_string(), Box::new(vec![]));
-    }
-}
-
-pub async fn model_list() -> ModelData {
+pub async fn model_list() -> AppResponse<Option<ModelData>> {
     let client = ClientBuilder::new().build().unwrap();
     let request = HttpRequestBuilder::new("GET", "http://localhost:11434/api/tags")
         .unwrap()
         .response_type(ResponseType::Json);
-    if let Ok(response) = client.send(request).await {
-        let data_result = response.read().await;
-        if data_result.is_err() {
-            error!(
-                "read model data failed, err: {}",
-                data_result.err().unwrap()
-            );
-            return ModelData { models: vec![] };
-        }
-        let data = data_result.unwrap().data;
-        // println!("{}",data);
-        let model_data: ModelData = serde_json::from_value(data).unwrap();
-        return model_data;
+    let result = client.send(request).await;
+    if result.is_err() {
+        return AppResponse::error(None, &result.err().unwrap().to_string())
     }
-    let model_data = ModelData { models: vec![] };
-    return model_data;
+    let data_result = result.unwrap().read().await;
+    if data_result.is_err() {
+       let err =  data_result.err().unwrap();
+        error!(
+                "read model data failed, err: {:?}",
+                err
+            );
+        return AppResponse::error(None, &err.to_string())
+    }
+    let data = data_result.unwrap().data;
+    // println!("{}",data);
+    let model_data: ModelData = serde_json::from_value(data).unwrap();
+    AppResponse::success(Some(model_data))
 }
 
 #[cfg(test)]
 mod test {
-    use crate::service::chat_service::{
-        message_request, ChatInfo, Message, RequestBody, GLOBAL_CHATS, GLOBAL_CHAT_MESSAGES,
-    };
+    use crate::entity;
+    use crate::service::chat_service::{create, message_request, CreateBody, RequestBody};
+    use crate::util::db_util::{drop_database_file, exist_database_file, init_connection};
+    use sea_orm::{ConnectionTrait, Schema};
+    use std::env::temp_dir;
+    use std::fs;
+    use uuid::Uuid;
 
     #[tokio::test] //由此判断这是一个测试函数
     async fn test_chat_request() {
-        let result = message_request(&RequestBody {
-            id: "1".to_string(),
-            prompt: "who is blackstar".to_string(),
-            model: "llama3:latest".to_string(),
-            stream: false,
-        })
-        .await;
-        println!("{:?}", result.text);
-        // request twice
-        let result = message_request(&RequestBody {
-            id: "1".to_string(),
-            prompt: "oh, no".to_string(),
-            model: "llama3:latest".to_string(),
-            stream: false,
-        })
-        .await;
-        println!("{:?}", result.text);
-    }
-    #[tokio::test]
-    async fn test_write_global() {
-        {
-            let mut read_guard = GLOBAL_CHAT_MESSAGES.read().unwrap();
-            println!("{:?}", read_guard.len());
+        let workspace = "test";
+        let temp_dir = temp_dir();
+        let base_path = &temp_dir.join(".fatherbox");
+        let user_path = base_path;
+        let file_path = &base_path.join("test-chat.sqlite");
+        if exist_database_file(file_path) {
+            drop_database_file(&file_path).unwrap();
         }
-
-        let mut map = GLOBAL_CHAT_MESSAGES.write().unwrap();
-        map.insert(
-            "2".to_string(),
-            Box::new(vec![Message {
-                role: "hello".to_string(),
-                text: "world".to_string(),
-            }]),
-        );
-
-        let result = map.get("2").unwrap();
-        assert_eq!(result[0].role, "hello");
-        assert_eq!(result[0].text, "world");
-    }
-
-    #[tokio::test]
-    async fn test_chats() {
-        let mut vec = GLOBAL_CHATS.write().unwrap();
-        vec.push(ChatInfo {
-            id: "3".to_string(),
-            name: "hello,world".to_string(),
-        });
-
-        assert_eq!(vec[0].id, "3");
-        assert_eq!(vec[0].name, "hello,world");
+        let db = &init_connection(&file_path).await.unwrap();
+        let builder = db.get_database_backend();
+        let schema = Schema::new(builder);
+        db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::File)))
+            .await
+            .unwrap();
+        let user_id = Uuid::new_v4().to_string();
+        let ws_id = Uuid::new_v4().to_string();
+        let ws_path = &user_path.join(&ws_id);
+        if !ws_path.exists() {
+            fs::create_dir_all(ws_path).unwrap();
+        }
+        // create chat
+        let result = create(
+            db,
+            &user_id,
+            &CreateBody {
+                name: "chat1".to_string(),
+                wid: ws_id.clone(),
+            },
+        )
+        .await;
+        if result.is_error() {
+            eprintln!("{:?}", result.message);
+            return;
+        }
+        let chat_info = result.result.clone().unwrap();
+        println!("{:?}", chat_info);
+        let chat_id = &chat_info.id;
+        // todo mock openai to test
+        // send message
+        let result = message_request(
+            db,
+            user_path,
+            &user_id,
+            &RequestBody {
+                id: chat_id.to_string(),
+                prompt: "who is blackstar".to_string(),
+                model: "llama3.1:8b".to_string(),
+                stream: false,
+            },
+        )
+        .await;
+        if result.is_error() {
+            panic!("{:?}", result.message);
+        }
+        println!("{:?}", result.result.unwrap());
+        // request twice
+        let result = message_request(
+            db,
+            user_path,
+            &user_id,
+            &RequestBody {
+                id: chat_id.to_string(),
+                prompt: "oh, no".to_string(),
+                model: "llama3.1:8b".to_string(),
+                stream: false,
+            },
+        )
+        .await;
+        if result.is_error() {
+            panic!("{:?}", result.message);
+        }
+        println!("{:?}", result.result.unwrap());
     }
 }

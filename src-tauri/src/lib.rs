@@ -25,6 +25,8 @@ pub const DEFAULT_WORKSPACE: &str = "default";
 pub const FILE_TYPE: &str = "file";
 pub const DIR_TYPE: &str = "dir";
 
+pub const CHAT_ZONE: &str = "chat";
+
 pub const RESPONSE_CODE_SUCCESS: i32 = 0;
 pub const RESPONSE_CODE_ERROR: i32 = -1;
 pub const RESPONSE_CODE_TIMEOUT: i32 = 401;

@@ -41,11 +41,11 @@ export async function getModels() {
   const accessStore = useAccessStore();
   return window.__TAURI__
     ? invoke('route_cmd', {
-        command: 'model_get_models',
+        command: 'chat_get_models',
         accessToken: accessStore.accessToken,
         args: {},
       }).then((message: any) => {
-        return message as ModelData;
+        return message.result;
       })
     : new Promise((resolve) => {
         const response: ModelData = {
@@ -55,15 +55,17 @@ export async function getModels() {
       });
 }
 
-export async function getChats() {
+export async function getChats(params: { wid: string }) {
   const accessStore = useAccessStore();
   return window.__TAURI__
     ? invoke('route_cmd', {
         command: 'chat_list',
         accessToken: accessStore.accessToken,
-        args: {},
+        args: {
+          ...params,
+        },
       }).then((message: any) => {
-        return message as ChatInfo[];
+        return message.result as ChatInfo[];
       })
     : new Promise<ChatInfo[]>((resolve) => {
         const response: ChatInfo[] = [];
@@ -81,7 +83,7 @@ export async function updateChatName(params: { id: string; name: string }) {
           ...params,
         },
       }).then((message: any) => {
-        return message as ChatInfo;
+        return message.result as ChatInfo;
       })
     : new Promise<ChatInfo>((resolve) => {
         // todo use http client replace this
@@ -91,7 +93,7 @@ export async function updateChatName(params: { id: string; name: string }) {
       });
 }
 
-export async function createChat(params: { name: string }) {
+export async function createChat(params: { name: string; wid: string }) {
   const accessStore = useAccessStore();
   return window.__TAURI__
     ? invoke('route_cmd', {
@@ -101,7 +103,7 @@ export async function createChat(params: { name: string }) {
           ...params,
         },
       }).then((message: any) => {
-        return message as ChatInfo;
+        return message.result as ChatInfo;
       })
     : new Promise<ChatInfo>((resolve: any) => {
         // todo use http client replace this
@@ -138,7 +140,7 @@ export async function getChatMessages(params: { id: string }) {
         accessToken: accessStore.accessToken,
         args: { ...params },
       }).then((message: any) => {
-        return message as ChatMessage[];
+        return message.result as ChatMessage[];
       })
     : new Promise<ChatMessage[]>((resolve) => {
         const response: ChatMessage[] = [];
@@ -149,7 +151,7 @@ export async function getChatMessages(params: { id: string }) {
 // todo
 // 思考过程
 
-export async function fetchChatAPIProcessNew(params: {
+export async function fetchChatAPIProcess(params: {
   id: string;
   model: string;
   onDownloadProgress?: (data: any) => void;
@@ -168,7 +170,7 @@ export async function fetchChatAPIProcessNew(params: {
     },
   }).then((response: any) => {
     if (params.onDownloadProgress) {
-      params.onDownloadProgress(response.text ?? response.error);
+      params.onDownloadProgress(response.result.text ?? response.result.error);
     }
   });
 }
@@ -191,7 +193,7 @@ export async function regenerateMessage(params: {
     },
   }).then((response: any) => {
     if (params.onDownloadProgress) {
-      params.onDownloadProgress(response.text ?? response.error);
+      params.onDownloadProgress(response.result.text ?? response.result.error);
     }
   });
 }
@@ -216,7 +218,7 @@ export async function editMessage(params: {
     },
   }).then((response: any) => {
     if (params.onDownloadProgress) {
-      params.onDownloadProgress(response.text ?? response.error);
+      params.onDownloadProgress(response.result.text ?? response.result.error);
     }
   });
 }
