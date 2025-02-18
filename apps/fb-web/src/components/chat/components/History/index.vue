@@ -135,7 +135,6 @@ onMounted(async () => {});
               isActive(item.id) && [
                 'border-[#4b9e5f]',
                 'bg-neutral-100',
-                'text-[#4b9e5f]',
                 'dark:bg-[#24272e]',
                 'dark:border-[#4b9e5f]',
                 'pr-14',
