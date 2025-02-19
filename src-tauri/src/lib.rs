@@ -31,6 +31,19 @@ pub const RESPONSE_CODE_SUCCESS: i32 = 0;
 pub const RESPONSE_CODE_ERROR: i32 = -1;
 pub const RESPONSE_CODE_TIMEOUT: i32 = 401;
 
+
+
+pub const CHAT_API_SETTING_KEY: &str = "chat_api";
+
+pub const OPENAI_NAME: &str = "OpenAI";
+pub const DEEP_SEEK: &str = "DeepSeek";
+pub const OLLAMA_NAME: &str = "Ollama";
+
+pub const OPENAI_BASE_URL: &str = "https://www.openai.com";
+pub const DEEPSEEK_BASE_URL: &str = "https://api.deepseek.com";
+pub const OLLAMA_BASE_URL: &str = "https://localhost:11434";
+pub const API_SUFFIX: &str ="v1";
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     pub api: Option<ApiSettings>,
