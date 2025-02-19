@@ -511,8 +511,7 @@ mod test {
         )
         .await;
         if result.is_error() {
-            eprintln!("{:?}", result.message);
-            return;
+            panic!("{:?}", result.message);
         }
         let chat_info = result.result.clone().unwrap();
         println!("{:?}", chat_info);
