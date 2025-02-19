@@ -3,3 +3,4 @@
 pub use super::file::Entity as File;
 pub use super::user::Entity as User;
 pub use super::workspace::Entity as Workspace;
+pub use super::setting::Entity as Setting;
