@@ -37,8 +37,10 @@ import {
 import { $t } from '#/locales';
 import { useWorkspaceStore } from '#/store';
 
-import { History, Input, Message } from './components';
-import { useScroll } from './hooks/useScroll';
+import History from './history/index.vue';
+import Input from './input/index.vue';
+import Message from './message/index.vue';
+import { useScroll } from './useScroll';
 
 const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll();
 

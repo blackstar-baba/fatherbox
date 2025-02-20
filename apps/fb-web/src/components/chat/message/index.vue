@@ -14,8 +14,8 @@ import { Button, message, Textarea } from 'ant-design-vue';
 
 import { copy } from '#/utils';
 
-import AvatarComponent from './Avatar.vue';
-import TextComponent from './Text.vue';
+import MessageAvatar from './message-avatar.vue';
+import MessageText from './message-text.vue';
 
 interface Props {
   text: string;
@@ -81,7 +81,7 @@ function handleCopy() {
       :class="[inversion ? 'ml-2' : 'mr-2']"
       class="flex h-8 flex-shrink-0 basis-8 items-center justify-center overflow-hidden rounded-full"
     >
-      <AvatarComponent :image="inversion" />
+      <MessageAvatar :image="inversion" />
     </div>
     <div
       :class="[inversion ? 'items-end' : 'items-start']"
@@ -91,7 +91,7 @@ function handleCopy() {
         :class="[inversion ? 'flex-row-reverse' : 'flex-row']"
         class="flex items-end pb-3"
       >
-        <TextComponent
+        <MessageText
           v-if="!isEditRef"
           :as-raw-text="asRawText"
           :error="error"

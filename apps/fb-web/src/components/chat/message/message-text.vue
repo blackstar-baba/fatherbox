@@ -277,7 +277,7 @@ onUnmounted(() => {
 </template>
 
 <style lang="less">
-@import url(./github-markdown.less);
-@import url(./highlight.less);
-@import url(./style.less);
+@import url(github-markdown.less);
+@import url(highlight.less);
+@import url(style.less);
 </style>
