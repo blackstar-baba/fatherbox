@@ -38,6 +38,7 @@
   },
   "system": {
     "title": "System",
-    "file-manage": "File Manage"
+    "file-manage": "File Manage",
+    "model-manage": "Model Manage"
   }
 }
