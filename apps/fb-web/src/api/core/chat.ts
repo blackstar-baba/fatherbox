@@ -9,17 +9,17 @@ export interface ChatMessage {
   loading: boolean;
 }
 
-export interface Model {
-  name: string;
-  model: string;
-  modified_at: string;
-  size: number;
-  digest: string;
-}
-
-export interface ModelData {
-  models: Model[];
-}
+// export interface Model {
+//   name: string;
+//   model: string;
+//   modified_at: string;
+//   size: number;
+//   digest: string;
+// }
+//
+// export interface ModelData {
+//   models: Model[];
+// }
 
 export interface ChatInfo {
   id: string;
@@ -29,30 +29,23 @@ export interface ChatInfo {
   isEdit: boolean;
 }
 
-export interface MessageResponse {
-  id: string;
-  index: number;
-  text?: string;
-  error?: string;
-}
-
-export async function getModels() {
-  const accessStore = useAccessStore();
-  return window.__TAURI__
-    ? invoke('route_cmd', {
-        command: 'chat_get_models',
-        accessToken: accessStore.accessToken,
-        args: {},
-      }).then((message: any) => {
-        return message.result;
-      })
-    : new Promise((resolve) => {
-        const response: ModelData = {
-          models: [],
-        };
-        resolve(response);
-      });
-}
+// export async function getModels() {
+//   const accessStore = useAccessStore();
+//   return window.__TAURI__
+//     ? invoke('route_cmd', {
+//         command: 'chat_get_models',
+//         accessToken: accessStore.accessToken,
+//         args: {},
+//       }).then((msg: any) => {
+//         return msg.result;
+//       })
+//     : new Promise((resolve) => {
+//         const response: ModelData = {
+//           models: [],
+//         };
+//         resolve(response);
+//       });
+// }
 
 export async function getChats(params: { wid: string }) {
   const accessStore = useAccessStore();
@@ -63,8 +56,8 @@ export async function getChats(params: { wid: string }) {
         args: {
           ...params,
         },
-      }).then((message: any) => {
-        return message.result as ChatInfo[];
+      }).then((msg: any) => {
+        return msg.result as ChatInfo[];
       })
     : new Promise<ChatInfo[]>((resolve) => {
         const response: ChatInfo[] = [];
@@ -81,8 +74,8 @@ export async function updateChatName(params: { id: string; name: string }) {
         args: {
           ...params,
         },
-      }).then((message: any) => {
-        return message.result as ChatInfo;
+      }).then((msg: any) => {
+        return msg.result as ChatInfo;
       })
     : new Promise<ChatInfo>((resolve) => {
         // todo use http client replace this
@@ -101,8 +94,8 @@ export async function createChat(params: { name: string; wid: string }) {
         args: {
           ...params,
         },
-      }).then((message: any) => {
-        return message.result as ChatInfo;
+      }).then((msg: any) => {
+        return msg.result as ChatInfo;
       })
     : new Promise<ChatInfo>((resolve: any) => {
         // todo use http client replace this
@@ -138,8 +131,8 @@ export async function getChatMessages(params: { id: string }) {
         command: 'chat_message_list',
         accessToken: accessStore.accessToken,
         args: { ...params },
-      }).then((message: any) => {
-        return message.result as ChatMessage[];
+      }).then((msg: any) => {
+        return msg.result as ChatMessage[];
       })
     : new Promise<ChatMessage[]>((resolve) => {
         const response: ChatMessage[] = [];
@@ -152,10 +145,11 @@ export async function getChatMessages(params: { id: string }) {
 
 export async function fetchChatAPIProcess(params: {
   id: string;
-  model: string;
+  modelId: string;
   onDownloadProgress?: (data: any) => void;
   parentMessageId?: number;
   prompt: string;
+  sourceId: string;
 }) {
   const accessStore = useAccessStore();
   invoke('route_cmd', {
@@ -164,7 +158,8 @@ export async function fetchChatAPIProcess(params: {
     args: {
       id: params.id,
       prompt: params.prompt,
-      model: params.model,
+      modelId: params.modelId,
+      sourceId: params.sourceId,
       stream: false,
     },
   }).then((response: any) => {
@@ -177,8 +172,9 @@ export async function fetchChatAPIProcess(params: {
 export async function regenerateMessage(params: {
   id: string;
   index: number;
-  model: string;
+  modelId: string;
   onDownloadProgress?: (data: any) => void;
+  sourceId: string;
 }) {
   const accessStore = useAccessStore();
   invoke('route_cmd', {
@@ -187,7 +183,8 @@ export async function regenerateMessage(params: {
     args: {
       id: params.id,
       index: params.index,
-      model: params.model,
+      modelId: params.modelId,
+      sourceId: params.sourceId,
       stream: false,
     },
   }).then((response: any) => {
@@ -200,9 +197,10 @@ export async function regenerateMessage(params: {
 export async function editMessage(params: {
   id: string;
   index: number;
-  model: string;
+  modelId: string;
   onDownloadProgress?: (data: any) => void;
   prompt: string;
+  sourceId: string;
 }) {
   const accessStore = useAccessStore();
   invoke('route_cmd', {
@@ -212,7 +210,8 @@ export async function editMessage(params: {
       id: params.id,
       index: params.index,
       prompt: params.prompt,
-      model: params.model,
+      modelId: params.modelId,
+      sourceId: params.sourceId,
       stream: false,
     },
   }).then((response: any) => {

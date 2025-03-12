@@ -31,8 +31,10 @@ import {
   fetchChatAPIProcess,
   getChatMessages,
   getChats,
-  getModels,
+  listAiSource,
+  listAiSourceModels,
   regenerateMessage,
+  type Source,
 } from '#/api';
 import { $t } from '#/locales';
 import { useWorkspaceStore } from '#/store';
@@ -44,6 +46,8 @@ import { useScroll } from './useScroll';
 
 const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll();
 
+const sourcesRef = ref<SelectProps['options']>([]);
+const sourceRef = ref('');
 const modelsRef = ref<SelectProps['options']>([]);
 const modelRef = ref('');
 const templatesRef = ref<SelectProps['options']>([]);
@@ -112,7 +116,8 @@ async function onConversation(message: string) {
   await fetchChatAPIProcess({
     id: currentUuid,
     prompt: message,
-    model: modelRef.value,
+    modelId: modelRef.value,
+    sourceId: sourceRef.value,
     onDownloadProgress: (message: string) => {
       const chatMessage =
         chatMessagesRef.value[chatMessagesRef.value.length - 1];
@@ -152,7 +157,8 @@ async function onRegenerate(index: number) {
   await regenerateMessage({
     id: activeIdRef.value,
     index,
-    model: modelRef.value,
+    modelId: modelRef.value,
+    sourceId: sourceRef.value,
     onDownloadProgress: (message: string) => {
       const chatMessage =
         chatMessagesRef.value[chatMessagesRef.value.length - 1];
@@ -200,7 +206,8 @@ async function onEdit(index: number, newPrompt: string) {
   await editMessage({
     id: activeIdRef.value,
     index,
-    model: modelRef.value,
+    modelId: modelRef.value,
+    sourceId: sourceRef.value,
     onDownloadProgress: (message: string) => {
       const chatMessage =
         chatMessagesRef.value[chatMessagesRef.value.length - 1];
@@ -239,20 +246,33 @@ function handleStop() {
 onMounted(async () => {
   scrollToBottom();
   if (inputRef.value) inputRef.value?.focus();
-  // get models
-  getModels().then((data: any) => {
-    modelsRef.value = [];
-    modelRef.value = '';
-    data.models.forEach((model: any) => {
+
+  // get source
+  const sources = await listAiSource();
+  sources.forEach((source: Source) => {
+    sourcesRef.value.push({
+      label: source.name,
+      value: source.id,
+    });
+  });
+  if (sourcesRef.value.length > 0) {
+    sourceRef.value = sourcesRef.value[0]?.value as string;
+  }
+
+  if (sourceRef.value) {
+    const models = await listAiSourceModels({
+      sourceId: sourceRef.value,
+    });
+    models.forEach((model: any) => {
       modelsRef.value?.push({
         label: model.name,
-        value: model.name,
+        value: model.id,
       });
     });
     if (modelsRef.value.length > 0) {
       modelRef.value = modelsRef.value[0]?.value as string;
     }
-  });
+  }
 });
 
 onUnmounted(() => {});
@@ -295,6 +315,14 @@ watchEffect(async () => {
             v-else
             class="trigger"
             @click="() => (collapsedRef = !collapsedRef)"
+          />
+          <span class="ml-5">Sources</span>
+          <LucideInfo class="ml-1 inline size-4" />
+          <Select
+            v-model:value="sourceRef"
+            :options="sourcesRef"
+            class="ml-2 w-36"
+            placeholder="model"
           />
           <span class="ml-5">Models</span>
           <LucideInfo class="ml-1 inline size-4" />

@@ -23,6 +23,15 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.system.file-manage'),
         },
       },
+      {
+        name: 'Model',
+        path: '/system/model',
+        component: () => import('#/views/system/model-manage/index.vue'),
+        meta: {
+          icon: 'hugeicons:ai-setting',
+          title: $t('page.system.model-manage'),
+        },
+      },
     ],
   },
 ];

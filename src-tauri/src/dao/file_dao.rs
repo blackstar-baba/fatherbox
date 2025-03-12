@@ -5,7 +5,7 @@ use sea_orm::{
     PaginatorTrait, QueryFilter, QuerySelect, Value,
 };
 
-use crate::dto::file_dto::{ListByPageBody, ListByPidBody, ListGeneralBody, PageResult};
+use crate::dto::file::{ListByPageBody, ListByPidBody, ListGeneralBody, PageResult};
 use crate::entity::file::{
     ActiveModel as FileActiveModel, Column, Entity as File, Model as FileModel,
 };

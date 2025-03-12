@@ -39,10 +39,13 @@ pub const OPENAI_NAME: &str = "OpenAI";
 pub const DEEP_SEEK: &str = "DeepSeek";
 pub const OLLAMA_NAME: &str = "Ollama";
 
+pub const BUILD_IN_CONNECTION_NAMES: [&str; 3] = [OPENAI_NAME, DEEP_SEEK, OLLAMA_NAME];
+
 pub const OPENAI_BASE_URL: &str = "https://www.openai.com";
 pub const DEEPSEEK_BASE_URL: &str = "https://api.deepseek.com";
 pub const OLLAMA_BASE_URL: &str = "https://localhost:11434";
 pub const API_SUFFIX: &str ="v1";
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {

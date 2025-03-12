@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{AppResponse, CHAT_API_SETTING_KEY, DEEP_SEEK, DEEPSEEK_BASE_URL, OLLAMA_BASE_URL, OLLAMA_NAME, OPENAI_BASE_URL, OPENAI_NAME};
 use crate::dao::setting_dao::SettingService;
-use crate::dto::setting_dto::CreateOrUpdateBody;
+use crate::dto::setting::CreateOrUpdateBody;
 use crate::entity::setting::{ActiveModel, Model};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]

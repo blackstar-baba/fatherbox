@@ -31,7 +31,7 @@ tokio-util = "0.7.11"
 tower-http = { version = "0.5.2", features = ["cors"] }
 http-body-util = "0.1.1"
 axum-macros = "0.4.1"
-sea-orm = { version = "1.0.0-rc.7", features = [
+sea-orm = { version = "1.1.5", features = [
     "debug-print",
     "runtime-tokio-native-tls",
      "sqlx-sqlite",

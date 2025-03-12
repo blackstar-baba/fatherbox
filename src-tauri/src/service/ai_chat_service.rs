@@ -21,7 +21,7 @@ use async_openai::Client;
 use chrono::Utc;
 use futures::future::ok;
 use futures::StreamExt;
-use log::{debug, error, info};
+use log::{debug, error, info, trace};
 use once_cell::sync::Lazy;
 use sea_orm::{DatabaseConnection, Set};
 use serde::{Deserialize, Serialize};
@@ -31,9 +31,11 @@ use tauri::{App, Window};
 use uuid::Uuid;
 
 use crate::dao::file_dao::FileService;
-use crate::dto::file_dto::ListGeneralBody;
+use crate::dto::file::ListGeneralBody;
 use crate::entity::file::ActiveModel;
 use crate::{AppResponse, CHAT_ZONE, FILE_TYPE};
+use crate::service::ai_source_service::get as get_ai_source;
+use crate::service::ai_model_service::get as get_ai_model;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelData {
@@ -94,7 +96,8 @@ pub struct CommonBody {
 pub struct RequestBody {
     pub id: String,
     pub prompt: String,
-    pub model: String,
+    pub model_id: String,
+    pub source_id: String,
     pub stream: bool,
 }
 
@@ -103,7 +106,8 @@ pub struct RequestBody {
 pub struct RegenerateBody {
     id: String,
     index: usize,
-    model: String,
+    model_id: String,
+    source_id: String,
     stream: bool,
 }
 
@@ -113,7 +117,8 @@ pub struct EditBody {
     id: String,
     index: usize,
     prompt: String,
-    model: String,
+    model_id: String,
+    source_id: String,
     stream: bool,
 }
 
@@ -272,6 +277,16 @@ pub async fn message_request(
         return AppResponse::error(None, &app_response.message);
     }
     let model = app_response.result.unwrap();
+    let app_response = get_ai_source(db, &body.source_id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
+    }
+    let ai_source = app_response.result.unwrap();
+    let app_response = get_ai_model(db, &body.model_id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
+    }
+    let ai_model = app_response.result.unwrap();
     let file_path = &user_path.join(&model.wid).join(&model.id);
     if !file_path.exists() {
         let result = fs::File::create(file_path);
@@ -300,7 +315,7 @@ pub async fn message_request(
         content: body.prompt.clone(),
     });
     // add system message
-    let text = do_openai_request(&messages, &body.model).await;
+    let text = do_openai_request(&messages, &ai_source.url, &ai_source.key, &ai_model.name).await;
     messages.push(Message {
         role: System.to_string(),
         content: text.clone(),
@@ -328,6 +343,16 @@ pub async fn message_regenerate(
         return AppResponse::error(None, &app_response.message);
     }
     let model = app_response.result.unwrap();
+    let app_response = get_ai_source(db, &body.source_id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
+    }
+    let ai_source = app_response.result.unwrap();
+    let app_response = get_ai_model(db, &body.model_id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
+    }
+    let ai_model = app_response.result.unwrap();
     let file_path = &user_path.join(&model.wid).join(&model.id);
     if !file_path.exists() {
         return AppResponse::error(None, "chat not found in file system");
@@ -340,7 +365,7 @@ pub async fn message_regenerate(
     if body.index < messages.len() {
         messages.truncate(body.index);
     }
-    let text = do_openai_request(&messages, &body.model).await;
+    let text = do_openai_request(&messages, &ai_source.url, &ai_source.key, &ai_model.name).await;
     // add system message
     messages.push(Message {
         role: System.to_string(),
@@ -369,6 +394,16 @@ pub async fn message_edit(
         return AppResponse::error(None, &app_response.message);
     }
     let model = app_response.result.unwrap();
+    let app_response = get_ai_source(db, &body.source_id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
+    }
+    let ai_source = app_response.result.unwrap();
+    let app_response = get_ai_model(db, &body.model_id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
+    }
+    let ai_model = app_response.result.unwrap();
     let file_path = &user_path.join(&model.wid).join(&model.id);
     if !file_path.exists() {
         return AppResponse::error(None, "chat not found in file system");
@@ -386,7 +421,7 @@ pub async fn message_edit(
         role: User.to_string(),
         content: body.prompt.clone(),
     });
-    let text = do_openai_request(&messages, &body.model).await;
+    let text = do_openai_request(&messages, &ai_source.url, &ai_source.key, &ai_model.name).await;
     // add system message
     messages.push(Message {
         role: System.to_string(),
@@ -404,12 +439,11 @@ pub async fn message_edit(
     }))
 }
 
-async fn do_openai_request(messages: &Vec<Message>, model: &str) -> String {
-    // new openai client
-    let api_key = "sk-4d1596f494474a3ab21fc674b3cb42b7"; // This secret could be from a file, or environment variable.
+async fn do_openai_request(messages: &Vec<Message>, url: &str, key: &str, model: &str) -> String {
+    // new openai client// This secret could be from a file, or environment variable.
     let config = OpenAIConfig::new()
-        .with_api_base(API_ADDRESS)
-        .with_api_key(api_key);
+        .with_api_base(url)
+        .with_api_key(key);
     let client = Client::with_config(config);
     // todo convert message to chat message
     let mut request_messages = vec![];
@@ -471,7 +505,7 @@ pub async fn model_list() -> AppResponse<Option<ModelData>> {
 #[cfg(test)]
 mod test {
     use crate::entity;
-    use crate::service::chat_service::{create, message_request, CreateBody, RequestBody};
+    use crate::service::ai_chat_service::{create, message_request, CreateBody, RequestBody};
     use crate::util::db_util::{drop_database_file, exist_database_file, init_connection};
     use sea_orm::{ConnectionTrait, Schema};
     use std::env::temp_dir;
@@ -494,6 +528,14 @@ mod test {
         db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::File)))
             .await
             .unwrap();
+        db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::AiSource)))
+            .await
+            .unwrap();
+        db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::AiModel)))
+            .await
+            .unwrap();
+
+        // todo new ai source & ai model
         let user_id = Uuid::new_v4().to_string();
         let ws_id = Uuid::new_v4().to_string();
         let ws_path = &user_path.join(&ws_id);
@@ -525,7 +567,8 @@ mod test {
             &RequestBody {
                 id: chat_id.to_string(),
                 prompt: "who is blackstar".to_string(),
-                model: "llama3.1:8b".to_string(),
+                model_id: "llama3.1:8b".to_string(),
+                source_id: "abc".to_string(),
                 stream: false,
             },
         )
@@ -542,7 +585,8 @@ mod test {
             &RequestBody {
                 id: chat_id.to_string(),
                 prompt: "oh, no".to_string(),
-                model: "llama3.1:8b".to_string(),
+                model_id: "llama3.1:8b".to_string(),
+                source_id: "abc".to_string(),
                 stream: false,
             },
         )

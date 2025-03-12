@@ -32,6 +32,9 @@ export function useAntdDesignTokens() {
     Layout: {
       colorBgHeader: '',
     },
+    Menu: {
+      itemBorderWidth: 0,
+    },
   });
 
   const getCssVariableValue = (variable: string, isColor: boolean = true) => {
