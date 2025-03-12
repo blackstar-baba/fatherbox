@@ -31,8 +31,8 @@ import {
   fetchChatAPIProcess,
   getChatMessages,
   getChats,
-  listAiSource,
-  listAiSourceModels,
+  listEnableAiSource,
+  listEnableAiSourceModels,
   regenerateMessage,
   type Source,
 } from '#/api';
@@ -248,7 +248,7 @@ onMounted(async () => {
   if (inputRef.value) inputRef.value?.focus();
 
   // get source
-  const sources = await listAiSource();
+  const sources = await listEnableAiSource();
   sources.forEach((source: Source) => {
     sourcesRef.value.push({
       label: source.name,
@@ -260,7 +260,7 @@ onMounted(async () => {
   }
 
   if (sourceRef.value) {
-    const models = await listAiSourceModels({
+    const models = await listEnableAiSourceModels({
       sourceId: sourceRef.value,
     });
     models.forEach((model: any) => {

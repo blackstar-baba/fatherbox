@@ -38,6 +38,13 @@ pub async fn list(db: &DatabaseConnection, source_id: &str) -> AppResponse<Vec<M
     }
 }
 
+pub async fn list_enable(db: &DatabaseConnection, source_id: &str) -> AppResponse<Vec<Model>> {
+    match AiModelService::list_enable(db, source_id).await {
+        Ok(model) => AppResponse::success(model),
+        Err(err) => AppResponse::error(vec![], &err.to_string()),
+    }
+}
+
 pub async fn get(db: &DatabaseConnection, id: &str) -> AppResponse<Option<Model>> {
     match AiModelService::get(db, id).await {
         Ok(model) => AppResponse::success(model),

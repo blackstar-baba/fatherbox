@@ -32,6 +32,7 @@ use app::service::ai_source_service::{
     delete as ai_source_delete,
     enable as ai_source_enable,
     list as ai_source_list,
+    list_enable as ai_source_list_enable,
     update as ai_source_update,
 };
 
@@ -39,7 +40,8 @@ use app::service::ai_model_service::{
     create as ai_model_create,
     delete as ai_model_delete,
     enable as ai_model_enable,
-    list as ai_model_list
+    list as ai_model_list,
+    list_enable as ai_model_list_enable,
 };
 
 use app::dto::ai_model::{
@@ -262,6 +264,10 @@ pub async fn invoke_ai_source_cmd(
             let response = ai_source_list(db).await;
             to_value(&response).unwrap()
         },
+        "ai_source_list_enable" => {
+            let response = ai_source_list_enable(db).await;
+            to_value(&response).unwrap()
+        },
         "ai_source_create" => {
             let body: AiSourceCreateBody = serde_json::from_value(args).unwrap();
             let response = ai_source_create(db, &body).await;
@@ -307,6 +313,11 @@ pub async fn invoke_ai_model_cmd(
         "ai_model_list" => {
             let body: AiModelListBody = serde_json::from_value(args).unwrap();
             let response = ai_model_list(db, &body.source_id).await;
+            to_value(&response).unwrap()
+        },
+        "ai_model_list_enable" => {
+            let body: AiModelListBody = serde_json::from_value(args).unwrap();
+            let response = ai_model_list_enable(db, &body.source_id).await;
             to_value(&response).unwrap()
         },
         "ai_model_create" => {

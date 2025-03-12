@@ -40,6 +40,26 @@ export async function listAiSource() {
       });
 }
 
+export async function listEnableAiSource() {
+  const accessStore = useAccessStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'ai_source_list_enable',
+        accessToken: accessStore.accessToken,
+        args: {},
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return [] as Source[];
+        }
+        return msg.result as Source[];
+      })
+    : new Promise<Source[]>((resolve: any) => {
+        // todo use http client replace this
+        resolve([]);
+      });
+}
+
 export async function createAiSource(params: {
   key: string;
   name: string;
@@ -174,6 +194,28 @@ export async function listAiSourceModels(params: { sourceId: string }) {
   return window.__TAURI__
     ? invoke('route_cmd', {
         command: 'ai_model_list',
+        accessToken: accessStore.accessToken,
+        args: {
+          ...params,
+        },
+      }).then((msg: any) => {
+        if (msg.code !== 0) {
+          message.error(msg.message);
+          return [] as Model[];
+        }
+        return msg.result as Model[];
+      })
+    : new Promise<Model[]>((resolve: any) => {
+        // todo use http client replace this
+        resolve([]);
+      });
+}
+
+export async function listEnableAiSourceModels(params: { sourceId: string }) {
+  const accessStore = useAccessStore();
+  return window.__TAURI__
+    ? invoke('route_cmd', {
+        command: 'ai_model_list_enable',
         accessToken: accessStore.accessToken,
         args: {
           ...params,

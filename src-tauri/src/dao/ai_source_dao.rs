@@ -52,4 +52,10 @@ impl AiConnectionService {
     pub async fn list(db: &DatabaseConnection) -> Result<Vec<Model>, DbErr> {
         Entity::find().all(db).await
     }
+
+    pub async fn list_enable(db: &DatabaseConnection) -> Result<Vec<Model>, DbErr> {
+        Entity::find()
+            .filter(ai_source::Column::Enable.eq(true))
+            .all(db).await
+    }
 }

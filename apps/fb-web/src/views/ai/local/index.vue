@@ -21,7 +21,7 @@ onMounted(() => {});
 <template>
   <Page
     auto-content-height
-    description="use local models running on ollama, need install ollama and download llms first."
+    description="use ollama local models or remote modes."
     title="Local AI"
   >
     <template #extra>

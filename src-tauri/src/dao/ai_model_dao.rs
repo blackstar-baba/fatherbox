@@ -49,4 +49,11 @@ impl AiModelService {
             .filter(ai_model::Column::SourceId.eq(source_id))
             .all(db).await
     }
+
+    pub async fn list_enable(db: &DatabaseConnection, source_id: &str) -> Result<Vec<Model>, DbErr> {
+        Entity::find()
+            .filter(ai_model::Column::SourceId.eq(source_id))
+            .filter(ai_model::Column::Enable.eq(true))
+            .all(db).await
+    }
 }
