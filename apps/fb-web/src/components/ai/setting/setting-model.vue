@@ -100,7 +100,7 @@ const [DeleteModal, deleteModalApi] = useVbenModal({
         modelsRef.value = await listAiSourceModels({
           sourceId: props.source.id,
         });
-        modelRef.value = null;
+        modelRef.value = undefined;
       });
     }
     deleteModalApi.close();

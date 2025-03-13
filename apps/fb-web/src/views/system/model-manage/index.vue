@@ -11,16 +11,17 @@ import ModelSetting from '#/components/ai/setting/index.vue';
 const contentStyle = computed<StyleValue>(() => {
   return {
     width: '100%',
-    height: `calc(var(${CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT}) - 130px)`,
+    height: `calc(var(${CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT}) - 190px)`,
     overflowY: 'auto',
   };
 });
 </script>
 <template>
   <Page auto-content-height description="Manage Models" title="Model Manage">
-    <Card :bordered="false" :style="contentStyle">
-      <!-- api url list -->
-      <ModelSetting />
+    <Card :bordered="false">
+      <div :style="contentStyle" class="my-2">
+        <ModelSetting />
+      </div>
     </Card>
   </Page>
 </template>

@@ -250,12 +250,12 @@ onMounted(async () => {
   // get source
   const sources = await listEnableAiSource();
   sources.forEach((source: Source) => {
-    sourcesRef.value.push({
+    sourcesRef.value?.push({
       label: source.name,
       value: source.id,
     });
   });
-  if (sourcesRef.value.length > 0) {
+  if (sourcesRef.value && sourcesRef.value.length > 0) {
     sourceRef.value = sourcesRef.value[0]?.value as string;
   }
 
@@ -269,7 +269,7 @@ onMounted(async () => {
         value: model.id,
       });
     });
-    if (modelsRef.value.length > 0) {
+    if (modelsRef.value && modelsRef.value.length > 0) {
       modelRef.value = modelsRef.value[0]?.value as string;
     }
   }

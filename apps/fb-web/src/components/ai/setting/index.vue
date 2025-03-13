@@ -129,11 +129,11 @@ const [DeleteModal, deleteModalApi] = useVbenModal({
     if (id) {
       deleteAiSource({ id }).then(async () => {
         chatSourcesRef.value = await listAiSource();
-        if (chatSourcesRef.value.length > 0) {
+        if (chatSourcesRef.value.length > 0 && chatSourcesRef.value[0]) {
           selectSourceKeysRef.value = [chatSourcesRef.value[0].id];
           sourceRef.value = chatSourcesRef.value[0];
         } else {
-          sourceRef.value = null;
+          sourceRef.value = undefined;
         }
       });
     }
@@ -177,7 +177,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div :style="contentStyle" class="flex h-full flex-row">
+  <div class="flex h-full flex-row">
     <div class="h-full w-[256px] border-r pr-4">
       <div class="py-4">
         <Button class="w-full" type="primary" @click="handleAdd">

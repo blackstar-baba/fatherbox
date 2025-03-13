@@ -11,7 +11,7 @@ import Chat from '#/components/chat/index.vue';
 const contentStyle = computed<StyleValue>(() => {
   return {
     width: '100%',
-    height: `calc(var(${CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT}) - 180px)`,
+    height: `calc(var(${CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT}) - 190px)`,
     overflowY: 'auto',
   };
 });
