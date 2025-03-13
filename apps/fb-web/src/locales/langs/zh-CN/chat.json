@@ -1,0 +1,26 @@
+{
+  "chat": {
+    "new": "新建",
+    "clear": "清空",
+    "clearAllHistoryConfirm": "确定清空所有对话吗？",
+    "clearHistoryConfirm": "确认清空对话",
+    "delete": "删除",
+    "newChatTitle": "新的对话",
+    "noData": "还没有对话",
+    "export": "导出",
+    "exportConfirm": "确认导出对话吗？",
+    "exportSuccess": "导出成功",
+    "exportFailed": "导出失败"
+  },
+  "message": {
+    "copy": "复制",
+    "copied": "已复制",
+    "copyFailed": "复制失败",
+    "thinking": "思考中",
+    "placeholder": "我能帮助你什么",
+    "stopResponding": "停止响应",
+    "notFound": "找不到消息",
+    "save": "保存",
+    "wrong": "获取消息失败"
+  }
+}

@@ -42,6 +42,7 @@
   },
   "system": {
     "title": "系统",
-    "file-manage": "文件管理"
+    "file-manage": "文件管理",
+    "model-manage": "模型管理"
   }
 }

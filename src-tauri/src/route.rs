@@ -2,24 +2,57 @@ use std::path::PathBuf;
 
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
+use log::{debug, trace};
 use sea_orm::DatabaseConnection;
 use serde_json::{to_value, Value};
 use tauri::State;
 
-use app::dto::file_dto::{
+use app::dto::file::{
     CopyBody as FileCopyBody, CreateBody as FileCreateBody, GeneralBody as FileGeneralBody,
     ListByPageBody as FileListByPageBody, ListByPidBody as FileListByPidBody,
     ListGeneralBody as FileListGeneralBody, UpdateBody as FileUpdateBody,
     UpdateContentBody as FileUpdateContentBody, UpdateNameBody as FileUpdateNameBody,
+};
+use app::service::ai_chat_service::{
+    create as chat_create, delete as chat_delete, list as chat_list, message_edit as chat_message_edit, message_list as chat_message_list,
+    message_regenerate  as chat_message_regenerate,
+    message_request as chat_message_request, model_list as chat_model_list, update_name as chat_update_name,
+    CommonBody as ChatCommonBody, CreateBody as ChatCreateBody, EditBody as ModelMessageEditBody,
+    ListBody as ChatListBody, RegenerateBody as ModelMessageRegenerateBody,
+    RequestBody as ChatRequestBody, UpdateNameBody as ChatUpdateNameBody
 };
 use app::service::file_service::{
     copy_file, create_file, delete_file, get_file, get_path, get_workspace_files,
     get_workspace_files_by_page, get_workspace_files_by_pid, update_file, update_file_content,
     update_file_name,
 };
-use app::service::model_service::{
-    chat_request, get_chat_history_messages, get_chats, get_models, ChatRequestBody,
-    DeepChatRequestBody,
+
+use app::service::ai_source_service::{
+    create as ai_source_create,
+    delete as ai_source_delete,
+    enable as ai_source_enable,
+    list as ai_source_list,
+    list_enable as ai_source_list_enable,
+    update as ai_source_update,
+};
+
+use app::service::ai_model_service::{
+    create as ai_model_create,
+    delete as ai_model_delete,
+    enable as ai_model_enable,
+    list as ai_model_list,
+    list_enable as ai_model_list_enable,
+};
+
+use app::dto::ai_model::{
+    CommonBody as AiModelCommonBody,
+    CreateBody as AiModelCreateBody, EnableBody as AiModelEnableBody,
+    ListBody as AiModelListBody,
+};
+use app::dto::ai_source::{
+    CommonBody as AiSourceCommonBody, CreateBody as AiSourceCreateBody,
+    EnableBody as AiSourceEnableBody,
+    UpdateBody as AiSourceUpdateBody,
 };
 use app::service::user_service::{
     get_access_codes, get_user_info, login, logout, refresh_token, register, LoginBody,
@@ -46,12 +79,16 @@ pub async fn route_cmd(
     let user_path = &state.user_path;
     return if command.starts_with("user") {
         Ok(invoke_user_cmd(db, command, access_token, args).await)
-    } else if command.starts_with("model") {
-        Ok(invoke_model_cmd(db, command, access_token, args).await)
+    }  else if command.starts_with("chat") {
+        Ok(invoke_chat_cmd(db, user_path, command, access_token, args).await)
     } else if command.starts_with("workspace") {
         Ok(invoke_workspace_cmd(db, command, access_token, args).await)
     } else if command.starts_with("file") {
         Ok(invoke_file_cmd(db, user_path, command, access_token, args).await)
+    } else if command.starts_with("ai_source") {
+        Ok(invoke_ai_source_cmd(db, user_path, command, access_token, args).await)
+    } else if command.starts_with("ai_model") {
+        Ok(invoke_ai_model_cmd(db, user_path, command, access_token, args).await)
     } else {
         let response =
             AppResponse::error(None::<String>, &format!("Command {:?} not found", command));
@@ -108,7 +145,7 @@ pub async fn invoke_user_cmd(
     let login_info = login_info_result.unwrap();
     let user_id = &login_info.user_id;
     let access_token_str = &login_info.access_token;
-    return match command.as_str() {
+    match command.as_str() {
         "user_get_info" => {
             let response = get_user_info(db, user_id).await;
             to_value(&response).unwrap()
@@ -135,54 +172,179 @@ pub async fn invoke_user_cmd(
             "User command not found",
         ))
         .unwrap(),
-    };
+    }
 }
 
-pub async fn invoke_model_cmd(
+pub async fn invoke_chat_cmd(
     db: &DatabaseConnection,
+    user_path: &PathBuf,
     command: String,
     access_token: Option<String>,
     args: Value,
 ) -> Value {
-    // if access_token.is_none() {
-    //     return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap()
-    // }
-    // let access_token = access_token.unwrap();
-    // let result = BASE64_STANDARD.decode(&access_token).unwrap();
-    // let user_id = String::from_utf8(result).unwrap();
-    return match command.as_str() {
-        "model_get_models" => {
-            let response = get_models().await;
+    if access_token.is_none() {
+        return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap();
+    }
+    let access_token = access_token.unwrap();
+    let result = BASE64_STANDARD.decode(&access_token).unwrap();
+    let user_id = String::from_utf8(result).unwrap();
+    match command.as_str() {
+        "chat_get_models" => {
+            let response = chat_model_list().await;
+            to_value(&response).unwrap()
+        },
+        "chat_list" => {
+            let body: ChatListBody = serde_json::from_value(args).unwrap();
+            let response = chat_list(db, &user_id, &body.wid).await;
             to_value(&response).unwrap()
         }
-        "model_get_chats" => {
-            let response = get_chats().await;
+        "chat_create" => {
+            let body: ChatCreateBody = serde_json::from_value(args).unwrap();
+            let response = chat_create(db, &user_id, &body).await;
             to_value(&response).unwrap()
         }
-        "model_get_chat_history_messages" => {
+        "chat_delete" => {
+            let body: ChatCommonBody = serde_json::from_value(args).unwrap();
+            let response = chat_delete(db, &user_id, &body.id).await;
+            to_value(&response).unwrap()
+        }
+        "chat_update_name" => {
+            let body: ChatUpdateNameBody = serde_json::from_value(args).unwrap();
+            let response = chat_update_name(db, &user_id, &body).await;
+            to_value(&response).unwrap()
+        }
+        "chat_model_list" => {
+            let response = chat_model_list().await;
+            to_value(&response).unwrap()
+        }
+        "chat_message_list" => {
+            let body: ChatCommonBody = serde_json::from_value(args).unwrap();
+            let response = chat_message_list(db, user_path, &user_id, &body.id).await;
+            to_value(&response).unwrap()
+        }
+        "chat_message_request" => {
             let body: ChatRequestBody = serde_json::from_value(args).unwrap();
-            let response = get_chat_history_messages(body.id).await;
+            debug!("request body: {:?}" ,body);
+            let response = chat_message_request(db, user_path, &user_id, &body).await;
             to_value(&response).unwrap()
         }
-        "model_chat_request" => {
-            let body: DeepChatRequestBody = serde_json::from_value(args).unwrap();
-            let response = chat_request(body).await;
+        "chat_message_regenerate" => {
+            let body: ModelMessageRegenerateBody = serde_json::from_value(args).unwrap();
+            let response = chat_message_regenerate(db, user_path, &user_id, &body).await;
             to_value(&response).unwrap()
         }
-        "model_chat_stream_request" => {
-            // todo
-            Value::Null
-        }
-        "modeL_chat_files_request" => {
-            // todo
-            Value::Null
+        "chat_message_edit" => {
+            let body: ModelMessageEditBody = serde_json::from_value(args).unwrap();
+            let response = chat_message_edit(db, user_path, &user_id, &body).await;
+            to_value(&response).unwrap()
         }
         _ => to_value(&AppResponse::error(
             None::<String>,
-            "Model command not found",
+            "Chat command not found",
         ))
         .unwrap(),
-    };
+    }
+}
+
+pub async fn invoke_ai_source_cmd(
+    db: &DatabaseConnection,
+    user_path: &PathBuf,
+    command: String,
+    access_token: Option<String>,
+    args: Value,
+) -> Value {
+    if access_token.is_none() {
+        return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap();
+    }
+    let access_token = access_token.unwrap();
+    let result = BASE64_STANDARD.decode(&access_token).unwrap();
+    let user_id = String::from_utf8(result).unwrap();
+    match command.as_str() {
+        "ai_source_list" => {
+            let response = ai_source_list(db).await;
+            to_value(&response).unwrap()
+        },
+        "ai_source_list_enable" => {
+            let response = ai_source_list_enable(db).await;
+            to_value(&response).unwrap()
+        },
+        "ai_source_create" => {
+            let body: AiSourceCreateBody = serde_json::from_value(args).unwrap();
+            let response = ai_source_create(db, &body).await;
+            to_value(&response).unwrap()
+        }
+        "ai_source_delete" => {
+            let body: AiSourceCommonBody  = serde_json::from_value(args).unwrap();
+            let response = ai_source_delete(db, &body.id).await;
+            to_value(&response).unwrap()
+        }
+        "ai_source_update" => {
+            let body: AiSourceUpdateBody = serde_json::from_value(args).unwrap();
+            let response = ai_source_update(db, &body).await;
+            to_value(&response).unwrap()
+        }
+        "ai_source_enable" => {
+            let body: AiSourceEnableBody = serde_json::from_value(args).unwrap();
+            let response = ai_source_enable(db, &body).await;
+            to_value(&response).unwrap()
+        }
+        _ => to_value(&AppResponse::error(
+            None::<String>,
+            "Ai source command not found",
+        ))
+            .unwrap(),
+    }
+}
+
+pub async fn invoke_ai_model_cmd(
+    db: &DatabaseConnection,
+    user_path: &PathBuf,
+    command: String,
+    access_token: Option<String>,
+    args: Value,
+) -> Value {
+    if access_token.is_none() {
+        return to_value(&AppResponse::error(None::<String>, "User token is null")).unwrap();
+    }
+    let access_token = access_token.unwrap();
+    let result = BASE64_STANDARD.decode(&access_token).unwrap();
+    let user_id = String::from_utf8(result).unwrap();
+    match command.as_str() {
+        "ai_model_list" => {
+            let body: AiModelListBody = serde_json::from_value(args).unwrap();
+            let response = ai_model_list(db, &body.source_id).await;
+            to_value(&response).unwrap()
+        },
+        "ai_model_list_enable" => {
+            let body: AiModelListBody = serde_json::from_value(args).unwrap();
+            let response = ai_model_list_enable(db, &body.source_id).await;
+            to_value(&response).unwrap()
+        },
+        "ai_model_create" => {
+            let body: AiModelCreateBody = serde_json::from_value(args).unwrap();
+            let response = ai_model_create(db, &body).await;
+            to_value(&response).unwrap()
+        }
+        "ai_model_delete" => {
+            let body: AiModelCommonBody  = serde_json::from_value(args).unwrap();
+            let response = ai_model_delete(db, &body.id).await;
+            to_value(&response).unwrap()
+        }
+        // "ai_model_sync" => {
+        //     let response = chat_model_list().await;
+        //     to_value(&response).unwrap()
+        // }
+        "ai_model_enable" => {
+            let body: AiModelEnableBody = serde_json::from_value(args).unwrap();
+            let response = ai_model_enable(db, &body).await;
+            to_value(&response).unwrap()
+        }
+        _ => to_value(&AppResponse::error(
+            None::<String>,
+            "Ai model command not found",
+        ))
+            .unwrap(),
+    }
 }
 
 pub async fn invoke_workspace_cmd(
@@ -201,7 +363,7 @@ pub async fn invoke_workspace_cmd(
     }
     let login_info = login_info_result.unwrap();
     let user_id = &login_info.user_id;
-    return match command.as_str() {
+    match command.as_str() {
         "workspace_list" => {
             let response = list_workspaces(db).await;
             to_value(&response).unwrap()
@@ -226,7 +388,7 @@ pub async fn invoke_workspace_cmd(
             "Workspace command not found",
         ))
         .unwrap(),
-    };
+    }
 }
 
 pub async fn invoke_file_cmd(
@@ -243,7 +405,7 @@ pub async fn invoke_file_cmd(
     // let result = BASE64_STANDARD.decode(&access_token).unwrap();
     // let user_id = String::from_utf8(result).unwrap();
     // todo need user_id to query
-    return match command.as_str() {
+    match command.as_str() {
         "file_get_all_workspace_files" => {
             let body: FileListGeneralBody = serde_json::from_value(args).unwrap();
             let response = get_workspace_files(db, &body).await;
@@ -304,5 +466,5 @@ pub async fn invoke_file_cmd(
             "File command not found",
         ))
         .unwrap(),
-    };
+    }
 }

@@ -52,6 +52,8 @@ catalog:
   '@types/lodash.clonedeep': ^4.5.9
   '@types/lodash.get': ^4.4.9
   '@types/lodash.isequal': ^4.5.8
+  '@types/markdown-it': ^12.2.3
+  '@types/markdown-it-link-attributes': ^3.0.1
   '@types/node': ^22.10.1
   '@types/nprogress': ^0.2.3
   '@types/postcss-import': ^14.0.3
@@ -64,6 +66,7 @@ catalog:
   '@vite-pwa/vitepress': ^0.5.3
   '@vitejs/plugin-vue': ^5.2.1
   '@vitejs/plugin-vue-jsx': ^4.1.1
+  '@vscode/markdown-it-katex': ^1.0.3
   '@vue/reactivity': ^3.5.13
   '@vue/shared': ^3.5.13
   '@vue/test-utils': ^2.4.6
@@ -90,7 +93,6 @@ catalog:
   cz-git: ^1.11.0
   czg: ^1.11.0
   dayjs: ^1.11.13
-  deep-chat: ^2.0.1
   defu: ^6.1.4
   depcheck: ^1.4.7
   dotenv: ^16.4.7
@@ -118,7 +120,9 @@ catalog:
   globals: ^15.13.0
   h3: ^1.13.0
   happy-dom: ^15.11.7
+  highlight.js: ^11.7.0
   html-minifier-terser: ^7.2.0
+  html-to-image: ^1.11.11
   husky: ^9.1.7
   is-ci: ^3.0.1
   jsonc-eslint-parser: ^2.4.0
@@ -128,7 +132,10 @@ catalog:
   lodash.get: ^4.4.2
   lodash.isequal: ^4.5.0
   lucide-vue-next: ^0.465.0
+  markdown-it: ^13.0.1
+  markdown-it-link-attributes: ^4.0.1
   medium-zoom: ^1.1.0
+  mermaid-it-markdown: ^1.0.8
   naive-ui: ^2.40.3
   nitropack: ^2.10.4
   nprogress: ^0.2.0

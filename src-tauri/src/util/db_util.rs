@@ -4,7 +4,8 @@ use std::path::PathBuf;
 use std::{fs, path};
 
 use sea_orm::entity::prelude::*;
-use sea_orm::{Database, DatabaseConnection};
+use sea_orm::{Database, DatabaseConnection, Schema};
+use crate::entity;
 
 pub async fn init_connection(file_path: &PathBuf) -> Result<DatabaseConnection, DbErr> {
     if !exist_database_file(file_path) {
@@ -31,6 +32,30 @@ pub fn drop_database_file(file_path: &PathBuf) -> std::io::Result<()> {
 pub fn exist_database_file(file_path: &PathBuf) -> bool {
     file_path.exists()
 }
+
+pub async fn init_test_database(db_name: &str, table_names: &Vec<String>) -> Result<DatabaseConnection, DbErr>  {
+    let temp_dir = temp_dir();
+    let base_path = temp_dir.join(".fatherbox");
+    let file_path = &base_path.join(format!("{}.sqlite", db_name));
+    println!("file path is: {:?}", file_path);
+    if exist_database_file(file_path) {
+        drop_database_file(&file_path).unwrap();
+    }
+    let db = init_connection(&file_path).await?;
+    let builder = db.get_database_backend();
+    let schema = Schema::new(builder);
+    for tableName in table_names {
+        if tableName.eq("ai_connection") {
+            db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::AiModel)))
+                .await?;
+        } else if tableName.eq("ai_model") {
+            db.execute(builder.build(&schema.create_table_from_entity(entity::prelude::AiModel)))
+                .await?;
+        }
+    }
+    Ok(db)
+}
+
 
 #[cfg(test)]
 mod tests {

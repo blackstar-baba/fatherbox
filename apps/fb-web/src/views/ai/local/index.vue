@@ -1,147 +1,27 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, type StyleValue } from 'vue';
 
 import { Page } from '@vben/common-ui';
-import { LucideInfo } from '@vben/icons';
+import { CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT } from '@vben-core/shared/constants';
 
-import { useResizeObserver } from '@vueuse/core';
-import { Card, Select, type SelectProps } from 'ant-design-vue';
-import { v4 as uuidv4 } from 'uuid';
+import { Card } from 'ant-design-vue';
 
-import {
-  chatRequest,
-  getChatHistoryMessages,
-  getChats,
-  getModels,
-} from '#/api/core/ai';
+import Chat from '#/components/chat/index.vue';
 
-import 'deep-chat';
-
-const models = ref<SelectProps['options']>([]);
-const model = ref('');
-const templates = ref<SelectProps['options']>([]);
-const template = ref('');
-const chats = ref<SelectProps['options']>([]);
-const chatId = ref('');
-const pageElementRef = ref<any>(null);
-const chatElementRef = ref<any>(null);
-
-const history = ref([]);
-// { role: 'user', text: 'Hey, how are you today?' },
-// { role: 'ai', text: 'I am doing very well!' },
-
-const avatars = ref({
-  ai: { src: '/logo.png', styles: { avatar: { marginLeft: '-3px' } } },
-  default: {
-    src: '/avatar.svg',
-    styles: {
-      avatar: { height: '30px', width: '30px' },
-      container: { marginTop: '8px' },
-    },
-  },
+const contentStyle = computed<StyleValue>(() => {
+  return {
+    width: '100%',
+    height: `calc(var(${CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT}) - 190px)`,
+    overflowY: 'auto',
+  };
 });
 
-const chatStyle = ref({
-  'border-radius': '8px',
-  height: `500px`,
-  width: `1024px`,
-});
-
-function getChatHistory(id: string) {
-  getChatHistoryMessages(id).then((data: any) => {
-    history.value = data;
-  });
-}
-
-function updateChats(id: string) {
-  getChats().then((data: any) => {
-    chats.value = [];
-    data.forEach((charInfo: any) => {
-      chats.value?.push({
-        label: charInfo.name,
-        value: charInfo.id,
-      });
-      chatId.value = id;
-    });
-  });
-}
-
-function updateChatStyle() {
-  if (pageElementRef.value) {
-    const rect = pageElementRef.value.$el.getBoundingClientRect();
-    chatStyle.value.height = `${rect.height - 220}px`;
-    chatStyle.value.width = `${rect.width - 60}px`;
-  }
-}
-
-onMounted(() => {
-  useResizeObserver(pageElementRef, (_) => {
-    updateChatStyle();
-  });
-  getChats().then((data: any) => {
-    chats.value = [];
-    chatId.value = '';
-    data.forEach((charInfo: any) => {
-      chats.value?.push({
-        label: charInfo.name,
-        value: charInfo.id,
-      });
-    });
-    if (chats.value.length > 0) {
-      chatId.value = chats.value[0]?.value as string;
-      getChatHistory(chatId.value);
-    }
-  });
-  // get models
-  getModels().then((data: any) => {
-    models.value = [];
-    model.value = '';
-    data.models.forEach((model: any) => {
-      models.value?.push({
-        label: model.name,
-        value: model.name,
-      });
-    });
-    if (models.value.length > 0) {
-      model.value = models.value[0]?.value as string;
-    }
-  });
-
-  if (chatElementRef.value) {
-    chatElementRef.value.connect = {
-      handler: (body: any, signals: any) => {
-        try {
-          // todo div auto scale
-          // default model if exist
-          const existChat: boolean = chatId.value !== '';
-          body.model = model.value;
-          body.stream = false;
-          body.id = existChat ? chatId.value : uuidv4();
-          chatRequest(body)
-            .then((data: any) => {
-              if (!existChat) {
-                updateChats(chatId.value);
-              }
-              signals.onResponse({
-                text: data.text.toString() || 'Handler response',
-              });
-            })
-            .catch((error) => {
-              signals.onResponse({ error: `Fetch error: ${error.message}` });
-            });
-        } catch (error: any) {
-          signals.onResponse({ error: `Handler error: ${error.message}` });
-        }
-      },
-    };
-  }
-});
+onMounted(() => {});
 </script>
 <template>
   <Page
-    ref="pageElementRef"
     auto-content-height
-    description="use local models running on ollama, need install ollama and download llms first."
+    description="use ollama local models or remote modes."
     title="Local AI"
   >
     <template #extra>
@@ -154,31 +34,8 @@ onMounted(() => {
       </div>
     </template>
     <Card :bordered="false">
-      <div class="my-2">
-        <span>Models</span>
-        <LucideInfo class="ml-1 inline size-4" />
-        <Select
-          v-model:value="model"
-          :options="models"
-          class="ml-2 w-36"
-          placeholder="model"
-        />
-        <span class="ml-2">Prompt Templates</span>
-        <Select
-          v-model:value="template"
-          :options="templates"
-          class="ml-2 w-36"
-          placeholder="template"
-        />
-      </div>
-      <div class="my-2" style="width: 100%">
-        <deep-chat
-          ref="chatElementRef"
-          :avatars="avatars"
-          :history="history"
-          :style="chatStyle"
-          demo="true"
-        />
+      <div :style="contentStyle" class="my-2">
+        <Chat />
       </div>
     </Card>
   </Page>

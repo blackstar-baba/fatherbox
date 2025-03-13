@@ -28,5 +28,6 @@ export function copy(value: any) {
   input.select();
   document.execCommand('Copy');
   input.remove();
+  // message.success($t('chat.message.copied'));
   message.info('copy success');
 }

@@ -1,0 +1,26 @@
+{
+  "chat": {
+    "new": "new chat",
+    "clear": "clear chat",
+    "clearAllHistoryConfirm": "are you sure clear all chats ?",
+    "clearHistoryConfirm": "are you sure clear chat:",
+    "delete": "delete chat",
+    "newChatTitle": "new chat",
+    "noData": "no chat yet",
+    "export": "export",
+    "exportConfirm": "are you sure export chat ?",
+    "exportSuccess": "export success",
+    "exportFailed": "export failed"
+  },
+  "message": {
+    "copy": "copy",
+    "copied": "copied",
+    "copyFailed": "copy failed",
+    "thinking": "thinking",
+    "placeholder": "how can i help you?",
+    "stopResponding": "stop responding",
+    "notFound": "message not found",
+    "save": "save",
+    "wrong": "get message failed"
+  }
+}

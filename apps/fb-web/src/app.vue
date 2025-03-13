@@ -11,7 +11,7 @@ import { antdLocale } from '#/locales';
 defineOptions({ name: 'App' });
 
 const { isDark } = usePreferences();
-const { tokens } = useAntdDesignTokens();
+const { tokens, components } = useAntdDesignTokens();
 
 const tokenTheme = computed(() => {
   const algorithm = isDark.value
@@ -26,6 +26,7 @@ const tokenTheme = computed(() => {
   return {
     algorithm,
     token: tokens,
+    components,
   };
 });
 </script>

@@ -266,6 +266,36 @@ async fn init_data_db(data_path: &PathBuf) -> Result<Option<DatabaseConnection>,
                 return Err(err);
             }
         }
+        match db
+            .execute(builder.build(&schema.create_table_from_entity(entity::prelude::Setting)))
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                info!("init data.db catch err: {:?}", err);
+                return Err(err);
+            }
+        }
+        match db
+            .execute(builder.build(&schema.create_table_from_entity(entity::prelude::AiSource)))
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                info!("init data.db catch err: {:?}", err);
+                return Err(err);
+            }
+        }
+        match db
+            .execute(builder.build(&schema.create_table_from_entity(entity::prelude::AiModel)))
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                info!("init data.db catch err: {:?}", err);
+                return Err(err);
+            }
+        }
     }
     Ok(Some(db))
 }

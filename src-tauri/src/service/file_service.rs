@@ -11,7 +11,7 @@ use tauri::api::dir::is_dir;
 use uuid::Uuid;
 
 use crate::dao::file_dao::FileService;
-use crate::dto::file_dto::{CopyBody, CreateBody, GeneralBody, ListByPageBody, ListByPidBody, ListGeneralBody, PageResult, UpdateBody, UpdateContentBody, UpdateNameBody};
+use crate::dto::file::{CopyBody, CreateBody, GeneralBody, ListByPageBody, ListByPidBody, ListGeneralBody, PageResult, UpdateBody, UpdateContentBody, UpdateNameBody};
 use crate::entity::file::{ActiveModel, Model};
 use crate::{AppResponse, DIR_TYPE, RESPONSE_CODE_ERROR, RESPONSE_CODE_SUCCESS};
 
