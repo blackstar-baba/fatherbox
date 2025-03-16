@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
 import {
@@ -9,9 +10,17 @@ import {
   CopyOutlined,
   EditOutlined,
   RedoOutlined,
+  SaveOutlined,
 } from '@ant-design/icons-vue';
 import { Button, message, Textarea } from 'ant-design-vue';
 
+import { useVbenForm } from '#/adapter';
+import { createFile as createFileApi } from '#/api';
+import {
+  encodeStringToUint8Array,
+  FILE_TYPE_FILE,
+  getFileTree,
+} from '#/components/file/file';
 import { copy } from '#/utils';
 
 import MessageAvatar from './message-avatar.vue';
@@ -69,6 +78,90 @@ function handleCopy() {
     message.error($t('chat.message.copyFailed'));
   }
 }
+
+function onSubmit(values: Record<string, any>) {
+  createFileApi({
+    name: values.name,
+    pid: values.pid,
+    content: values.content
+      ? encodeStringToUint8Array(values.content)
+      : undefined,
+    path: values.file ?? undefined,
+    type: FILE_TYPE_FILE,
+  }).then((file: any) => {
+    if (file.id) {
+      message.success('save file success');
+    }
+  });
+}
+
+const [createForm, createFormApi] = useVbenForm({
+  handleSubmit: onSubmit,
+  schema: [
+    {
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入',
+      },
+      fieldName: 'name',
+      label: 'Name',
+      rules: 'required',
+    },
+    {
+      component: 'TreeSelect',
+      componentProps: {
+        class: 'w-full',
+        allowClear: false,
+        placeholder: '请选择',
+        showSearch: false,
+        treeData: [],
+        treeNodeFilterProp: 'label',
+      },
+      fieldName: 'pid',
+      label: 'Parent',
+    },
+    {
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入内容',
+      },
+      fieldName: 'content',
+      label: 'Content',
+    },
+  ],
+  showDefaultActions: false,
+});
+
+const [CreateModal, createModalApi] = useVbenModal({
+  onCancel() {
+    createModalApi.close();
+  },
+  onConfirm: async () => {
+    await createFormApi.validateAndSubmitForm();
+    createModalApi.close();
+  },
+});
+
+async function handleSave() {
+  const fileTree = await getFileTree();
+  // todo can throw error
+  if (fileTree) {
+    createFormApi.updateSchema([
+      {
+        fieldName: 'pid',
+        componentProps: {
+          treeData: [fileTree],
+          disabled: false,
+        },
+      },
+    ]);
+    createFormApi.setValues({
+      content: props.text,
+      pid: fileTree?.value,
+    });
+    createModalApi.open();
+  }
+}
 </script>
 
 <template>
@@ -115,6 +208,14 @@ function handleCopy() {
           v-if="!inversion && !loading"
           size="small"
           type="text"
+          @click="handleSave"
+        >
+          <SaveOutlined />
+        </Button>
+        <Button
+          v-if="!inversion && !loading"
+          size="small"
+          type="text"
           @click="handleRegenerate"
         >
           <RedoOutlined />
@@ -146,4 +247,7 @@ function handleCopy() {
       </p>
     </div>
   </div>
+  <CreateModal>
+    <createForm />
+  </CreateModal>
 </template>
