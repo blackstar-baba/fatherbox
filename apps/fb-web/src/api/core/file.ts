@@ -408,11 +408,11 @@ export async function getFileContent(id: string) {
     if (filePath.length > 0) {
       return readBinaryFile(filePath as string);
     }
-    return new Promise((resolve) => {
+    return new Promise<Uint8Array>((resolve) => {
       resolve(new Uint8Array([]));
     });
   }
-  return new Promise((resolve) => {
+  return new Promise<Uint8Array>((resolve) => {
     resolve(new Uint8Array([]));
   });
 }
