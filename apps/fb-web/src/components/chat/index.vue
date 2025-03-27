@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, type Ref, ref, watchEffect } from 'vue';
 
-import { LucideInfo, RiStopCircleFill } from '@vben/icons';
+import { LucideInfo } from '@vben/icons';
 
 import {
   DownloadOutlined,
@@ -27,13 +27,13 @@ import {
   type ChatInfo,
   type ChatMessage,
   createChat,
-  editMessage,
-  fetchChatAPIProcess,
+  editChatMessageWithStream,
+  generateChatMessageWithStream,
   getChatMessages,
   getChats,
   listEnableAiSource,
   listEnableAiSourceModels,
-  regenerateMessage,
+  regenerateChatMessageWithStream,
   type Source,
 } from '#/api';
 import { $t } from '#/locales';
@@ -107,28 +107,31 @@ async function onConversation(message: string) {
     },
     {
       role: 'system',
-      content: $t('chat.message.thinking'),
+      content: '',
       loading: true,
     },
   );
   scrollToBottom();
+  const lastChatMessage =
+    chatMessagesRef.value[chatMessagesRef.value.length - 1];
   // request
-  await fetchChatAPIProcess({
+  await generateChatMessageWithStream({
     id: currentUuid,
     prompt: message,
     modelId: modelRef.value,
     sourceId: sourceRef.value,
-    onDownloadProgress: (message: string) => {
-      const chatMessage =
-        chatMessagesRef.value[chatMessagesRef.value.length - 1];
-      if (chatMessage) {
-        chatMessage.content = message;
-        chatMessage.loading = false;
+    onProgress: (message: null | string, _: number) => {
+      if (lastChatMessage) {
+        if (message) {
+          lastChatMessage.content += message;
+        } else {
+          lastChatMessage.loading = false;
+          loadingRef.value = false;
+        }
       }
       scrollToBottomIfAtBottom();
     },
   });
-  loadingRef.value = false;
 }
 
 async function onRegenerate(index: number) {
@@ -139,37 +142,40 @@ async function onRegenerate(index: number) {
     message.error($t('chat.message.notFound'));
     return;
   }
-  loadingRef.value = true;
-
-  chatMessagesRef.value.splice(index);
-  // push system message
-  chatMessagesRef.value.push({
-    role: 'system',
-    content: $t('chat.message.thinking'),
-    loading: true,
-  });
-
   if (activeIdRef.value === null) {
     message.error($t('chat.message.notFound'));
     return;
   }
 
-  await regenerateMessage({
+  loadingRef.value = true;
+  chatMessagesRef.value.splice(index);
+  // push system message
+  chatMessagesRef.value.push({
+    role: 'system',
+    content: '',
+    loading: true,
+  });
+
+  const lastChatMessage =
+    chatMessagesRef.value[chatMessagesRef.value.length - 1];
+
+  await regenerateChatMessageWithStream({
     id: activeIdRef.value,
     index,
     modelId: modelRef.value,
     sourceId: sourceRef.value,
-    onDownloadProgress: (message: string) => {
-      const chatMessage =
-        chatMessagesRef.value[chatMessagesRef.value.length - 1];
-      if (chatMessage) {
-        chatMessage.content = message;
-        chatMessage.loading = false;
+    onProgress: (message: null | string, _: number) => {
+      if (lastChatMessage) {
+        if (message) {
+          lastChatMessage.content += message;
+        } else {
+          lastChatMessage.loading = false;
+          loadingRef.value = false;
+        }
       }
       scrollToBottomIfAtBottom();
     },
   });
-  loadingRef.value = false;
 }
 
 async function onEdit(index: number, newPrompt: string) {
@@ -180,14 +186,14 @@ async function onEdit(index: number, newPrompt: string) {
     message.error($t('chat.message.notFound'));
     return;
   }
-  loadingRef.value = true;
-  // delete old messages
-  chatMessagesRef.value.splice(index);
-
   if (activeIdRef.value === null) {
     message.error($t('chat.message.notFound'));
     return;
   }
+
+  loadingRef.value = true;
+  // delete old messages
+  chatMessagesRef.value.splice(index);
   // add user message & think system message
   chatMessagesRef.value.push(
     {
@@ -197,29 +203,32 @@ async function onEdit(index: number, newPrompt: string) {
     },
     {
       role: 'system',
-      content: $t('chat.message.thinking'),
+      content: '',
       loading: true,
     },
   );
 
-  scrollToBottom();
-  await editMessage({
+  const lastChatMessage =
+    chatMessagesRef.value[chatMessagesRef.value.length - 1];
+
+  await editChatMessageWithStream({
     id: activeIdRef.value,
     index,
     modelId: modelRef.value,
     sourceId: sourceRef.value,
-    onDownloadProgress: (message: string) => {
-      const chatMessage =
-        chatMessagesRef.value[chatMessagesRef.value.length - 1];
-      if (chatMessage) {
-        chatMessage.content = message;
-        chatMessage.loading = false;
+    onProgress: (message: null | string, _: number) => {
+      if (lastChatMessage) {
+        if (message) {
+          lastChatMessage.content += message;
+        } else {
+          lastChatMessage.loading = false;
+          loadingRef.value = false;
+        }
       }
       scrollToBottomIfAtBottom();
     },
     prompt: newPrompt,
   });
-  loadingRef.value = false;
 }
 
 async function handleExport() {
@@ -237,11 +246,11 @@ async function handleExport() {
   }
 }
 
-function handleStop() {
-  if (loadingRef.value) {
-    loadingRef.value = false;
-  }
-}
+// function handleStop() {
+//   if (loadingRef.value) {
+//     loadingRef.value = false;
+//   }
+// }
 
 onMounted(async () => {
   scrollToBottom();
@@ -363,22 +372,14 @@ watchEffect(async () => {
                       :error="item.error"
                       :inversion="item.role === 'user'"
                       :loading="item.loading"
-                      :text="item.content"
+                      :text="
+                        item.content
+                          ? item.content
+                          : $t('chat.message.thinking')
+                      "
                       @edit="(returnValue) => onEdit(index, returnValue)"
                       @regenerate="onRegenerate(index)"
                     />
-                    <div class="sticky bottom-0 left-0 flex justify-center">
-                      <Button
-                        v-if="loadingRef"
-                        type="primary"
-                        @click="handleStop"
-                      >
-                        <template #icon>
-                          <RiStopCircleFill />
-                        </template>
-                        {{ $t('chat.message.stopResponding') }}
-                      </Button>
-                    </div>
                   </div>
                 </template>
               </div>

@@ -3,7 +3,8 @@
     "beforeBuildCommand": "pnpm run build",
     "beforeDevCommand": "pnpm -F @fatherbox/fb-web run dev",
     "devPath": "http://localhost:5666",
-    "distDir": "../apps/fb-web/dist"
+    "distDir": "../apps/fb-web/dist",
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "fatherbox",

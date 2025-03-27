@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use crate::route::route_cmd;
+use crate::stream::stream_cmd;
 use anyhow::anyhow;
 use app::api::{file, Api};
 use app::dao::file_dao::FileService;
@@ -38,6 +39,8 @@ use tauri::api::path::home_dir;
 use tauri::State;
 
 mod route;
+
+mod stream;
 
 static DEFAULT_CONFIG: &str = include_str!("../config.toml");
 
@@ -180,7 +183,7 @@ async fn main() {
             user_path: user_file_path.to_owned(),
         })
         // why sync fn must after sync fc
-        .invoke_handler(tauri::generate_handler![route_cmd, my_custom_command,])
+        .invoke_handler(tauri::generate_handler![route_cmd, my_custom_command, stream_cmd])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
