@@ -1,6 +1,7 @@
 import { useAccessStore } from '@vben/stores';
 
 import { invoke } from '@tauri-apps/api/tauri';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface ChatMessage {
   role: string;
@@ -140,83 +141,116 @@ export async function getChatMessages(params: { id: string }) {
       });
 }
 
-// todo
-// 思考过程
+// todo support thinking style
 
-export async function fetchChatAPIProcess(params: {
+export async function generateChatMessageWithStream(params: {
   id: string;
   modelId: string;
-  onDownloadProgress?: (data: any) => void;
+  onProgress: (data: any, status: number) => void;
   parentMessageId?: number;
   prompt: string;
   sourceId: string;
 }) {
   const accessStore = useAccessStore();
-  invoke('route_cmd', {
-    command: 'chat_message_request',
-    accessToken: accessStore.accessToken,
-    args: {
-      id: params.id,
-      prompt: params.prompt,
-      modelId: params.modelId,
-      sourceId: params.sourceId,
-      stream: false,
-    },
-  }).then((response: any) => {
-    if (params.onDownloadProgress) {
-      params.onDownloadProgress(response.result.text ?? response.result.error);
-    }
+  if (window.__TAURI__) {
+    const requestId = uuidv4().toString();
+    // @ts-ignore event & ResponseEvent exist
+    window.__TAURI__.event.listen(requestId, (e: ResponseEvent) => {
+      const { chunk, status } = e?.payload || {};
+      params.onProgress(chunk, status);
+    });
+    return invoke('route_cmd', {
+      command: 'chat_message_request',
+      accessToken: accessStore.accessToken,
+      args: {
+        id: params.id,
+        prompt: params.prompt,
+        modelId: params.modelId,
+        sourceId: params.sourceId,
+        requestId,
+      },
+    }).then((res: any) => {
+      return res.result;
+    });
+  }
+  return new Promise((resolve: any) => {
+    resolve({});
   });
 }
 
-export async function regenerateMessage(params: {
+export async function regenerateChatMessageWithStream(params: {
   id: string;
   index: number;
   modelId: string;
-  onDownloadProgress?: (data: any) => void;
+  onProgress: (data: any, status: number) => void;
   sourceId: string;
 }) {
+  // { id: string; index: number; modelId: string; sourceId: string; onProgress: (message: null | string, _: number) => void;
+  // { id: string; index: number; messageId: number; modelId: string; onProgress: (data: any, status: number) => void; sourceId: string; }
   const accessStore = useAccessStore();
-  invoke('route_cmd', {
-    command: 'chat_message_regenerate',
-    accessToken: accessStore.accessToken,
-    args: {
-      id: params.id,
-      index: params.index,
-      modelId: params.modelId,
-      sourceId: params.sourceId,
-      stream: false,
-    },
-  }).then((response: any) => {
-    if (params.onDownloadProgress) {
-      params.onDownloadProgress(response.result.text ?? response.result.error);
-    }
+  if (window.__TAURI__) {
+    const requestId = uuidv4().toString();
+    // @ts-ignore event & ResponseEvent exist
+    window.__TAURI__.event.listen(requestId, (e: ResponseEvent) => {
+      const { chunk, status } = e?.payload || {};
+      // if (chunk) {
+      //   message.info(`get stream chunk:${chunk}`);
+      // } else {
+      //   message.info(`get stream status:${status}`);
+      // }
+      params.onProgress(chunk, status);
+    });
+    return invoke('route_cmd', {
+      command: 'chat_message_regenerate',
+      accessToken: accessStore.accessToken,
+      args: {
+        id: params.id,
+        index: params.index,
+        modelId: params.modelId,
+        sourceId: params.sourceId,
+        requestId,
+      },
+    }).then((res: any) => {
+      return res.result;
+    });
+  }
+  return new Promise((resolve: any) => {
+    resolve({});
   });
 }
 
-export async function editMessage(params: {
+export async function editChatMessageWithStream(params: {
   id: string;
   index: number;
   modelId: string;
-  onDownloadProgress?: (data: any) => void;
+  onProgress: (data: any, status: number) => void;
   prompt: string;
   sourceId: string;
 }) {
   const accessStore = useAccessStore();
-  invoke('route_cmd', {
-    command: 'chat_message_edit',
-    accessToken: accessStore.accessToken,
-    args: {
-      id: params.id,
-      index: params.index,
-      prompt: params.prompt,
-      modelId: params.modelId,
-      sourceId: params.sourceId,
-      stream: false,
-    },
-  }).then((response: any) => {
-    if (params.onDownloadProgress) {
-      params.onDownloadProgress(response.result.text ?? response.result.error);
-    }
+  if (window.__TAURI__) {
+    const requestId = uuidv4().toString();
+    // @ts-ignore event & ResponseEvent exist
+    window.__TAURI__.event.listen(requestId, (e: ResponseEvent) => {
+      const { chunk, status } = e?.payload || {};
+      params.onProgress(chunk, status);
+    });
+    return invoke('route_cmd', {
+      command: 'chat_message_edit',
+      accessToken: accessStore.accessToken,
+      args: {
+        id: params.id,
+        index: params.index,
+        prompt: params.prompt,
+        modelId: params.modelId,
+        sourceId: params.sourceId,
+        requestId,
+      },
+    }).then((res: any) => {
+      return res.result;
+    });
+  }
+  return new Promise((resolve: any) => {
+    resolve({});
   });
 }

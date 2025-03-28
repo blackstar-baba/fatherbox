@@ -33,9 +33,9 @@ use uuid::Uuid;
 use crate::dao::file_dao::FileService;
 use crate::dto::file::ListGeneralBody;
 use crate::entity::file::ActiveModel;
-use crate::{AppResponse, CHAT_ZONE, FILE_TYPE};
-use crate::service::ai_source_service::get as get_ai_source;
 use crate::service::ai_model_service::get as get_ai_model;
+use crate::service::ai_source_service::get as get_ai_source;
+use crate::{AppResponse, CHAT_ZONE, FILE_TYPE};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelData {
@@ -98,7 +98,7 @@ pub struct RequestBody {
     pub prompt: String,
     pub model_id: String,
     pub source_id: String,
-    pub stream: bool,
+    pub request_id: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
@@ -108,7 +108,7 @@ pub struct RegenerateBody {
     index: usize,
     model_id: String,
     source_id: String,
-    stream: bool,
+    pub request_id: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
@@ -119,7 +119,7 @@ pub struct EditBody {
     prompt: String,
     model_id: String,
     source_id: String,
-    stream: bool,
+    pub request_id: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
@@ -254,7 +254,7 @@ pub async fn message_list(
     AppResponse::success(Some(data))
 }
 
-async fn get_chat_model(db: &DatabaseConnection, id: &str) -> AppResponse<Option<FileModel>> {
+async fn get_chat(db: &DatabaseConnection, id: &str) -> AppResponse<Option<FileModel>> {
     let get_result = FileService::get_file(db, id).await;
     if get_result.is_err() {
         return AppResponse::error(None, &get_result.err().unwrap().to_string());
@@ -272,7 +272,7 @@ pub async fn message_request(
     user_id: &str,
     body: &RequestBody,
 ) -> AppResponse<Option<Response>> {
-    let app_response = get_chat_model(db, &body.id).await;
+    let app_response = get_chat(db, &body.id).await;
     if app_response.is_error() {
         return AppResponse::error(None, &app_response.message);
     }
@@ -332,13 +332,108 @@ pub async fn message_request(
     }))
 }
 
-pub async fn message_regenerate(
+pub async fn message_request_stream<F>(
+    callback: F,
+    db: &DatabaseConnection,
+    user_path: &PathBuf,
+    user_id: &str,
+    body: &RequestBody,
+) -> AppResponse<Option<Response>>
+where
+    F: Fn(Option<String>, i8),
+{
+    let app_response = get_chat(db, &body.id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
+    }
+    let model = app_response.result.unwrap();
+    let app_response = get_ai_source(db, &body.source_id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
+    }
+    let ai_source = app_response.result.unwrap();
+    let app_response = get_ai_model(db, &body.model_id).await;
+    if app_response.is_error() {
+        return AppResponse::error(None, &app_response.message);
+    }
+    let ai_model = app_response.result.unwrap();
+    let file_path = &user_path.join(&model.wid).join(&model.id);
+    if !file_path.exists() {
+        let result = fs::File::create(file_path);
+        if result.is_err() {
+            error!(
+                "create chat file on disk failed, err: {}",
+                result.err().unwrap()
+            );
+            return AppResponse::error(
+                None,
+                "create chat file on disk failed, please check your disk space and permissions",
+            );
+        }
+    }
+    // todo catch error
+    // 读取文件内容到字符串
+    let file_content = fs::read_to_string(file_path).unwrap();
+    // 将 JSON 字符串反序列化为结构体
+    let mut messages = Vec::new();
+    if !file_content.is_empty() {
+        messages = serde_json::from_str(&file_content).unwrap();
+    }
+    // add user message
+    messages.push(Message {
+        role: User.to_string(),
+        content: body.prompt.clone(),
+    });
+    messages.push(Message {
+        role: System.to_string(),
+        content: String::new(),
+    });
+    let callback_wrapper = |content: Option<String>, status: i8| {
+        let mut messages = messages.clone();
+        let len = messages.len() - 1;
+        match messages.get_mut(len) {
+            None => {}
+            Some(message) => {
+                if content.is_some() {
+                    message.content = format!("{}{}", &message.content, content.clone().unwrap());
+                } else {
+                    let json_str = serde_json::to_string(&messages).unwrap();
+                    fs::write(file_path, json_str).unwrap();
+                }
+                // invoke callback
+                callback(content, status);
+            }
+        }
+    };
+    // add system message
+    do_openai_request_stream(
+        callback_wrapper,
+        &messages,
+        &ai_source.url,
+        &ai_source.key,
+        &ai_model.name,
+    )
+    .await;
+    // return
+    AppResponse::success(Some(Response {
+        id: body.id.clone(),
+        index: messages.len() - 1,
+        text: Some(String::new()),
+        error: None,
+    }))
+}
+
+pub async fn message_regenerate<F>(
+    callback: F,
     db: &DatabaseConnection,
     user_path: &PathBuf,
     user_id: &str,
     body: &RegenerateBody,
-) -> AppResponse<Option<Response>> {
-    let app_response = get_chat_model(db, &body.id).await;
+) -> AppResponse<Option<Response>>
+where
+    F: Fn(Option<String>, i8),
+{
+    let app_response = get_chat(db, &body.id).await;
     if app_response.is_error() {
         return AppResponse::error(None, &app_response.message);
     }
@@ -365,31 +460,57 @@ pub async fn message_regenerate(
     if body.index < messages.len() {
         messages.truncate(body.index);
     }
-    let text = do_openai_request(&messages, &ai_source.url, &ai_source.key, &ai_model.name).await;
     // add system message
     messages.push(Message {
         role: System.to_string(),
-        content: text.clone(),
+        content: String::new(),
     });
-    // save to file
-    let json_str = serde_json::to_string(&messages).unwrap();
-    fs::write(file_path, json_str).unwrap();
+    let callback_wrapper = |content: Option<String>, status: i8| {
+        let mut messages = messages.clone();
+        let len = messages.len() - 1;
+        match messages.get_mut(len) {
+            None => {}
+            Some(message) => {
+                if content.is_some() {
+                    message.content = format!("{}{}", &message.content, content.clone().unwrap());
+                } else {
+                    let json_str = serde_json::to_string(&messages).unwrap();
+                    fs::write(file_path, json_str).unwrap();
+                }
+                // invoke callback
+                callback(content, status);
+            }
+        }
+    };
+    // add system message
+    do_openai_request_stream(
+        callback_wrapper,
+        &messages,
+        &ai_source.url,
+        &ai_source.key,
+        &ai_model.name,
+    )
+    .await;
     // return
     AppResponse::success(Some(Response {
         id: body.id.clone(),
         index: body.index.clone(),
-        text: Some(text),
+        text: Some(String::new()),
         error: None,
     }))
 }
 
-pub async fn message_edit(
+pub async fn message_edit<F>(
+    callback: F,
     db: &DatabaseConnection,
     user_path: &PathBuf,
     user_id: &str,
     body: &EditBody,
-) -> AppResponse<Option<Response>> {
-    let app_response = get_chat_model(db, &body.id).await;
+) -> AppResponse<Option<Response>>
+where
+    F: Fn(Option<String>, i8),
+{
+    let app_response = get_chat(db, &body.id).await;
     if app_response.is_error() {
         return AppResponse::error(None, &app_response.message);
     }
@@ -421,29 +542,106 @@ pub async fn message_edit(
         role: User.to_string(),
         content: body.prompt.clone(),
     });
-    let text = do_openai_request(&messages, &ai_source.url, &ai_source.key, &ai_model.name).await;
     // add system message
     messages.push(Message {
         role: System.to_string(),
-        content: text.clone(),
+        content: String::new(),
     });
-    // save to file
-    let json_str = serde_json::to_string(&messages).unwrap();
-    fs::write(file_path, json_str).unwrap();
+    let callback_wrapper = |content: Option<String>, status: i8| {
+        let mut messages = messages.clone();
+        let len = messages.len() - 1;
+        match messages.get_mut(len) {
+            None => {}
+            Some(message) => {
+                if content.is_some() {
+                    message.content = format!("{}{}", &message.content, content.clone().unwrap());
+                } else {
+                    let json_str = serde_json::to_string(&messages).unwrap();
+                    fs::write(file_path, json_str).unwrap();
+                }
+                // invoke callback
+                callback(content, status);
+            }
+        }
+    };
+    // add system message
+    do_openai_request_stream(
+        callback_wrapper,
+        &messages,
+        &ai_source.url,
+        &ai_source.key,
+        &ai_model.name,
+    )
+    .await;
     // return
     AppResponse::success(Some(Response {
         id: body.id.clone(),
         index: body.index.clone(),
-        text: Some(text),
+        text: Some(String::new()),
         error: None,
     }))
 }
 
+async fn do_openai_request_stream<F>(
+    mut callback: F,
+    messages: &Vec<Message>,
+    url: &str,
+    key: &str,
+    model: &str,
+) where
+    F: FnMut(Option<String>, i8),
+{
+    // new openai client// This secret could be from a file, or environment variable.
+    let config = OpenAIConfig::new().with_api_base(url).with_api_key(key);
+    let client = Client::with_config(config);
+    // todo convert message to chat message
+    let mut request_messages = vec![];
+    for msg in messages.iter() {
+        request_messages.push(
+            ChatCompletionRequestUserMessageArgs::default()
+                .name(msg.role.clone())
+                .content(msg.content.clone())
+                .build()
+                .unwrap()
+                .into(),
+        )
+    }
+    let request = CreateChatCompletionRequestArgs::default()
+        .model(model.to_string())
+        .messages(request_messages)
+        .build()
+        .unwrap();
+    debug!("request {:?}", request);
+    match client.chat().create_stream(request).await {
+        Ok(mut stream) => {
+            while let Some(result) = stream.next().await {
+                match result {
+                    Ok(response) => {
+                        response.choices.iter().for_each(|chat_choice| {
+                            if let Some(ref content) = chat_choice.delta.content {
+                                debug!("stream body: {:?}", content);
+                                callback(Some(content.to_string()), 0);
+                            }
+                        });
+                    }
+                    Err(err) => {
+                        error!("stream err: {:?}", err);
+                        callback(None, -1);
+                    }
+                }
+            }
+            callback(None, 1)
+        }
+        Err(err) => {
+            error!("stream err: {:?}", err);
+            callback(None, 1)
+        }
+    }
+}
+
 async fn do_openai_request(messages: &Vec<Message>, url: &str, key: &str, model: &str) -> String {
     // new openai client// This secret could be from a file, or environment variable.
-    let config = OpenAIConfig::new()
-        .with_api_base(url)
-        .with_api_key(key);
+    let config = OpenAIConfig::new().with_api_base(url).with_api_key(key);
     let client = Client::with_config(config);
     // todo convert message to chat message
     let mut request_messages = vec![];
@@ -485,16 +683,13 @@ pub async fn model_list() -> AppResponse<Option<ModelData>> {
         .response_type(ResponseType::Json);
     let result = client.send(request).await;
     if result.is_err() {
-        return AppResponse::error(None, &result.err().unwrap().to_string())
+        return AppResponse::error(None, &result.err().unwrap().to_string());
     }
     let data_result = result.unwrap().read().await;
     if data_result.is_err() {
-       let err =  data_result.err().unwrap();
-        error!(
-                "read model data failed, err: {:?}",
-                err
-            );
-        return AppResponse::error(None, &err.to_string())
+        let err = data_result.err().unwrap();
+        error!("read model data failed, err: {:?}", err);
+        return AppResponse::error(None, &err.to_string());
     }
     let data = data_result.unwrap().data;
     // println!("{}",data);
@@ -569,7 +764,7 @@ mod test {
                 prompt: "who is blackstar".to_string(),
                 model_id: "llama3.1:8b".to_string(),
                 source_id: "abc".to_string(),
-                stream: false,
+                request_id: "1".to_string(),
             },
         )
         .await;
@@ -587,7 +782,7 @@ mod test {
                 prompt: "oh, no".to_string(),
                 model_id: "llama3.1:8b".to_string(),
                 source_id: "abc".to_string(),
-                stream: false,
+                request_id: "2".to_string(),
             },
         )
         .await;

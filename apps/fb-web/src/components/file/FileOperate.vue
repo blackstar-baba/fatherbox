@@ -38,6 +38,7 @@ import { useWorkspaceStore } from '#/store';
 import { downloadByData } from '#/utils/file/downloadUtil';
 
 import {
+  decodeUint8ArrayToString,
   encodeStringToUint8Array,
   FILE_TYPE_DIR,
   FILE_TYPE_FILE,
@@ -210,8 +211,8 @@ const selectTreeItem = async (_: any, node: any) => {
   if (!node.children) {
     fileIdRef.value = node.dataRef.key;
     fileNameRef.value = node.dataRef.title;
-    const content = (await getFileContent(node.dataRef.key)) as string;
-    emits('sendContent', content);
+    const contentBytes = await getFileContent(node.dataRef.key);
+    emits('sendContent', decodeUint8ArrayToString(contentBytes));
     modalApi.close();
   }
 };

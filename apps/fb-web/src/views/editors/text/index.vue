@@ -5,13 +5,12 @@ import { Page } from '@vben/common-ui';
 
 import { Card, Col, Row, Textarea } from 'ant-design-vue';
 
-import { decodeUint8ArrayToString } from '#/components/file/file';
 import FileOperate from '#/components/file/FileOperate.vue';
 
 const text = ref('');
 
 function setContent(content: string) {
-  text.value = decodeUint8ArrayToString(content);
+  text.value = content;
 }
 </script>
 <template>
